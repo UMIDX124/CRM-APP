@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="goldShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="40%" stop-color="#F5E6A3"/>
+      <stop offset="60%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#8B7355"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="50%" stop-color="#0d0d0d"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <filter id="premium">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#D4AF37" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Premium rounded square -->
+  <rect width="200" height="200" rx="45" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle inner border glow -->
+  <rect x="4" y="4" width="192" height="192" rx="41" fill="none" stroke="url(#goldShine)" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- F - Bold, aggressive stroke -->
+  <text x="38" y="135" font-family="Arial Black, sans-serif" font-size="100" font-weight="900" fill="url(#goldShine)" filter="url(#premium)">F</text>
+  
+  <!-- U - Bold, matching -->
+  <text x="105" y="135" font-family="Arial Black, sans-serif" font-size="100" font-weight="900" fill="url(#goldShine)" filter="url(#premium)">U</text>
+  
+  <!-- Subtle accent line - like confidence -->
+  <rect x="40" y="155" width="120" height="3" rx="1.5" fill="url(#goldShine)" opacity="0.8"/>
+</svg>

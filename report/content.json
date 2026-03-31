@@ -1,0 +1,202 @@
+{
+  "title": "FU Corp Command Center",
+  "subtitle": "Premium CRM Dashboard Report - March 2026",
+  "author": "FU Corporation",
+  "date": "March 2026",
+  "type": "report",
+  "accent": "#D4AF37",
+  "cover-bg": "#0A0A0F",
+  "sections": [
+    {
+      "type": "h1",
+      "text": "Executive Summary"
+    },
+    {
+      "type": "body",
+      "text": "FU Corp Command Center is a comprehensive CRM dashboard designed for elite business management across multiple brands. This report provides an overview of the key performance indicators, client metrics, employee performance, and sales pipeline status for March 2026."
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Key Performance Indicators"
+    },
+    {
+      "type": "table",
+      "headers": ["Metric", "Value", "Change"],
+      "rows": [
+        ["Active Clients", "200", "+12%"],
+        ["Revenue This Month", "$225,000", "+8.5%"],
+        ["Open Tasks", "147", "-5%"],
+        ["Employee Utilization", "82%", "+3%"]
+      ],
+      "col_widths": [0.4, 0.3, 0.3],
+      "caption": "Table 1: Key Performance Indicators - March 2026"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Revenue by Brand"
+    },
+    {
+      "type": "body",
+      "text": "The revenue overview for the last 6 months shows consistent growth across all three brands. VCS leads with the highest revenue contribution, followed by BRAND_2 and BRAND_3."
+    },
+    {
+      "type": "chart",
+      "chart_type": "bar",
+      "labels": ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+      "datasets": [
+        {"label": "VCS", "values": [85000, 92000, 88000, 105000, 112000, 118000]},
+        {"label": "BRAND_2", "values": [42000, 48000, 45000, 52000, 58000, 62000]},
+        {"label": "BRAND_3", "values": [28000, 32000, 35000, 38000, 42000, 45000]}
+      ],
+      "title": "Monthly Revenue by Brand (USD)",
+      "caption": "Figure 1: 6-Month Revenue Performance"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Revenue by Service"
+    },
+    {
+      "type": "chart",
+      "chart_type": "pie",
+      "labels": ["SEO & Content", "PPC & Ads", "Virtual Workforce", "Web Development", "Cloud & Security"],
+      "datasets": [{"label": "Revenue", "values": [185000, 142000, 98000, 76000, 32000]}],
+      "caption": "Figure 2: Revenue Distribution by Service Type"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Client Overview"
+    },
+    {
+      "type": "body",
+      "text": "The client portfolio consists of 8 active enterprise clients across multiple countries including the US, UAE, Germany, Canada, Australia, Brazil, and India. Client health is monitored through a comprehensive scoring system."
+    },
+    {
+      "type": "table",
+      "headers": ["Client", "MRR", "Health", "Status"],
+      "rows": [
+        ["TechFlow Solutions", "$4,500", "92%", "Healthy"],
+        ["Nordic Retail AB", "$3,200", "78%", "At Risk"],
+        ["Gulf Tech Industries", "$5,800", "95%", "Healthy"],
+        ["Canuck Consulting", "$2,100", "45%", "Churning"],
+        ["Berlin Digital GmbH", "$3,900", "88%", "Healthy"],
+        ["Sydney Scale Up", "$2,800", "82%", "Healthy"],
+        ["São Paulo Startups", "$1,800", "71%", "At Risk"],
+        ["Mumbai E-Commerce", "$4,200", "90%", "Healthy"]
+      ],
+      "col_widths": [0.35, 0.2, 0.2, 0.25],
+      "caption": "Table 2: Client Portfolio Overview"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Employee Directory"
+    },
+    {
+      "type": "body",
+      "text": "The workforce consists of 8 highly skilled professionals across Marketing, Development, and Workforce departments. Performance scores range from 85% to 96%, with an average utilization rate of 82%."
+    },
+    {
+      "type": "table",
+      "headers": ["Employee", "Title", "Performance", "Workload"],
+      "rows": [
+        ["Ahmed Khan", "Senior SEO Manager", "94%", "78%"],
+        ["Fatima Hassan", "PPC Specialist", "88%", "92%"],
+        ["Ali Raza", "Full Stack Developer", "96%", "65%"],
+        ["Sarah Williams", "VA Lead", "91%", "85%"],
+        ["Usman Tariq", "Social Media Manager", "87%", "On Leave"],
+        ["Ayesha Malik", "Content Writer", "93%", "70%"],
+        ["Hamza Ali", "DevOps Engineer", "89%", "88%"],
+        ["Zainab Butt", "SDR Team Lead", "85%", "75%"]
+      ],
+      "col_widths": [0.25, 0.3, 0.22, 0.23],
+      "caption": "Table 3: Employee Performance Metrics"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Sales Pipeline"
+    },
+    {
+      "type": "body",
+      "text": "The sales pipeline currently contains 6 leads in various stages. The total pipeline value stands at $28,500 with a conversion rate of 50%."
+    },
+    {
+      "type": "table",
+      "headers": ["Lead", "Value", "Stage", "Status"],
+      "rows": [
+        ["Singapore FinTech", "$8,500", "Proposal Sent", "Active"],
+        ["London Legal Services", "$4,200", "Negotiation", "Active"],
+        ["Paris Fashion House", "$3,800", "Qualified", "Active"],
+        ["Tokyo Tech Ventures", "$12,000", "New", "Active"],
+        ["Cape Town Logistics", "$5,600", "Won", "Closed"],
+        ["Mexican Retail Group", "$2,800", "Lost", "Closed"]
+      ],
+      "col_widths": [0.3, 0.18, 0.27, 0.25],
+      "caption": "Table 4: Sales Pipeline Status"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Task Management"
+    },
+    {
+      "type": "body",
+      "text": "The task management system tracks 8 active tasks across various clients. Tasks are categorized by priority (Critical, High, Normal, Low) and status (To Do, In Progress, Review, Done)."
+    },
+    {
+      "type": "table",
+      "headers": ["Task", "Priority", "Assignee", "Due Date"],
+      "rows": [
+        ["Monthly SEO Audit Report", "High", "Ahmed Khan", "Apr 5"],
+        ["Google Ads Campaign Setup", "Critical", "Fatima Hassan", "Apr 2"],
+        ["Website Migration", "High", "Ali Raza", "Apr 8"],
+        ["Content Calendar Q2", "Normal", "Usman Tariq", "Apr 3"],
+        ["Security Audit", "Critical", "Hamza Ali", "Apr 4"],
+        ["Lead List Research", "Low", "Zainab Butt", "Apr 15"]
+      ],
+      "col_widths": [0.35, 0.18, 0.25, 0.22],
+      "caption": "Table 5: Active Tasks Overview"
+    },
+    {
+      "type": "spacer",
+      "pt": 16
+    },
+    {
+      "type": "h1",
+      "text": "Conclusion"
+    },
+    {
+      "type": "body",
+      "text": "FU Corp Command Center demonstrates strong performance across all key metrics. Revenue growth of 8.5% month-over-month, a healthy client portfolio with 5 out of 8 clients in excellent standing, and a skilled workforce with an average performance score of 90% position the company well for continued growth. The sales pipeline shows promising opportunities with potential new business valued at over $28,000."
+    },
+    {
+      "type": "callout",
+      "text": "Recommendation: Focus on at-risk clients (Nordic Retail, São Paulo Startups) and prioritize conversion of Tokyo Tech Ventures ($12,000 potential value)."
+    }
+  ]
+}

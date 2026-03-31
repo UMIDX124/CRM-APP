@@ -1,0 +1,164 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Core Colors - Lavish Dark Theme */
+  --background: #0A0A0A;
+  --background-secondary: #0F0F0F;
+  --surface: #111111;
+  --surface-elevated: #1A1A1A;
+  
+  /* Gold Accent (Royal) */
+  --gold: #D4AF37;
+  --gold-light: #E5C158;
+  --gold-dark: #B8960F;
+  --gold-glow: rgba(212, 175, 55, 0.3);
+  
+  /* Emerald (Success) */
+  --emerald: #22C55E;
+  --emerald-light: #4ADE80;
+  --emerald-dark: #16A34A;
+  
+  /* Electric Blue (Data/Charts) */
+  --blue: #3B82F6;
+  --blue-light: #60A5FA;
+  --blue-dark: #2563EB;
+  
+  /* Status Colors */
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --info: #06B6D4;
+  
+  /* Text */
+  --foreground: #FAFAFA;
+  --foreground-muted: #A1A1AA;
+  --foreground-dim: #71717A;
+  
+  /* Borders */
+  --border: rgba(212, 175, 55, 0.1);
+  --border-gold: rgba(212, 175, 55, 0.3);
+  
+  /* Shadows */
+  --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.15);
+  --shadow-gold-hover: 0 0 30px rgba(212, 175, 55, 0.25);
+  --shadow-deep: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-emerald: var(--emerald);
+  --color-blue: var(--blue);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-dim: var(--foreground-dim);
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) var(--surface);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--gold-dark);
+  border-radius: 3px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(17, 17, 17, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.glass-gold {
+  background: rgba(17, 17, 17, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Gold shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(212, 175, 55, 0.1) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Card hover glow */
+.card-glow {
+  transition: all 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: var(--shadow-gold-hover);
+  border-color: var(--border-gold);
+}
+
+/* Gradient text */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse-gold {
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* Counter animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-count {
+  animation: countUp 0.5s ease-out forwards;
+}

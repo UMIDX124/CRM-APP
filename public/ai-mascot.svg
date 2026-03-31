@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <!-- Cute gradient background -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE4F3"/>
+      <stop offset="100%" stop-color="#FFD1DC"/>
+    </radialGradient>
+    <!-- Body gradient -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9ECD"/>
+      <stop offset="100%" stop-color="#FF6BA9"/>
+    </linearGradient>
+    <!-- Cheek blush -->
+    <radialGradient id="blush" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6B8A" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#FF6B8A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Background circle with glow -->
+  <circle cx="100" cy="100" r="95" fill="url(#bgGlow)" />
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#FFB6C1" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- Body - cute rounded robot -->
+  <ellipse cx="100" cy="120" rx="50" ry="45" fill="url(#bodyGrad)"/>
+  
+  <!-- Body shine -->
+  <ellipse cx="85" cy="105" rx="15" ry="10" fill="#FFB6C1" opacity="0.5"/>
+  
+  <!-- Head -->
+  <circle cx="100" cy="75" r="45" fill="url(#bodyGrad)"/>
+  
+  <!-- Head shine -->
+  <ellipse cx="85" cy="60" rx="15" ry="12" fill="#FFB6C1" opacity="0.5"/>
+  
+  <!-- Ears/Antenna - cute nubs -->
+  <circle cx="60" cy="50" r="12" fill="#FF9ECD" stroke="#FF6BA9" stroke-width="3"/>
+  <circle cx="140" cy="50" r="12" fill="#FF9ECD" stroke="#FF6BA9" stroke-width="3"/>
+  
+  <!-- Blush cheeks -->
+  <ellipse cx="65" cy="85" rx="12" ry="8" fill="url(#blush)"/>
+  <ellipse cx="135" cy="85" rx="12" ry="8" fill="url(#blush)"/>
+  
+  <!-- Eyes - big sparkly kawaii eyes -->
+  <ellipse cx="80" cy="75" rx="12" ry="14" fill="#1a1a1a"/>
+  <ellipse cx="120" cy="75" rx="12" ry="14" fill="#1a1a1a"/>
+  
+  <!-- Eye sparkles -->
+  <circle cx="76" cy="70" r="4" fill="white"/>
+  <circle cx="84" cy="78" r="2" fill="white"/>
+  <circle cx="116" cy="70" r="4" fill="white"/>
+  <circle cx="124" cy="78" r="2" fill="white"/>
+  
+  <!-- Cute smile - ^_^ -->
+  <path d="M90 95 Q100 105 110 95" stroke="#1a1a1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Small bow on head -->
+  <path d="M85 35 Q100 25 115 35 Q100 45 85 35" fill="#FF6BA9"/>
+  <circle cx="100" cy="35" r="6" fill="#FFE4EC"/>
+  
+  <!-- Tiny heart above antenna -->
+  <path d="M100 15 C95 10 85 15 85 22 C85 28 100 35 100 35 C100 35 115 28 115 22 C115 15 105 10 100 15" fill="#FF6BA9"/>
+  
+  <!-- Arms - cute stubby arms -->
+  <ellipse cx="50" cy="115" rx="10" ry="15" fill="#FF9ECD"/>
+  <ellipse cx="150" cy="115" rx="10" ry="15" fill="#FF9ECD"/>
+  
+  <!-- Little hands -->
+  <circle cx="50" cy="130" r="8" fill="#FF9ECD"/>
+  <circle cx="150" cy="130" r="8" fill="#FF9ECD"/>
+  
+  <!-- Feet -->
+  <ellipse cx="80" cy="160" rx="15" ry="10" fill="#FF9ECD"/>
+  <ellipse cx="120" cy="160" rx="15" ry="10" fill="#FF9ECD"/>
+  
+  <!-- Sparkles around -->
+  <path d="M30 60 L35 65 L30 70 L25 65 Z" fill="#FFD700" opacity="0.8"/>
+  <path d="M170 80 L175 85 L170 90 L165 85 Z" fill="#FFD700" opacity="0.8"/>
+  <circle cx="40" cy="100" r="3" fill="#FFD700" opacity="0.6"/>
+  <circle cx="160" cy="50" r="2" fill="#FFD700" opacity="0.6"/>
+</svg>
