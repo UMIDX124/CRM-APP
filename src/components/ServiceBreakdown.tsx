@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { clsx } from "clsx";
 
 const serviceTypes = [
-  { name: "SEO & Content", revenue: 185000, percentage: 35, color: "#D4AF37" },
+  { name: "SEO & Content", revenue: 185000, percentage: 35, color: "#FF6B00" },
   { name: "PPC & Ads", revenue: 142000, percentage: 27, color: "#3B82F6" },
   { name: "Virtual Workforce", revenue: 98000, percentage: 18, color: "#22C55E" },
   { name: "Web Development", revenue: 76000, percentage: 14, color: "#8B5CF6" },
@@ -51,7 +51,7 @@ export default function ServiceBreakdown() {
           <p className="text-sm text-white/40 mt-0.5">Distribution breakdown</p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-[#D4AF37]">$533K</p>
+          <p className="text-2xl font-bold text-[#FF6B00]">$533K</p>
           <p className="text-xs text-white/40">Total Revenue</p>
         </div>
       </div>
@@ -89,7 +89,7 @@ export default function ServiceBreakdown() {
           {/* Center Label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-xs text-white/40">Best</span>
-            <span className="text-sm font-semibold text-[#D4AF37]">SEO</span>
+            <span className="text-sm font-semibold text-[#FF6B00]">SEO</span>
           </div>
         </div>
 

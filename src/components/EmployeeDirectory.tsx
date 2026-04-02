@@ -97,7 +97,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
     setFormData({ ...formData, skills: formData.skills.filter((s) => s !== skill) });
   };
 
-  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#D4AF37";
+  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   const stats = useMemo(() => ({
     total: employeeList.length,
@@ -112,7 +112,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold tracking-wider">
+            <span className="px-2 py-0.5 rounded-md bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] text-[10px] font-bold tracking-wider">
               {parentCompany.code} CORP
             </span>
             <span className="text-white/30 text-xs">Hires all employees</span>
@@ -123,7 +123,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#FF6B00]/20 transition-all"
         >
           <UserPlus className="w-4 h-4" />
           Hire Employee
@@ -147,7 +147,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
         })}
         <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
           <div className="flex items-center gap-2 mb-2">
-            <Star className="w-3 h-3 text-[#D4AF37]" />
+            <Star className="w-3 h-3 text-[#FF6B00]" />
             <span className="text-xs text-white/50">Avg Performance</span>
           </div>
           <p className="text-2xl font-bold text-white">{stats.avgPerformance}%</p>
@@ -162,7 +162,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
           <input
             type="text" placeholder="Search by name, email, or title..."
             value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30"
           />
         </div>
         <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}
@@ -198,7 +198,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
             return (
               <div key={emp.id} className={clsx("p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all hover-lift group animate-fade-in-up", `stagger-${(i % 6) + 1}`)}>
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center">
                     <span className="text-lg font-bold text-white/80">{emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -260,7 +260,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                   <tr key={emp.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
                           <span className="text-sm font-bold text-white/80">{emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</span>
                         </div>
                         <div>
@@ -317,9 +317,9 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
 
             <div className="p-6 space-y-5">
               {/* Hired by FU Corp badge */}
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-[#D4AF37]/5 border border-[#D4AF37]/10">
-                <BadgeCheck className="w-5 h-5 text-[#D4AF37]" />
-                <span className="text-sm text-white/70">Hired by <strong className="text-[#D4AF37]">FU Corp</strong> — Mother Company</span>
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-[#FF6B00]/5 border border-[#FF6B00]/10">
+                <BadgeCheck className="w-5 h-5 text-[#FF6B00]" />
+                <span className="text-sm text-white/70">Hired by <strong className="text-[#FF6B00]">FU Corp</strong> — Mother Company</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -327,25 +327,25 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Full Name *</label>
                   <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Employee name" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="Employee name" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 {/* Email */}
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Email *</label>
                   <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="employee@fu-corp.com" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="employee@fu-corp.com" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 {/* Phone */}
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Phone</label>
                   <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+92 300-1234567" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="+92 300-1234567" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 {/* Title */}
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Job Title *</label>
                   <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g. Senior Developer" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="e.g. Senior Developer" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 {/* Assign to Subsidiary */}
                 <div>
@@ -383,13 +383,13 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Salary (USD/mo)</label>
                   <input type="number" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: Number(e.target.value) })}
-                    placeholder="5000" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="5000" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 {/* Hire Date */}
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Hire Date</label>
                   <input type="date" value={formData.hireDate} onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
               </div>
 
@@ -407,7 +407,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                 <div className="flex gap-2">
                   <input type="text" value={newSkill} onChange={(e) => setNewSkill(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSkill())}
-                    placeholder="Add skill..." className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    placeholder="Add skill..." className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                   <button onClick={addSkill} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-sm transition-all">Add</button>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                 Cancel
               </button>
               <button onClick={handleSave} disabled={!formData.name || !formData.email}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all disabled:opacity-50 flex items-center gap-2">
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#FF6B00]/20 transition-all disabled:opacity-50 flex items-center gap-2">
                 <Save className="w-4 h-4" />
                 {editingEmployee ? "Save Changes" : "Hire Employee"}
               </button>

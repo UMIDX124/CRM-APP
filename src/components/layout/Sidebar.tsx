@@ -44,7 +44,7 @@ const navItems = [
 ];
 
 const brandColors: Record<string, string> = {
-  VCS: "#D4AF37",
+  VCS: "#FF6B00",
   BSL: "#3B82F6",
   DPL: "#22C55E",
 };
@@ -73,7 +73,7 @@ export default function Sidebar({
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   const currentBrand = brands.find((b) => b.id === selectedBrand);
-  const brandColor = brandColors[currentBrand?.code || "VCS"] || "#D4AF37";
+  const brandColor = brandColors[currentBrand?.code || "VCS"] || "#FF6B00";
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -93,7 +93,7 @@ export default function Sidebar({
       <aside
         className={clsx(
           "fixed top-0 left-0 h-full flex flex-col border-r border-white/10 transition-all duration-300 z-50",
-          "bg-gradient-to-b from-[#0a0a0f] via-[#0f0f18] to-[#0a0a0f]",
+          "bg-gradient-to-b from-[#0D0D10] via-[#111114] to-[#0D0D10] carbon-bg",
           collapsed ? "w-[72px]" : "w-[260px]",
           !isMobileOpen && "-translate-x-full lg:translate-x-0"
         )}
@@ -176,7 +176,7 @@ export default function Sidebar({
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-white/80 hover:bg-white/5 transition-all">
             <Bell className="w-5 h-5" />
             {!collapsed && <span>Notifications</span>}
-            <span className="ml-auto px-2 py-0.5 rounded-full bg-[#D4AF37] text-black text-xs font-bold">3</span>
+            <span className="ml-auto px-2 py-0.5 rounded-full bg-[#FF6B00] text-black text-xs font-bold">3</span>
           </button>
           <button
             onClick={onToggleTheme}
@@ -187,13 +187,13 @@ export default function Sidebar({
             {!collapsed && <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>}
           </button>
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#E05500] flex items-center justify-center shrink-0">
               <span className="text-black text-xs font-bold">{currentUser?.name?.charAt(0) || "U"}</span>
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{currentUser?.name}</p>
-                <p className="text-[10px] text-[#D4AF37]">{currentUser?.role}</p>
+                <p className="text-[10px] text-[#FF6B00]">{currentUser?.role}</p>
               </div>
             )}
             <button
@@ -246,7 +246,7 @@ export function MobileHeader({
         </div>
         <button className="p-2 rounded-lg hover:bg-white/10 transition-colors relative">
           <Bell className="w-5 h-5 text-white/70" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[#D4AF37] rounded-full" />
+          <span className="absolute top-1 right-1 w-2 h-2 bg-[#FF6B00] rounded-full" />
         </button>
       </div>
     </header>

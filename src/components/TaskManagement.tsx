@@ -323,7 +323,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
         >
           <Plus className="w-4 h-4" />
           Add Task
@@ -358,13 +358,13 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
           />
         </div>
         <select
           value={filterPriority}
           onChange={(e) => setFilterPriority(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
         >
           <option value="all" className="bg-[#0f0f18]">All Priorities</option>
           <option value="CRITICAL" className="bg-[#0f0f18]">Critical</option>
@@ -418,7 +418,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                           >
                             {priority.label}
                           </div>
-                          <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: `${task.brand === "VCS" ? "#D4AF37" : task.brand === "BSL" ? "#3B82F6" : "#22C55E"}20`, color: task.brand === "VCS" ? "#D4AF37" : task.brand === "BSL" ? "#3B82F6" : "#22C55E" }}>
+                          <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: `${task.brand === "VCS" ? "#FF6B00" : task.brand === "BSL" ? "#3B82F6" : "#22C55E"}20`, color: task.brand === "VCS" ? "#FF6B00" : task.brand === "BSL" ? "#3B82F6" : "#22C55E" }}>
                             {task.brand}
                           </span>
                         </div>
@@ -447,7 +447,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-3 border-t border-white/10">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-black text-[10px] font-bold">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#E05500] flex items-center justify-center text-black text-[10px] font-bold">
                             {getInitials(task.assignee)}
                           </div>
                           <span className="text-xs text-white/60">{task.assignee.split(" ")[0]}</span>
@@ -501,7 +501,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="Enter task title"
                 />
               </div>
@@ -510,7 +510,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 min-h-[80px]"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 min-h-[80px]"
                   placeholder="Task description..."
                 />
               </div>
@@ -520,7 +520,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="CRITICAL" className="bg-[#0f0f18]">Critical</option>
                     <option value="HIGH" className="bg-[#0f0f18]">High</option>
@@ -533,7 +533,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="VCS" className="bg-[#0f0f18]">VCS</option>
                     <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
@@ -547,7 +547,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.assignee}
                     onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="" className="bg-[#0f0f18]">Select Assignee</option>
                     {employees.map((emp) => (
@@ -560,7 +560,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.client}
                     onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="" className="bg-[#0f0f18]">Select Client</option>
                     {clients.map((client) => (
@@ -575,7 +575,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
                   type="date"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                 />
               </div>
             </div>
@@ -586,7 +586,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
               <button
                 onClick={handleSaveTask}
                 disabled={!formData.title}
-                className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
               >
                 {editingTask ? "Update" : "Add"} Task
               </button>

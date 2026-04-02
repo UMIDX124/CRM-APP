@@ -28,7 +28,7 @@ const data: RevenueDataPoint[] = [
 ];
 
 const brandColors = {
-  vcs: "#D4AF37",
+  vcs: "#FF6B00",
   brand2: "#3B82F6",
   brand3: "#22C55E",
 };
@@ -72,7 +72,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
       </div>
       <div className="mt-3 pt-3 border-t border-white/10 flex justify-between">
         <span className="text-white/40 text-xs">Total</span>
-        <span className="text-[#D4AF37] font-semibold text-sm">${total.toLocaleString()}</span>
+        <span className="text-[#FF6B00] font-semibold text-sm">${total.toLocaleString()}</span>
       </div>
     </div>
   );
@@ -82,7 +82,7 @@ export default function RevenueChart() {
   return (
     <div className="relative rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6 overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: "#D4AF37" }} />
+      <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: "#FF6B00" }} />
 
       <div className="flex items-center justify-between mb-6">
         <div>

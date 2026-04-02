@@ -11,7 +11,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = {
-  VCS: "#D4AF37",
+  VCS: "#FF6B00",
   BSL: "#3B82F6",
   DPL: "#22C55E",
 };
@@ -87,14 +87,14 @@ export default function DashboardLayout({
   };
 
   const currentBrandData = brands.find((b) => b.id === selectedBrand);
-  const brandColor = brandColors[currentBrandData?.code || "VCS"] || "#D4AF37";
+  const brandColor = brandColors[currentBrandData?.code || "VCS"] || "#FF6B00";
   const pageTitle = pageTitles[pathname] || "Dashboard";
 
   // Show nothing while checking auth
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-[#FF6B00]/30 border-t-[#FF6B00] rounded-full animate-spin" />
       </div>
     );
   }
@@ -102,7 +102,7 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#0f0f18] to-[#0a0a0f]">
+    <div className="min-h-screen bg-[#09090B] carbon-bg">
       {/* Mobile Header */}
       <MobileHeader
         onMenuOpen={() => setSidebarOpen(true)}

@@ -66,7 +66,7 @@ function MarkdownContent({ content }: { content: string }) {
           const isInline = !className;
           if (isInline) {
             return (
-              <code className="px-1.5 py-0.5 rounded-md bg-white/10 text-pink-300 text-xs font-mono" {...props}>
+              <code className="px-1.5 py-0.5 rounded-md bg-white/10 text-#FF8A33 text-xs font-mono" {...props}>
                 {children}
               </code>
             );
@@ -79,7 +79,7 @@ function MarkdownContent({ content }: { content: string }) {
         },
         pre: ({ children }) => <pre className="mb-2">{children}</pre>,
         blockquote: ({ children }) => (
-          <blockquote className="border-l-2 border-pink-400/50 pl-3 italic text-white/60 mb-2">{children}</blockquote>
+          <blockquote className="border-l-2 border-#FF6B00/50 pl-3 italic text-white/60 mb-2">{children}</blockquote>
         ),
         table: ({ children }) => (
           <div className="overflow-x-auto mb-2 rounded-lg border border-white/10">
@@ -91,7 +91,7 @@ function MarkdownContent({ content }: { content: string }) {
         td: ({ children }) => <td className="px-3 py-2 text-white/60 border-b border-white/5">{children}</td>,
         hr: () => <hr className="border-white/10 my-3" />,
         a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 underline underline-offset-2">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-#FF6B00 hover:text-#FF8A33 underline underline-offset-2">
             {children}
           </a>
         ),
@@ -159,8 +159,8 @@ export default function AIChat() {
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 group"
       >
-        <div className="absolute -inset-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full blur-xl opacity-20 group-hover:opacity-40 animate-pulse" />
-        <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 shadow-lg shadow-pink-500/30 flex items-center justify-center hover:scale-110 transition-transform">
+        <div className="absolute -inset-4 bg-gradient-to-r from-#FF6B00 to-#E05500 rounded-full blur-xl opacity-20 group-hover:opacity-40 animate-pulse" />
+        <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-#FF6B00 to-#E05500 shadow-lg shadow-#FF6B00/30 flex items-center justify-center hover:scale-110 transition-transform">
           <div className="relative">
             <MessageCircle className="w-8 h-8 text-white" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-bounce" />
@@ -185,10 +185,10 @@ export default function AIChat() {
     >
       <div className="w-full h-full rounded-2xl bg-gradient-to-b from-[#1a1a2e] to-[#0f0f1a] border border-white/10 shadow-2xl shadow-black/50 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-pink-500/10 to-purple-500/10">
+        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-#FF6B00/10 to-#E05500/10">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-#FF6B00 to-#E05500 flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1a1a2e]" />
@@ -233,8 +233,8 @@ export default function AIChat() {
                 <div className="flex justify-start">
                   <div className="max-w-[88%] rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-white/90 rounded-bl-md">
                     <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-3 h-3 text-pink-400" />
-                      <span className="text-xs text-pink-400 font-medium">FU AI</span>
+                      <Sparkles className="w-3 h-3 text-#FF6B00" />
+                      <span className="text-xs text-#FF6B00 font-medium">FU AI</span>
                     </div>
                     <div className="text-sm">
                       <MarkdownContent content={"Hey there! I'm **FU AI** \u{1F916}\n\nYour intelligent CRM assistant powered by Groq. I can help you with:\n\n- **Dashboard insights** & analytics\n- **Client management** & health scores\n- **Team performance** & workloads\n- **Task tracking** & priorities\n- **Revenue reports** & trends\n\nWhat can I help you with today?"} />
@@ -257,15 +257,15 @@ export default function AIChat() {
                       className={clsx(
                         "max-w-[88%] rounded-2xl px-4 py-3 group relative",
                         message.role === "user"
-                          ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-br-md"
+                          ? "bg-gradient-to-r from-#FF6B00 to-#E05500 text-white rounded-br-md"
                           : "bg-white/5 border border-white/10 text-white/90 rounded-bl-md"
                       )}
                     >
                       {message.role === "assistant" && (
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <Sparkles className="w-3 h-3 text-pink-400" />
-                            <span className="text-xs text-pink-400 font-medium">FU AI</span>
+                            <Sparkles className="w-3 h-3 text-#FF6B00" />
+                            <span className="text-xs text-#FF6B00 font-medium">FU AI</span>
                           </div>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <CopyButton text={text} />
@@ -292,12 +292,12 @@ export default function AIChat() {
                 <div className="flex justify-start">
                   <div className="bg-white/5 border border-white/10 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-3 h-3 text-pink-400 animate-pulse" />
-                      <span className="text-xs text-pink-400">Thinking...</span>
+                      <Sparkles className="w-3 h-3 text-#FF6B00 animate-pulse" />
+                      <span className="text-xs text-#FF6B00">Thinking...</span>
                       <div className="flex gap-1">
-                        <span className="w-1.5 h-1.5 bg-pink-400/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-1.5 h-1.5 bg-pink-400/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-1.5 h-1.5 bg-pink-400/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ export default function AIChat() {
                         onClick={() => handleQuickAction(action.prompt)}
                         className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 text-xs text-white/70 hover:text-white transition-all group"
                       >
-                        <action.icon className="w-4 h-4 text-pink-400 group-hover:scale-110 transition-transform" />
+                        <action.icon className="w-4 h-4 text-#FF6B00 group-hover:scale-110 transition-transform" />
                         {action.label}
                       </button>
                     ))}
@@ -336,7 +336,7 @@ export default function AIChat() {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isLoading ? "FU AI is thinking..." : "Ask me anything..."}
                   disabled={isLoading}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-pink-500/50 disabled:opacity-50 transition-all"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-#FF6B00/50 disabled:opacity-50 transition-all"
                 />
                 <button
                   type="submit"
@@ -344,7 +344,7 @@ export default function AIChat() {
                   className={clsx(
                     "w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0",
                     inputValue.trim() && !isLoading
-                      ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:opacity-90 hover:scale-105"
+                      ? "bg-gradient-to-r from-#FF6B00 to-#E05500 text-white hover:opacity-90 hover:scale-105"
                       : "bg-white/5 text-white/30 cursor-not-allowed"
                   )}
                 >

@@ -24,7 +24,7 @@ const actionColors: Record<string, { bg: string; color: string; icon: typeof Shi
   CREATE: { bg: "bg-emerald-500/10", color: "text-emerald-400", icon: CheckSquare },
   UPDATE: { bg: "bg-cyan-500/10", color: "text-cyan-400", icon: RefreshCw },
   DELETE: { bg: "bg-red-500/10", color: "text-red-400", icon: AlertTriangle },
-  LOGIN: { bg: "bg-[#D4AF37]/10", color: "text-[#D4AF37]", icon: LogIn },
+  LOGIN: { bg: "bg-[#FF6B00]/10", color: "text-[#FF6B00]", icon: LogIn },
   LOGOUT: { bg: "bg-white/5", color: "text-white/50", icon: LogOut },
   EXPORT: { bg: "bg-purple-500/10", color: "text-purple-400", icon: Download },
 };
@@ -79,7 +79,7 @@ export default function AuditPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-5 h-5 text-[#D4AF37]" />
+            <Shield className="w-5 h-5 text-[#FF6B00]" />
             <h2 className="text-lg font-semibold text-white">Audit Trail</h2>
           </div>
           <p className="text-sm text-white/40">Complete log of every action in the system</p>
@@ -98,7 +98,7 @@ export default function AuditPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
           <input type="text" placeholder="Search by user or entity..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
         </div>
         <select value={filterAction} onChange={(e) => setFilterAction(e.target.value)}
           className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">

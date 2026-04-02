@@ -92,7 +92,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
     { label: "Add Client", icon: Plus, color: "#22C55E" },
     { label: "New Task", icon: CheckSquare, color: "#3B82F6" },
     { label: "Schedule", icon: Calendar, color: "#8B5CF6" },
-    { label: "Report", icon: Target, color: "#D4AF37" },
+    { label: "Report", icon: Target, color: "#FF6B00" },
   ];
 
   return (
@@ -206,8 +206,8 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
               <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="dashVcsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#FF6B00" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#FF6B00" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="dashBslGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -255,7 +255,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
                         </div>
                         <div className="mt-3 pt-3 border-t border-white/10 flex justify-between">
                           <span className="text-white/40 text-xs">Total</span>
-                          <span className="text-[#D4AF37] font-semibold text-sm">${total.toLocaleString()}</span>
+                          <span className="text-[#FF6B00] font-semibold text-sm">${total.toLocaleString()}</span>
                         </div>
                       </div>
                     );
@@ -264,7 +264,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
                 <Area
                   type="monotone"
                   dataKey="vcs"
-                  stroke="#D4AF37"
+                  stroke="#FF6B00"
                   strokeWidth={2}
                   fill="url(#dashVcsGradient)"
                   animationDuration={1500}
@@ -296,7 +296,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
         <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Activity</h3>
-            <button className="text-xs text-[#D4AF37] hover:underline">View All</button>
+            <button className="text-xs text-[#FF6B00] hover:underline">View All</button>
           </div>
           <div className="space-y-4">
             {activities.slice(0, 5).map((activity, i) => (
@@ -323,13 +323,13 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
         <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Top Clients</h3>
-            <button className="text-xs text-[#D4AF37] hover:underline">View All</button>
+            <button className="text-xs text-[#FF6B00] hover:underline">View All</button>
           </div>
           <div className="space-y-3">
             {brandClients.slice(0, 5).map((client, i) => (
               <div key={client.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-[#D4AF37]" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-[#FF6B00]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{client.companyName}</p>
@@ -347,7 +347,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
         <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Task Status</h3>
-            <button className="text-xs text-[#D4AF37] hover:underline">View All</button>
+            <button className="text-xs text-[#FF6B00] hover:underline">View All</button>
           </div>
           {(() => {
             const taskStatuses = [

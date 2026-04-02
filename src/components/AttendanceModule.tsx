@@ -125,7 +125,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
 
   const formatDate = (s: string) => new Date(s + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   const formatMonth = (s: string) => { const [yr, mo] = s.split("-"); return new Date(Number(yr), Number(mo) - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }); };
-  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#D4AF37";
+  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   const statusDot = (status?: AttendanceStatus) => {
     if (!status) return "bg-white/10";
@@ -139,7 +139,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold tracking-wider">{parentCompany.code} CORP</span>
+            <span className="px-2 py-0.5 rounded-md bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] text-[10px] font-bold tracking-wider">{parentCompany.code} CORP</span>
             <span className="text-white/30 text-xs">Centralized Attendance</span>
           </div>
           <p className="text-white/50 text-sm">Track attendance across all subsidiaries</p>
@@ -187,13 +187,13 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
           <div className="flex items-center gap-2">
             <label className="text-xs text-white/40 uppercase tracking-wider">From</label>
             <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
           </div>
           <span className="text-white/30">to</span>
           <div className="flex items-center gap-2">
             <label className="text-xs text-white/40 uppercase tracking-wider">To</label>
             <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
           </div>
         </div>
       )}
@@ -225,7 +225,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
           <input type="text" placeholder="Search employee..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
         </div>
         {viewMode === "daily" && (
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as AttendanceStatus | "ALL")}
@@ -265,7 +265,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                   <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
                           <span className="text-sm font-bold text-white/80">{r.employee?.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                         </div>
                         <div><p className="text-sm font-medium text-white">{r.employee?.name}</p><p className="text-xs text-white/40">{r.employee?.title}</p></div>
@@ -364,7 +364,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                 <tr key={row.employee.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-white/80">{row.employee.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div>

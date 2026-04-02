@@ -25,11 +25,11 @@ const iconMap: Record<string, React.ElementType> = {
 
 const iconColors: Record<string, string> = {
   check: "#22C55E",
-  trophy: "#D4AF37",
+  trophy: "#FF6B00",
   dollar: "#22C55E",
   "user-plus": "#3B82F6",
   message: "#8B5CF6",
-  star: "#D4AF37",
+  star: "#FF6B00",
   alert: "#EF4444",
   clock: "#6B7280",
 };
@@ -112,7 +112,7 @@ export default function RecentActivity() {
           <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
           <p className="text-sm text-white/40 mt-0.5">Latest updates across all modules</p>
         </div>
-        <button className="text-xs text-[#D4AF37] hover:text-[#E5C158] transition-colors font-medium">
+        <button className="text-xs text-[#FF6B00] hover:text-[#E5C158] transition-colors font-medium">
           View All
         </button>
       </div>
@@ -141,7 +141,7 @@ export default function RecentActivity() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-white group-hover:text-[#D4AF37] transition-colors">
+                  <p className="text-sm font-medium text-white group-hover:text-[#FF6B00] transition-colors">
                     {activity.title}
                   </p>
                   <span className="text-xs text-white/30 shrink-0">{activity.time}</span>

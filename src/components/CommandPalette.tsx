@@ -212,9 +212,9 @@ export default function CommandPalette() {
                         >
                           <div className={clsx(
                             "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                            idx === selectedIndex ? "bg-[#D4AF37]/10" : "bg-white/[0.04]"
+                            idx === selectedIndex ? "bg-[#FF6B00]/10" : "bg-white/[0.04]"
                           )}>
-                            <Icon className={clsx("w-4 h-4", idx === selectedIndex ? "text-[#D4AF37]" : "text-white/40")} />
+                            <Icon className={clsx("w-4 h-4", idx === selectedIndex ? "text-[#FF6B00]" : "text-white/40")} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className={clsx("text-sm truncate", idx === selectedIndex ? "text-white" : "text-white/70")}>{item.label}</p>
@@ -223,7 +223,7 @@ export default function CommandPalette() {
                             )}
                           </div>
                           {idx === selectedIndex && (
-                            <ArrowRight className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                            <ArrowRight className="w-4 h-4 text-[#FF6B00] shrink-0" />
                           )}
                         </button>
                       );

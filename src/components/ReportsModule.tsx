@@ -67,7 +67,7 @@ const reportData: ReportData = {
   brands: [
     { name: "Performance Marketing", revenue: 185000, color: "#22C55E" },
     { name: "Web Architecture", revenue: 142000, color: "#3B82F6" },
-    { name: "Remote Workforce", revenue: 98000, color: "#D4AF37" },
+    { name: "Remote Workforce", revenue: 98000, color: "#FF6B00" },
     { name: "AI & Analytics", revenue: 85000, color: "#8B5CF6" },
     { name: "Cloud & Security", revenue: 72000, color: "#F59E0B" },
   ],
@@ -251,7 +251,7 @@ export default function ReportsModule() {
           </button>
           <button
             onClick={generatePDF}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
           >
             <Download className="w-4 h-4" />
             Export PDF
@@ -268,7 +268,7 @@ export default function ReportsModule() {
             className={clsx(
               "px-4 py-2 rounded-lg text-sm transition-all",
               selectedPeriod === period
-                ? "bg-[#D4AF37] text-black font-medium"
+                ? "bg-[#FF6B00] text-black font-medium"
                 : "text-white/60 hover:text-white"
             )}
           >
@@ -281,10 +281,10 @@ export default function ReportsModule() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/20 p-5">
+        <div className="rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 border border-[#FF6B00]/20 p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/20">
-              <DollarSign className="w-5 h-5 text-[#D4AF37]" />
+            <div className="p-2 rounded-lg bg-[#FF6B00]/20">
+              <DollarSign className="w-5 h-5 text-[#FF6B00]" />
             </div>
             <span className="text-xs text-white/50">Total Revenue</span>
           </div>
@@ -344,7 +344,7 @@ export default function ReportsModule() {
             <h3 className="text-lg font-semibold text-white">Revenue Trend</h3>
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#D4AF37]" />
+                <div className="w-3 h-3 rounded-full bg-[#FF6B00]" />
                 <span className="text-white/60">VCS</span>
               </div>
               <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ export default function ReportsModule() {
               return (
                 <div key={month.month} className="flex-1 flex flex-col items-center gap-2">
                   <div className="w-full flex gap-1 items-end" style={{ height: `${totalHeight}%` }}>
-                    <div className="flex-1 rounded-t bg-[#D4AF37]" style={{ height: `${(month.vcs / maxValue) * 100}%` }} />
+                    <div className="flex-1 rounded-t bg-[#FF6B00]" style={{ height: `${(month.vcs / maxValue) * 100}%` }} />
                     <div className="flex-1 rounded-t bg-[#3B82F6]" style={{ height: `${(month.bsl / maxValue) * 100}%` }} />
                     <div className="flex-1 rounded-t bg-[#22C55E]" style={{ height: `${(month.dpl / maxValue) * 100}%` }} />
                   </div>
@@ -421,7 +421,7 @@ export default function ReportsModule() {
                     <p className="text-xs text-white/50">{client.status}</p>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-[#D4AF37]">{formatCurrency(client.mrr)}</span>
+                <span className="text-sm font-semibold text-[#FF6B00]">{formatCurrency(client.mrr)}</span>
               </div>
             ))}
           </div>
@@ -436,7 +436,7 @@ export default function ReportsModule() {
             {reportData.employees.slice(0, 5).map((emp, i) => (
               <div key={emp.name} className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-black text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#E05500] flex items-center justify-center text-black text-xs font-bold">
                     {emp.name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
@@ -461,9 +461,9 @@ export default function ReportsModule() {
         <h3 className="text-lg font-semibold text-white mb-6">Company Portfolio</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* VCS */}
-          <div className="p-5 rounded-xl bg-gradient-to-br from-[#D4AF37]/10 to-transparent border border-[#D4AF37]/20">
+          <div className="p-5 rounded-xl bg-gradient-to-br from-[#FF6B00]/10 to-transparent border border-[#FF6B00]/20">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-[#D4AF37] flex items-center justify-center text-black font-bold">VC</div>
+              <div className="w-12 h-12 rounded-xl bg-[#FF6B00] flex items-center justify-center text-black font-bold">VC</div>
               <div>
                 <h4 className="text-white font-medium">VCS</h4>
                 <p className="text-xs text-white/50">Virtual Customer Solution</p>

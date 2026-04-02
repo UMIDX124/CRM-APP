@@ -6,7 +6,7 @@ export const parentCompany = {
   id: "0",
   name: "FU Corp",
   code: "FU",
-  color: "#D4AF37",
+  color: "#FF6B00",
   website: "fu-corp.com",
   tagline: "Enterprise Command Center",
   founded: "2023",
@@ -14,7 +14,7 @@ export const parentCompany = {
 };
 
 export const brands = [
-  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#D4AF37", website: "virtualcustomersolution.com", parentId: "0" },
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com", parentId: "0" },
   { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", parentId: "0" },
   { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", parentId: "0" },
 ];
@@ -671,7 +671,7 @@ export const revenueData = [
 export const serviceTypes = [
   { name: "Performance Marketing", revenue: 185000, percentage: 32, color: "#22C55E" },
   { name: "Web Architecture", revenue: 142000, percentage: 24, color: "#3B82F6" },
-  { name: "Remote Workforce", revenue: 98000, percentage: 17, color: "#D4AF37" },
+  { name: "Remote Workforce", revenue: 98000, percentage: 17, color: "#FF6B00" },
   { name: "AI & Analytics", revenue: 85000, percentage: 15, color: "#8B5CF6" },
   { name: "Cloud & Security", revenue: 72000, percentage: 12, color: "#F59E0B" },
 ];

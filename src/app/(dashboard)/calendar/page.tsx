@@ -97,7 +97,7 @@ export default function CalendarPage() {
                   <>
                     <div className={clsx(
                       "w-7 h-7 rounded-lg flex items-center justify-center text-sm mb-1",
-                      isToday ? "bg-[#D4AF37] text-black font-bold" : "text-white/60"
+                      isToday ? "bg-[#FF6B00] text-black font-bold" : "text-white/60"
                     )}>
                       {day}
                     </div>

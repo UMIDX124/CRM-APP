@@ -23,7 +23,7 @@ import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = {
-  VCS: "#D4AF37",
+  VCS: "#FF6B00",
   BSL: "#3B82F6",
   DPL: "#22C55E",
 };
@@ -362,7 +362,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
         >
           <Plus className="w-4 h-4" />
           Add Lead
@@ -395,8 +395,8 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
         </div>
         <div className="hover-lift rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/20">
-              <TrendingUp className="w-5 h-5 text-[#D4AF37]" />
+            <div className="p-2 rounded-lg bg-[#FF6B00]/20">
+              <TrendingUp className="w-5 h-5 text-[#FF6B00]" />
             </div>
             <div>
               <p className="text-2xl font-bold text-white">{wonLeads.length}</p>
@@ -459,13 +459,13 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
             placeholder="Search leads..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
           />
         </div>
         <select
           value={selectedStage}
           onChange={(e) => setSelectedStage(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
         >
           <option value="all" className="bg-[#0f0f18]">All Stages</option>
           {stages.map((stage) => (
@@ -477,7 +477,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
         <select
           value={selectedBrand}
           onChange={(e) => setSelectedBrand(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
         >
           <option value="all" className="bg-[#0f0f18]">All Brands</option>
           {brands.map((brand) => (
@@ -552,8 +552,8 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 flex items-center justify-center">
-                          <Briefcase className="w-5 h-5 text-[#D4AF37]" />
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-[#FF6B00]" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-white">{lead.companyName}</p>
@@ -574,7 +574,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                       <span className="text-sm text-white/70">{lead.source}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-semibold text-[#D4AF37]">{formatCurrency(lead.value)}</p>
+                      <p className="text-sm font-semibold text-[#FF6B00]">{formatCurrency(lead.value)}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
@@ -637,7 +637,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   type="text"
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="Enter company name"
                 />
               </div>
@@ -648,7 +648,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                     type="text"
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="Contact person"
                   />
                 </div>
@@ -658,7 +658,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="email@company.com"
                   />
                 </div>
@@ -669,7 +669,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   type="text"
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="SEO, PPC, Web Development"
                 />
               </div>
@@ -680,7 +680,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                     type="text"
                     value={formData.source}
                     onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="Website, LinkedIn, Referral"
                   />
                 </div>
@@ -689,7 +689,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value as Lead["brand"] })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="VCS" className="bg-[#0f0f18]">VCS</option>
                     <option value="BSL" className="bg-[#0f0f18]">BSL</option>
@@ -703,7 +703,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as Lead["status"] })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     {stages.map((stage) => (
                       <option key={stage.id} value={stage.id} className="bg-[#0f0f18]">
@@ -718,7 +718,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                     type="number"
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="5000"
                   />
                 </div>
@@ -729,7 +729,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
                   type="text"
                   value={formData.salesRep}
                   onChange={(e) => setFormData({ ...formData, salesRep: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="Sales rep name"
                 />
               </div>
@@ -744,7 +744,7 @@ export default function PipelineModule({ brandId = "1" }: { brandId?: string }) 
               <button
                 onClick={handleSaveLead}
                 disabled={!formData.companyName}
-                className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
               >
                 {editingLead ? "Update" : "Add"} Lead
               </button>

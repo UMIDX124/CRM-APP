@@ -69,7 +69,7 @@ export default function InvoiceModule() {
     count: invoices.length,
   }), [invoices]);
 
-  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#D4AF37";
+  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   return (
     <div className="space-y-6">
@@ -96,14 +96,14 @@ export default function InvoiceModule() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
           <input type="text" placeholder="Search invoices..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
         </div>
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as InvoiceStatus | "ALL")}
           className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
           <option value="ALL" className="bg-[#0f0f1e]">All Status</option>
           {Object.entries(statusConfig).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v.label}</option>)}
         </select>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all">
+        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#FF6B00]/20 transition-all">
           <Plus className="w-4 h-4" /> New Invoice
         </button>
       </div>
@@ -211,7 +211,7 @@ export default function InvoiceModule() {
             </div>
             <div className="p-4 border-t border-white/[0.06] flex justify-end gap-3">
               <button onClick={() => setSelectedInvoice(null)} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Close</button>
-              <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm flex items-center gap-2"><Download className="w-4 h-4" /> Download PDF</button>
+              <button className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm flex items-center gap-2"><Download className="w-4 h-4" /> Download PDF</button>
             </div>
           </div>
         </div>

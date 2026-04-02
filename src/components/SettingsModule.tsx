@@ -52,7 +52,7 @@ export default function SettingsModule() {
                     : "text-white/50 hover:text-white/70 hover:bg-white/[0.03]"
                 )}
               >
-                <tab.icon className={clsx("w-4 h-4", activeTab === tab.id ? "text-[#D4AF37]" : "")} />
+                <tab.icon className={clsx("w-4 h-4", activeTab === tab.id ? "text-[#FF6B00]" : "")} />
                 {tab.label}
               </button>
             ))}
@@ -70,7 +70,7 @@ export default function SettingsModule() {
 
               {/* Avatar */}
               <div className="flex items-center gap-5 p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center relative group cursor-pointer">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center relative group cursor-pointer">
                   <span className="text-2xl font-bold text-white">{profile.name.split(" ").map(n => n[0]).join("")}</span>
                   <div className="absolute inset-0 rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Camera className="w-5 h-5 text-white" />
@@ -79,7 +79,7 @@ export default function SettingsModule() {
                 <div>
                   <p className="text-white font-medium">{profile.name}</p>
                   <p className="text-sm text-white/40">{profile.title}</p>
-                  <p className="text-xs text-[#D4AF37] mt-1">FU Corp — Super Admin</p>
+                  <p className="text-xs text-[#FF6B00] mt-1">FU Corp — Super Admin</p>
                 </div>
               </div>
 
@@ -88,27 +88,27 @@ export default function SettingsModule() {
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Full Name</label>
                   <input type="text" value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Email</label>
                   <input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Phone</label>
                   <input type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Job Title</label>
                   <input type="text" value={profile.title} onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Bio</label>
                   <textarea rows={3} value={profile.bio} onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30 resize-none" />
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 resize-none" />
                 </div>
                 <div>
                   <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Timezone</label>
@@ -140,16 +140,16 @@ export default function SettingsModule() {
               </div>
 
               {/* Parent Company */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#D4AF37]/5 to-transparent border border-[#D4AF37]/10">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#FF6B00]/5 to-transparent border border-[#FF6B00]/10">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center">
-                    <span className="text-lg font-black text-[#D4AF37]">FU</span>
+                  <div className="w-12 h-12 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
+                    <span className="text-lg font-black text-[#FF6B00]">FU</span>
                   </div>
                   <div>
                     <h3 className="text-white font-semibold">{parentCompany.name}</h3>
                     <p className="text-xs text-white/40">Mother Company &bull; Founded {parentCompany.founded}</p>
                   </div>
-                  <span className="ml-auto px-3 py-1 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-bold">PARENT</span>
+                  <span className="ml-auto px-3 py-1 rounded-lg bg-[#FF6B00]/10 text-[#FF6B00] text-xs font-bold">PARENT</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="p-3 rounded-xl bg-white/[0.03]">
@@ -211,7 +211,7 @@ export default function SettingsModule() {
                       onClick={() => setNotifSettings({ ...notifSettings, [item.key]: !notifSettings[item.key] })}
                       className={clsx(
                         "w-11 h-6 rounded-full transition-all relative",
-                        notifSettings[item.key] ? "bg-[#D4AF37]" : "bg-white/10"
+                        notifSettings[item.key] ? "bg-[#FF6B00]" : "bg-white/10"
                       )}
                     >
                       <div className={clsx(
@@ -275,10 +275,10 @@ export default function SettingsModule() {
                 <p className="text-sm text-white/40">Customize the look and feel</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <button className="p-5 rounded-2xl bg-[#060610] border-2 border-[#D4AF37]/30 text-center">
+                <button className="p-5 rounded-2xl bg-[#060610] border-2 border-[#FF6B00]/30 text-center">
                   <div className="w-full h-20 rounded-xl bg-[#0a0a14] border border-white/10 mb-3" />
                   <p className="text-sm text-white font-medium">Dark Mode</p>
-                  <p className="text-xs text-[#D4AF37] mt-0.5">Active</p>
+                  <p className="text-xs text-[#FF6B00] mt-0.5">Active</p>
                 </button>
                 <button className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-center hover:border-white/[0.12] transition-all">
                   <div className="w-full h-20 rounded-xl bg-gray-100 border border-gray-200 mb-3" />
@@ -289,14 +289,14 @@ export default function SettingsModule() {
                 <h4 className="text-sm font-medium text-white mb-3">Accent Color</h4>
                 <div className="flex gap-3">
                   {[
-                    { color: "#D4AF37", label: "Gold" },
+                    { color: "#FF6B00", label: "Gold" },
                     { color: "#0EA5E9", label: "Cyan" },
                     { color: "#8B5CF6", label: "Purple" },
                     { color: "#10B981", label: "Emerald" },
                     { color: "#EF4444", label: "Red" },
                   ].map((c) => (
                     <button key={c.color} className="flex flex-col items-center gap-1.5 group">
-                      <div className={clsx("w-10 h-10 rounded-xl border-2 transition-all", c.color === "#D4AF37" ? "border-white scale-110" : "border-transparent hover:scale-105")} style={{ backgroundColor: c.color }} />
+                      <div className={clsx("w-10 h-10 rounded-xl border-2 transition-all", c.color === "#FF6B00" ? "border-white scale-110" : "border-transparent hover:scale-105")} style={{ backgroundColor: c.color }} />
                       <span className="text-[10px] text-white/40">{c.label}</span>
                     </button>
                   ))}
@@ -313,7 +313,7 @@ export default function SettingsModule() {
                 "flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all",
                 saved
                   ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                  : "bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black hover:shadow-lg hover:shadow-[#D4AF37]/20"
+                  : "bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black hover:shadow-lg hover:shadow-[#FF6B00]/20"
               )}
             >
               {saved ? <><Check className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save Changes</>}

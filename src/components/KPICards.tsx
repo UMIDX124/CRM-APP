@@ -78,7 +78,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
         change={12}
         changeLabel="vs last month"
         icon={Users}
-        iconColor="#D4AF37"
+        iconColor="#FF6B00"
         trend="up"
       />
       <KPICard

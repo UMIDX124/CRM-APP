@@ -20,7 +20,7 @@ const iconMap = {
   success: { icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/10" },
   warning: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/10" },
   info: { icon: Zap, color: "text-cyan-400", bg: "bg-cyan-500/10" },
-  revenue: { icon: DollarSign, color: "text-[#D4AF37]", bg: "bg-[#D4AF37]/10" },
+  revenue: { icon: DollarSign, color: "text-[#FF6B00]", bg: "bg-[#FF6B00]/10" },
   task: { icon: Check, color: "text-blue-400", bg: "bg-blue-500/10" },
   hire: { icon: UserPlus, color: "text-purple-400", bg: "bg-purple-500/10" },
 };
@@ -62,7 +62,7 @@ export default function NotificationCenter() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#D4AF37] text-black text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B00] text-black text-[10px] font-bold flex items-center justify-center">
             {unreadCount}
           </span>
         )}
@@ -77,7 +77,7 @@ export default function NotificationCenter() {
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-semibold text-white">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-bold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#FF6B00]/10 text-[#FF6B00] text-[10px] font-bold">
                     {unreadCount} new
                   </span>
                 )}
@@ -129,7 +129,7 @@ export default function NotificationCenter() {
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <Clock className="w-3 h-3 text-white/20" />
                           <span className="text-[10px] text-white/20">{notif.time}</span>
-                          {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] ml-1" />}
+                          {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] ml-1" />}
                         </div>
                       </div>
                     </div>

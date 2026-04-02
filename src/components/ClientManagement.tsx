@@ -193,7 +193,7 @@ const initialClients: Client[] = [
 ];
 
 const brandColors: Record<string, string> = {
-  VCS: "#D4AF37",
+  VCS: "#FF6B00",
   BSL: "#3B82F6",
   DPL: "#22C55E",
 };
@@ -424,7 +424,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
           </button>
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
           >
             <Plus className="w-4 h-4" />
             Add Client
@@ -436,8 +436,8 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/20">
-              <Building2 className="w-5 h-5 text-[#D4AF37]" />
+            <div className="p-2 rounded-lg bg-[#FF6B00]/20">
+              <Building2 className="w-5 h-5 text-[#FF6B00]" />
             </div>
             <div>
               <p className="text-2xl font-bold text-white">{clients.length}</p>
@@ -495,13 +495,13 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
             placeholder="Search clients..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
           />
         </div>
         <select
           value={filterBrand}
           onChange={(e) => setFilterBrand(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
         >
           <option value="all" className="bg-[#0f0f18]">All Brands</option>
           <option value="VCS" className="bg-[#0f0f18]">VCS</option>
@@ -511,7 +511,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
         >
           <option value="all" className="bg-[#0f0f18]">All Status</option>
           <option value="HEALTHY" className="bg-[#0f0f18]">Healthy</option>
@@ -539,7 +539,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
               {filteredClients.map((client) => {
                 const HealthIcon = healthConfig[client.healthStatus].icon;
                 const healthColor = healthConfig[client.healthStatus].color;
-                const brandColor = brandColors[client.brand] || "#D4AF37";
+                const brandColor = brandColors[client.brand] || "#FF6B00";
 
                 return (
                   <tr
@@ -548,8 +548,8 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                   >
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 flex items-center justify-center shrink-0">
-                          <Building2 className="w-5 h-5 text-[#D4AF37]" />
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 flex items-center justify-center shrink-0">
+                          <Building2 className="w-5 h-5 text-[#FF6B00]" />
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-white truncate">{client.companyName}</p>
@@ -639,7 +639,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                   type="text"
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="Enter company name"
                 />
               </div>
@@ -650,7 +650,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                     type="text"
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="Contact person"
                   />
                 </div>
@@ -660,7 +660,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="+1-555-0123"
                   />
                 </div>
@@ -671,7 +671,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="email@company.com"
                 />
               </div>
@@ -682,7 +682,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                     type="text"
                     value={formData.country}
                     onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="United States"
                   />
                 </div>
@@ -691,7 +691,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                   <select
                     value={formData.brand}
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
                   >
                     <option value="VCS" className="bg-[#0f0f18]">VCS</option>
                     <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
@@ -706,7 +706,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                     type="text"
                     value={formData.accountManager}
                     onChange={(e) => setFormData({ ...formData, accountManager: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="Manager name"
                   />
                 </div>
@@ -716,7 +716,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                     type="number"
                     value={formData.mrr}
                     onChange={(e) => setFormData({ ...formData, mrr: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                     placeholder="5000"
                   />
                 </div>
@@ -727,7 +727,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
                   type="text"
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
                   placeholder="SEO, PPC, Web Development"
                 />
               </div>
@@ -742,7 +742,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
               <button
                 onClick={handleSaveClient}
                 disabled={!formData.companyName}
-                className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
               >
                 {editingClient ? "Update" : "Add"} Client
               </button>
@@ -794,7 +794,7 @@ export default function ClientManagement({ brandId = "1" }: { brandId?: string }
             </div>
             <div className="p-6">
               <div
-                className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[#D4AF37]/50 transition-colors cursor-pointer"
+                className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[#FF6B00]/50 transition-colors cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
