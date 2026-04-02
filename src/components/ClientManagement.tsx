@@ -1,30 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useMemo } from "react";
 import {
-  Search,
-  Plus,
-  Filter,
-  ChevronDown,
-  Building2,
-  Phone,
-  Mail,
-  Globe,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Upload,
-  Download,
-  X,
-  Save,
-  FileSpreadsheet,
+  Search, Plus, Building2, Phone, Mail, Globe, Edit, Trash2, Eye, X, Save,
+  Download, AlertTriangle, Loader2, TrendingUp, Heart,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { clients as mockClients, brands } from "@/data/mock-data";
+import { useData, apiMutate } from "@/lib/use-data";
+import { useToast } from "@/components/ui/toast";
 
 interface Client {
   id: string;
@@ -38,789 +22,377 @@ interface Client {
   accountManager: string;
   mrr: number;
   healthScore: number;
-  healthStatus: "HEALTHY" | "AT_RISK" | "CHURNING";
+  healthStatus: string;
   services: string[];
   activeTasks: number;
   lastActivity: string;
   result?: string;
 }
 
-const initialClients: Client[] = [
-  {
-    id: "1",
-    companyName: "Sarah Mitchell E-Commerce",
-    contactName: "Sarah Mitchell",
-    email: "sarah@ecommerce-brand.com",
-    phone: "+1 415-555-0123",
-    country: "United States",
-    countryFlag: "US",
-    brand: "VCS",
-    accountManager: "Ahmed Khan",
-    mrr: 8500,
-    healthScore: 92,
-    healthStatus: "HEALTHY",
-    services: ["AI CX", "Digital Marketing", "Remote Workforce"],
-    activeTasks: 8,
-    lastActivity: "2 hours ago",
-    result: "340% ROI reported",
-  },
-  {
-    id: "2",
-    companyName: "SaaS Startup Client",
-    contactName: "Tech Founder",
-    email: "founder@saas-startup.io",
-    phone: "+1 650-555-0124",
-    country: "United States",
-    countryFlag: "US",
-    brand: "VCS",
-    accountManager: "Ali Raza",
-    mrr: 12000,
-    healthScore: 88,
-    healthStatus: "HEALTHY",
-    services: ["Web Development", "Cloud Infrastructure", "Remote Staff"],
-    activeTasks: 12,
-    lastActivity: "1 day ago",
-    result: "12 hires, 8 days ramp time, $18K saved/month",
-  },
-  {
-    id: "3",
-    companyName: "Marketing Agency Partner",
-    contactName: "Agency Owner",
-    email: "owner@marketing-agency.co",
-    phone: "+44 20-555-0125",
-    country: "United Kingdom",
-    countryFlag: "UK",
-    brand: "VCS",
-    accountManager: "Fatima Hassan",
-    mrr: 5800,
-    healthScore: 95,
-    healthStatus: "HEALTHY",
-    services: ["SEO", "PPC", "Content Strategy"],
-    activeTasks: 5,
-    lastActivity: "30 minutes ago",
-    result: "5 to 16 clients, +28% profit margin",
-  },
-  {
-    id: "4",
-    companyName: "TechMart",
-    contactName: "Sarah Chen",
-    email: "sarah.chen@techmart.com",
-    phone: "+1 555-0126",
-    country: "United States",
-    countryFlag: "US",
-    brand: "BSL",
-    accountManager: "Hamza Ali",
-    mrr: 15000,
-    healthScore: 94,
-    healthStatus: "HEALTHY",
-    services: ["Web Architecture", "E-Commerce Platform"],
-    activeTasks: 6,
-    lastActivity: "2 hours ago",
-    result: "340% revenue growth, 99.99% uptime",
-  },
-  {
-    id: "5",
-    companyName: "SecureBank",
-    contactName: "CISO",
-    email: "security@securebank.com",
-    phone: "+1 212-555-0127",
-    country: "United States",
-    countryFlag: "US",
-    brand: "BSL",
-    accountManager: "Hamza Ali",
-    mrr: 25000,
-    healthScore: 98,
-    healthStatus: "HEALTHY",
-    services: ["Cybersecurity", "Banking Security Infrastructure"],
-    activeTasks: 4,
-    lastActivity: "4 hours ago",
-    result: "Zero breaches, $2.3M saved",
-  },
-  {
-    id: "6",
-    companyName: "DataFlow Analytics",
-    contactName: "CEO",
-    email: "ceo@dataflow.ai",
-    phone: "+1 408-555-0128",
-    country: "United States",
-    countryFlag: "US",
-    brand: "BSL",
-    accountManager: "Sarah Williams",
-    mrr: 18000,
-    healthScore: 91,
-    healthStatus: "HEALTHY",
-    services: ["AI Modeling", "Analytics Dashboard"],
-    activeTasks: 5,
-    lastActivity: "1 day ago",
-    result: "10x faster insights, 98% accuracy",
-  },
-  {
-    id: "7",
-    companyName: "DTC E-Commerce Brand",
-    contactName: "Marcus Thompson",
-    email: "marcus@ecommerce-dtc.com",
-    phone: "+1 310-555-0129",
-    country: "United States",
-    countryFlag: "US",
-    brand: "DPL",
-    accountManager: "Faizan",
-    mrr: 22000,
-    healthScore: 96,
-    healthStatus: "HEALTHY",
-    services: ["Performance Marketing", "Meta Ads", "Google Ads"],
-    activeTasks: 7,
-    lastActivity: "1 hour ago",
-    result: "ROAS 4.2x to 6.8x, CAC -34%, +127% revenue",
-  },
-  {
-    id: "8",
-    companyName: "B2B SaaS Company",
-    contactName: "Sarah Chen",
-    email: "sarah.chen@b2b-saas.io",
-    phone: "+1 415-555-0130",
-    country: "United States",
-    countryFlag: "US",
-    brand: "DPL",
-    accountManager: "Anwaar",
-    mrr: 28000,
-    healthScore: 93,
-    healthStatus: "HEALTHY",
-    services: ["Attribution Setup", "CRM Integration", "Media Buying"],
-    activeTasks: 8,
-    lastActivity: "3 hours ago",
-    result: "+89% pipeline, CAC -41%",
-  },
-];
-
-const brandColors: Record<string, string> = {
-  VCS: "#FF6B00",
-  BSL: "#3B82F6",
-  DPL: "#22C55E",
+const defaultForm = {
+  companyName: "", contactName: "", email: "", phone: "",
+  country: "United States", brand: "VCS", mrr: 0, healthScore: 80,
+  services: [] as string[], source: "Website",
 };
 
-const brandNames: Record<string, string> = {
-  VCS: "Virtual Customer Solution",
-  BSL: "Backup Solutions LLC",
-  DPL: "Digital Point LLC",
-};
+const countries = ["United States", "United Kingdom", "Canada", "Australia", "Germany", "UAE", "Pakistan", "India", "Singapore"];
 
-const healthConfig = {
-  HEALTHY: { color: "#22C55E", icon: CheckCircle, label: "Healthy" },
-  AT_RISK: { color: "#F59E0B", icon: AlertCircle, label: "At Risk" },
-  CHURNING: { color: "#EF4444", icon: XCircle, label: "Churning" },
-};
-
-interface ClientFormData {
-  companyName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  country: string;
-  brand: string;
-  accountManager: string;
-  mrr: string;
-  services: string;
-}
-
-const emptyFormData: ClientFormData = {
-  companyName: "",
-  contactName: "",
-  email: "",
-  phone: "",
-  country: "",
-  brand: "VCS",
-  accountManager: "",
-  mrr: "",
-  services: "",
-};
-
-export default function ClientManagement({ brandId = "1" }: { brandId?: string }) {
-  const [clients, setClients] = useState<Client[]>(initialClients);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterBrand, setFilterBrand] = useState<string>("all");
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [formData, setFormData] = useState<ClientFormData>(emptyFormData);
-  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const filteredClients = clients.filter((client) => {
-    const matchesSearch =
-      client.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === "all" || client.healthStatus === filterStatus;
-    const matchesBrand = filterBrand === "all" || client.brand === filterBrand;
-    return matchesSearch && matchesStatus && matchesBrand;
+export default function ClientManagement({ brandId }: { brandId: string }) {
+  const { success, error: showError } = useToast();
+  const { data: clientList, setData: setClientList, loading } = useData<Client[]>({
+    apiUrl: "/api/clients", mockData: mockClients,
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(value);
+  const [search, setSearch] = useState("");
+  const [filterBrand, setFilterBrand] = useState("ALL");
+  const [filterStatus, setFilterStatus] = useState("ALL");
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(defaultForm);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [viewClient, setViewClient] = useState<Client | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [newService, setNewService] = useState("");
+
+  const filtered = useMemo(() => {
+    return clientList.filter((c) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!c.companyName.toLowerCase().includes(q) && !c.contactName.toLowerCase().includes(q) && !c.email.toLowerCase().includes(q)) return false;
+      }
+      if (filterBrand !== "ALL" && c.brand !== filterBrand) return false;
+      return true;
+    });
+  }, [clientList, search, filterBrand, filterStatus]);
+
+  const stats = useMemo(() => ({
+    total: clientList.length,
+    totalMRR: clientList.reduce((a, c) => a + (c.mrr || 0), 0),
+    avgHealth: clientList.length > 0 ? Math.round(clientList.reduce((a, c) => a + (c.healthScore || 80), 0) / clientList.length) : 0,
+  }), [clientList]);
+
+  const openAdd = () => { setEditingId(null); setForm(defaultForm); setShowModal(true); };
+
+  const openEdit = (client: Client) => {
+    setEditingId(client.id);
+    setForm({
+      companyName: client.companyName, contactName: client.contactName,
+      email: client.email, phone: client.phone || "", country: client.country || "",
+      brand: client.brand, mrr: client.mrr || 0, healthScore: client.healthScore || 80,
+      services: client.services || [], source: "Website",
+    });
+    setShowModal(true);
   };
 
-  const handleOpenModal = (client?: Client) => {
-    if (client) {
-      setEditingClient(client);
-      setFormData({
-        companyName: client.companyName,
-        contactName: client.contactName,
-        email: client.email,
-        phone: client.phone,
-        country: client.country,
-        brand: client.brand,
-        accountManager: client.accountManager,
-        mrr: client.mrr.toString(),
-        services: client.services.join(", "),
+  const handleSave = async () => {
+    if (!form.companyName.trim()) { showError("Company name required"); return; }
+    if (!form.contactName.trim()) { showError("Contact name required"); return; }
+    if (!form.email.trim()) { showError("Email required"); return; }
+
+    setSaving(true);
+
+    if (editingId) {
+      await apiMutate(`/api/clients/${editingId}`, "PATCH", form);
+      setClientList((prev) => prev.map((c) => c.id === editingId ? {
+        ...c, companyName: form.companyName, contactName: form.contactName,
+        email: form.email, phone: form.phone, country: form.country,
+        brand: form.brand, mrr: form.mrr, healthScore: form.healthScore,
+        services: form.services,
+      } : c));
+      success("Client updated");
+    } else {
+      await apiMutate("/api/clients", "POST", {
+        companyName: form.companyName, contactName: form.contactName,
+        email: form.email, phone: form.phone, country: form.country,
+        brandId: brands.find(b => b.code === form.brand)?.id, mrr: form.mrr,
+        healthScore: form.healthScore, source: form.source,
       });
-    } else {
-      setEditingClient(null);
-      setFormData(emptyFormData);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingClient(null);
-    setFormData(emptyFormData);
-  };
-
-  const handleSaveClient = () => {
-    const servicesArray = formData.services.split(",").map((s) => s.trim()).filter(Boolean);
-    
-    if (editingClient) {
-      setClients(
-        clients.map((c) =>
-          c.id === editingClient.id
-            ? {
-                ...c,
-                companyName: formData.companyName,
-                contactName: formData.contactName,
-                email: formData.email,
-                phone: formData.phone,
-                country: formData.country,
-                brand: formData.brand,
-                accountManager: formData.accountManager,
-                mrr: parseFloat(formData.mrr) || 0,
-                services: servicesArray,
-              }
-            : c
-        )
-      );
-    } else {
       const newClient: Client = {
-        id: Date.now().toString(),
-        companyName: formData.companyName,
-        contactName: formData.contactName,
-        email: formData.email,
-        phone: formData.phone,
-        country: formData.country,
-        countryFlag: "US",
-        brand: formData.brand,
-        accountManager: formData.accountManager,
-        mrr: parseFloat(formData.mrr) || 0,
-        healthScore: 75,
-        healthStatus: "HEALTHY",
-        services: servicesArray,
-        activeTasks: 0,
-        lastActivity: "Just added",
+        id: String(Date.now()), ...form, countryFlag: "", accountManager: "",
+        healthStatus: form.healthScore >= 80 ? "HEALTHY" : "AT_RISK",
+        activeTasks: 0, lastActivity: "Just now",
       };
-      setClients([...clients, newClient]);
+      setClientList((prev) => [...prev, newClient]);
+      success(`${form.companyName} added!`);
     }
-    handleCloseModal();
+
+    setSaving(false);
+    setShowModal(false);
   };
 
-  const handleDeleteClient = () => {
-    if (deleteClientId) {
-      setClients(clients.filter((c) => c.id !== deleteClientId));
-      setIsDeleteModalOpen(false);
-      setDeleteClientId(null);
-    }
+  const handleDelete = async (id: string) => {
+    await apiMutate(`/api/clients/${id}`, "DELETE");
+    setClientList((prev) => prev.filter((c) => c.id !== id));
+    setShowDeleteConfirm(null);
+    success("Client removed");
   };
 
-  const handleCSVUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const text = e.target?.result as string;
-      const lines = text.split("\n").filter((line) => line.trim());
-      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
-
-      const newClients: Client[] = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map((v) => v.trim());
-        const clientData: any = {};
-        
-        headers.forEach((header, index) => {
-          clientData[header] = values[index] || "";
-        });
-
-        if (clientData.companyname || clientData.company || clientData.name) {
-          newClients.push({
-            id: Date.now().toString() + i,
-            companyName: clientData.companyname || clientData.company || clientData.name || "",
-            contactName: clientData.contactname || clientData.contact || "",
-            email: clientData.email || "",
-            phone: clientData.phone || "",
-            country: clientData.country || "United States",
-            countryFlag: "US",
-            brand: clientData.brand || "VCS",
-            accountManager: clientData.accountmanager || clientData.manager || "",
-            mrr: parseFloat(clientData.mrr || clientData.revenue || "0") || 0,
-            healthScore: 75,
-            healthStatus: "HEALTHY",
-            services: (clientData.services || "").split("|").filter(Boolean),
-            activeTasks: 0,
-            lastActivity: "Just imported",
-          });
-        }
-      }
-
-      if (newClients.length > 0) {
-        setClients([...clients, ...newClients]);
-      }
-      setIsUploadModalOpen(false);
-    };
-    reader.readAsText(file);
-  };
-
-  const downloadSampleCSV = () => {
-    const sample = "companyName,contactName,email,phone,country,brand,accountManager,mrr,services\nSarah Mitchell E-Commerce,Sarah Mitchell,sarah@example.com,+1-555-0123,United States,VCS,Ahmed Khan,8500,AI CX|Digital Marketing|Remote Workforce";
-    const blob = new Blob([sample], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "sample_clients.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const healthColor = (score: number) => score >= 80 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
+  const healthBg = (score: number) => score >= 80 ? "bg-emerald-400" : score >= 50 ? "bg-amber-400" : "bg-red-400";
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-display font-bold text-white">Client Management</h2>
-          <p className="text-white/50 mt-1">Manage and monitor your client relationships</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-all"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            Import CSV
-          </button>
-          <button
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Add Client
-          </button>
-        </div>
-      </div>
-
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#FF6B00]/20">
-              <Building2 className="w-5 h-5 text-[#FF6B00]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{clients.length}</p>
-              <p className="text-xs text-white/50">Total Clients</p>
-            </div>
-          </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2 mb-2"><Building2 className="w-4 h-4 text-[#FF6B00]" /><span className="text-xs text-white/50">Total Clients</span></div>
+          <p className="text-2xl font-bold text-white">{stats.total}</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#22C55E]/20">
-              <CheckCircle className="w-5 h-5 text-[#22C55E]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                {clients.filter((c) => c.healthStatus === "HEALTHY").length}
-              </p>
-              <p className="text-xs text-white/50">Healthy</p>
-            </div>
-          </div>
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-emerald-400" /><span className="text-xs text-white/50">Total MRR</span></div>
+          <p className="text-2xl font-bold text-white">${(stats.totalMRR / 1000).toFixed(1)}K</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#F59E0B]/20">
-              <AlertCircle className="w-5 h-5 text-[#F59E0B]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                {clients.filter((c) => c.healthStatus === "AT_RISK").length}
-              </p>
-              <p className="text-xs text-white/50">At Risk</p>
-            </div>
-          </div>
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2 mb-2"><Heart className="w-4 h-4 text-emerald-400" /><span className="text-xs text-white/50">Avg Health</span></div>
+          <p className="text-2xl font-bold text-white">{stats.avgHealth}%</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#EF4444]/20">
-              <TrendingUp className="w-5 h-5 text-[#EF4444]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                ${clients.reduce((sum, c) => sum + c.mrr, 0).toLocaleString()}
-              </p>
-              <p className="text-xs text-white/50">Total MRR</p>
-            </div>
+        {brands.map((b) => (
+          <div key={b.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] lg:hidden first:block">
+            <div className="flex items-center gap-2 mb-2"><div className="w-3 h-3 rounded-full" style={{ backgroundColor: b.color }} /><span className="text-xs text-white/50">{b.code}</span></div>
+            <p className="text-2xl font-bold text-white">{clientList.filter(c => c.brand === b.code).length}</p>
           </div>
-        </div>
+        )).slice(0, 1)}
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search clients..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-          />
+      {/* Filters + Add */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <input type="text" placeholder="Search company, contact, or email..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
         </div>
-        <select
-          value={filterBrand}
-          onChange={(e) => setFilterBrand(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-        >
-          <option value="all" className="bg-[#0f0f18]">All Brands</option>
-          <option value="VCS" className="bg-[#0f0f18]">VCS</option>
-          <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
-          <option value="DPL" className="bg-[#0f0f18]">Digital Point</option>
+        <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          <option value="ALL" className="bg-[#111114]">All Companies</option>
+          {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#111114]">{b.code}</option>)}
         </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-        >
-          <option value="all" className="bg-[#0f0f18]">All Status</option>
-          <option value="HEALTHY" className="bg-[#0f0f18]">Healthy</option>
-          <option value="AT_RISK" className="bg-[#0f0f18]">At Risk</option>
-          <option value="CHURNING" className="bg-[#0f0f18]">Churning</option>
-        </select>
+        <button onClick={openAdd}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-bold text-sm">
+          <Plus className="w-4 h-4" /> Add Client
+        </button>
       </div>
 
-      {/* Client Table */}
-      <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+      {/* Client List */}
+      {loading ? (
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <div key={i} className="h-20 skeleton rounded-xl" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <Building2 className="w-12 h-12 text-white/10 mx-auto mb-3" />
+          <p className="text-white/30 text-sm mb-4">{search ? "No clients match" : "No clients yet"}</p>
+          <button onClick={openAdd} className="px-4 py-2 rounded-xl bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] text-sm font-medium">
+            <Plus className="w-4 h-4 inline mr-2" />Add first client
+          </button>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">Client</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">Brand</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">Health</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">MRR</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">Services</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/50 uppercase tracking-wider">Result</th>
-                <th className="px-4 py-3"></th>
+              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Client</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hidden sm:table-cell">Company</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">MRR</th>
+                <th className="text-center px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hidden md:table-cell">Health</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClients.map((client) => {
-                const HealthIcon = healthConfig[client.healthStatus].icon;
-                const healthColor = healthConfig[client.healthStatus].color;
-                const brandColor = brandColors[client.brand] || "#FF6B00";
-
-                return (
-                  <tr
-                    key={client.id}
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                  >
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 flex items-center justify-center shrink-0">
-                          <Building2 className="w-5 h-5 text-[#FF6B00]" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{client.companyName}</p>
-                          <p className="text-xs text-white/50 truncate">{client.contactName}</p>
-                        </div>
+              {filtered.map((client) => (
+                <tr key={client.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+                        <span className="text-sm font-bold text-white/80">{client.companyName.charAt(0)}</span>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                        style={{ backgroundColor: `${brandColor}20`, color: brandColor }}
-                      >
-                        {client.brand}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <HealthIcon className="w-4 h-4" style={{ color: healthColor }} />
-                        <span className="text-sm font-medium text-white">{client.healthScore}%</span>
+                      <div>
+                        <p className="text-sm font-medium text-white">{client.companyName}</p>
+                        <p className="text-xs text-white/40">{client.contactName} &bull; {client.email}</p>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <p className="text-sm font-semibold text-white">{formatCurrency(client.mrr)}</p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-1 max-w-[200px]">
-                        {client.services.slice(0, 2).map((service) => (
-                          <span key={service} className="px-2 py-0.5 rounded bg-white/5 text-xs text-white/60 whitespace-nowrap">
-                            {service}
-                          </span>
-                        ))}
-                        {client.services.length > 2 && (
-                          <span className="px-2 py-0.5 rounded bg-white/5 text-xs text-white/40">
-                            +{client.services.length - 2}
-                          </span>
-                        )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ color: brandColor(client.brand), backgroundColor: brandColor(client.brand) + "10" }}>{client.brand}</span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="text-sm font-semibold text-white">${(client.mrr || 0).toLocaleString()}</span>
+                    <span className="text-xs text-white/30">/mo</span>
+                  </td>
+                  <td className="px-4 py-3 text-center hidden md:table-cell">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-16 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className={clsx("h-full rounded-full", healthBg(client.healthScore))} style={{ width: `${client.healthScore}%` }} />
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <p className="text-xs text-white/60 max-w-[150px] truncate">{client.result || "-"}</p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleOpenModal(client)}
-                          className="p-2 rounded-lg hover:bg-white/10 transition-colors text-white/60 hover:text-white"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setDeleteClientId(client.id);
-                            setIsDeleteModalOpen(true);
-                          }}
-                          className="p-2 rounded-lg hover:bg-red-500/20 transition-colors text-white/60 hover:text-red-400"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-</tr>
-                );
-              })}
+                      <span className={clsx("text-xs font-medium", healthColor(client.healthScore))}>{client.healthScore}%</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => setViewClient(client)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><Eye className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(client)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => setShowDeleteConfirm(client.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
 
-      {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold text-white">
-                {editingClient ? "Edit Client" : "Add New Client"}
-              </h3>
-              <button onClick={handleCloseModal} className="p-2 rounded-lg hover:bg-white/10">
-                <X className="w-5 h-5 text-white/60" />
-              </button>
+      {/* View Client Detail */}
+      {viewClient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setViewClient(null)} />
+          <div className="relative w-full max-w-lg bg-[#111114] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-white/[0.06]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center">
+                    <span className="text-xl font-bold text-white">{viewClient.companyName.charAt(0)}</span>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">{viewClient.companyName}</h3>
+                    <p className="text-sm text-white/40">{viewClient.contactName}</p>
+                  </div>
+                </div>
+                <button onClick={() => setViewClient(null)} className="p-2 rounded-lg hover:bg-white/10 text-white/40"><X className="w-5 h-5" /></button>
+              </div>
             </div>
             <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Company Name *</label>
-                <input
-                  type="text"
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                  placeholder="Enter company name"
-                />
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><p className="text-xs text-white/40 mb-1">Email</p><p className="text-white">{viewClient.email}</p></div>
+                <div><p className="text-xs text-white/40 mb-1">Phone</p><p className="text-white">{viewClient.phone || "—"}</p></div>
+                <div><p className="text-xs text-white/40 mb-1">Country</p><p className="text-white">{viewClient.country || "—"}</p></div>
+                <div><p className="text-xs text-white/40 mb-1">Company</p><span className="px-2 py-0.5 rounded-md text-[11px] font-bold" style={{ color: brandColor(viewClient.brand), backgroundColor: brandColor(viewClient.brand) + "10" }}>{viewClient.brand}</span></div>
+                <div><p className="text-xs text-white/40 mb-1">MRR</p><p className="text-white font-semibold">${viewClient.mrr.toLocaleString()}/mo</p></div>
+                <div><p className="text-xs text-white/40 mb-1">Health Score</p><p className={clsx("font-semibold", healthColor(viewClient.healthScore))}>{viewClient.healthScore}%</p></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              {viewClient.services && viewClient.services.length > 0 && (
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Contact Name</label>
-                  <input
-                    type="text"
-                    value={formData.contactName}
-                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                    placeholder="Contact person"
-                  />
+                  <p className="text-xs text-white/40 mb-2">Services</p>
+                  <div className="flex flex-wrap gap-2">
+                    {viewClient.services.map((s) => (
+                      <span key={s} className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/60">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewClient.result && (
+                <div className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                  <p className="text-xs text-emerald-400/70 mb-1">Result</p>
+                  <p className="text-sm text-emerald-400">{viewClient.result}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-white/[0.06] flex justify-end gap-3">
+              <button onClick={() => { setViewClient(null); openEdit(viewClient); }} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm flex items-center gap-2"><Edit className="w-4 h-4" /> Edit</button>
+              <button onClick={() => setViewClient(null)} className="px-4 py-2 rounded-xl bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] text-sm">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#111114] border border-white/10 rounded-2xl shadow-2xl">
+            <div className="sticky top-0 bg-[#111114] border-b border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-semibold text-white">{editingId ? "Edit Client" : "Add New Client"}</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5">Company Name *</label>
+                  <input type="text" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                    placeholder="Acme Corp" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Phone</label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                    placeholder="+1-555-0123"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Email</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                  placeholder="email@company.com"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-white/60 mb-2">Country</label>
-                  <input
-                    type="text"
-                    value={formData.country}
-                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                    placeholder="United States"
-                  />
+                  <label className="block text-xs text-white/40 mb-1.5">Contact Person *</label>
+                  <input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })}
+                    placeholder="John Smith" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Brand</label>
-                  <select
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-                  >
-                    <option value="VCS" className="bg-[#0f0f18]">VCS</option>
-                    <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
-                    <option value="DPL" className="bg-[#0f0f18]">Digital Point</option>
+                  <label className="block text-xs text-white/40 mb-1.5">Email *</label>
+                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="john@acme.com" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5">Phone</label>
+                  <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="+1 555-0123" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5">Assign to Company</label>
+                  <select value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#111114]">{b.code} - {b.name}</option>)}
                   </select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Account Manager</label>
-                  <input
-                    type="text"
-                    value={formData.accountManager}
-                    onChange={(e) => setFormData({ ...formData, accountManager: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                    placeholder="Manager name"
-                  />
+                  <label className="block text-xs text-white/40 mb-1.5">Country</label>
+                  <select value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {countries.map((c) => <option key={c} value={c} className="bg-[#111114]">{c}</option>)}
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">MRR ($)</label>
-                  <input
-                    type="number"
-                    value={formData.mrr}
-                    onChange={(e) => setFormData({ ...formData, mrr: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                    placeholder="5000"
-                  />
+                  <label className="block text-xs text-white/40 mb-1.5">Monthly Revenue ($)</label>
+                  <input type="number" value={form.mrr || ""} onChange={(e) => setForm({ ...form, mrr: Number(e.target.value) })}
+                    placeholder="5000" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5">Health Score (0-100)</label>
+                  <input type="number" min={0} max={100} value={form.healthScore} onChange={(e) => setForm({ ...form, healthScore: Number(e.target.value) })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
               </div>
+              {/* Services */}
               <div>
-                <label className="block text-sm text-white/60 mb-2">Services (comma separated)</label>
-                <input
-                  type="text"
-                  value={formData.services}
-                  onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                  placeholder="SEO, PPC, Web Development"
-                />
+                <label className="block text-xs text-white/40 mb-1.5">Services</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {form.services.map((s) => (
+                    <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70">
+                      {s}<button onClick={() => setForm({ ...form, services: form.services.filter((x) => x !== s) })} className="text-white/30 hover:text-red-400"><X className="w-3 h-3" /></button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" value={newService} onChange={(e) => setNewService(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (newService.trim()) { setForm({ ...form, services: [...form.services, newService.trim()] }); setNewService(""); } } }}
+                    placeholder="Add service + Enter" className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-              <button
-                onClick={handleCloseModal}
-                className="px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveClient}
-                disabled={!formData.companyName}
-                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all disabled:opacity-50"
-              >
-                {editingClient ? "Update" : "Add"} Client
+            <div className="sticky bottom-0 bg-[#111114] border-t border-white/[0.06] px-6 py-4 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm disabled:opacity-50 flex items-center gap-2">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editingId ? "Save" : "Add Client"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-md">
-            <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white text-center mb-2">Delete Client?</h3>
-              <p className="text-white/60 text-center text-sm">
-                Are you sure you want to delete this client? This action cannot be undone.
-              </p>
+      {/* Delete Confirm */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
+          <div className="relative w-full max-w-md bg-[#111114] border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div>
+              <div><h3 className="text-white font-semibold">Remove Client</h3><p className="text-xs text-white/40">This cannot be undone</p></div>
             </div>
-            <div className="flex items-center gap-3 p-6 border-t border-white/10">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteClient}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-all"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CSV Upload Modal */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold text-white">Import Clients from CSV</h3>
-              <button onClick={() => setIsUploadModalOpen(false)} className="p-2 rounded-lg hover:bg-white/10">
-                <X className="w-5 h-5 text-white/60" />
-              </button>
-            </div>
-            <div className="p-6">
-              <div
-                className="border-2 border-dashed border-white/20 rounded-2xl p-8 text-center hover:border-[#FF6B00]/50 transition-colors cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-12 h-12 text-white/40 mx-auto mb-4" />
-                <p className="text-white/80 mb-2">Click to upload CSV file</p>
-                <p className="text-white/40 text-sm">or drag and drop</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  onChange={handleCSVUpload}
-                  className="hidden"
-                />
-              </div>
-              <button
-                onClick={downloadSampleCSV}
-                className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
-              >
-                <Download className="w-4 h-4" />
-                Download Sample CSV
-              </button>
-              <div className="mt-4 p-4 rounded-xl bg-white/5">
-                <p className="text-xs text-white/50 mb-2">CSV Format:</p>
-                <code className="text-xs text-white/60">
-                  companyName, contactName, email, phone, country, brand, accountManager, mrr, services
-                </code>
-              </div>
+            <p className="text-sm text-white/60 mb-6">
+              Remove <strong className="text-white">{clientList.find((c) => c.id === showDeleteConfirm)?.companyName}</strong>?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
+              <button onClick={() => handleDelete(showDeleteConfirm)} className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium">Remove</button>
             </div>
           </div>
         </div>
