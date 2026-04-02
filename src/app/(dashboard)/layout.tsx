@@ -8,6 +8,9 @@ import Sidebar, { MobileHeader } from "@/components/layout/Sidebar";
 import AIChat from "@/components/AIChat";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationCenter from "@/components/NotificationCenter";
+import { ToastProvider } from "@/components/ui/toast";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
+import EmailCompose from "@/components/EmailCompose";
 import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = {
@@ -27,6 +30,8 @@ const pageTitles: Record<string, string> = {
   "/attendance/checkin": "Check In",
   "/invoices": "Invoices",
   "/calendar": "Calendar",
+  "/leaves": "Leave Management",
+  "/payroll": "Payroll",
   "/audit": "Audit Log",
   "/guide": "User Guide",
   "/settings": "Settings",
@@ -51,6 +56,7 @@ export default function DashboardLayout({
   const [selectedBrand, setSelectedBrand] = useState("1");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showEmailCompose, setShowEmailCompose] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Check auth on mount
@@ -105,6 +111,7 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-[#09090B] carbon-bg">
       {/* Mobile Header */}
       <MobileHeader
@@ -154,6 +161,11 @@ export default function DashboardLayout({
               <kbd className="ml-4 px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] font-mono">Ctrl+K</kbd>
             </button>
 
+            <button onClick={() => setShowEmailCompose(true)}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all" title="Compose Email">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+            </button>
+
             <NotificationCenter />
 
             <button
@@ -180,6 +192,9 @@ export default function DashboardLayout({
           </div>
         </div>
 
+        {/* Breadcrumbs */}
+        <Breadcrumbs />
+
         {/* Page Content */}
         <div className="animate-fade-in-up pb-8">
           {children}
@@ -194,8 +209,12 @@ export default function DashboardLayout({
       {/* AI Chat */}
       <AIChat />
 
+      {/* Email Compose */}
+      <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
+
       {/* Command Palette */}
       <CommandPalette />
     </div>
+    </ToastProvider>
   );
 }

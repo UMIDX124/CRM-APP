@@ -25,6 +25,8 @@ import {
   CalendarDays,
   Shield,
   Book,
+  DollarSign,
+  CalendarOff,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
@@ -38,6 +40,8 @@ const navItems = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays, section: "main" },
   { href: "/employees", label: "Team", icon: Users, section: "hr" },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" },
+  { href: "/leaves", label: "Leaves", icon: CalendarOff, section: "hr" },
+  { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" },
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" },
   { href: "/reports", label: "Reports", icon: BarChart3, section: "finance" },
   { href: "/audit", label: "Audit Log", icon: Shield, section: "system" },
