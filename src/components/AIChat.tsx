@@ -161,17 +161,17 @@ export default function AIChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 group"
+        className="fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-50 group cursor-pointer"
       >
-        <div className="absolute -inset-2 bg-[#FF6B00]/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="relative hover:scale-110 transition-transform">
-          <FUMascot emotion="idle" size={70} />
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-[#09090B] flex items-center justify-center">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-ping absolute" />
+        <div className="absolute inset-[-16px] rounded-full bg-[#FF6B00]/15 blur-2xl group-hover:bg-[#FF6B00]/25 transition-all duration-500 animate-pulse" />
+        <div className="relative hover:scale-110 active:scale-95 transition-transform duration-200">
+          <FUMascot emotion="excited" size={90} />
+          <span className="absolute top-0 right-0 w-5 h-5 bg-green-400 rounded-full border-[3px] border-[#09090B] shadow-lg shadow-green-400/30">
+            <span className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-60" />
           </span>
         </div>
-        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-          FU AI
+        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[10px] text-[#FF6B00] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 font-semibold backdrop-blur-sm">
+          Ask FU AI
         </span>
       </button>
     );
