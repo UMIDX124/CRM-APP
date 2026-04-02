@@ -6,8 +6,8 @@ import { LogIn, UserPlus, Eye, EyeOff, Shield, Zap } from "lucide-react";
 import { clsx } from "clsx";
 
 const demoUsers = [
-  { email: "faizi@digitalpointllc.com", password: "faizi13579", role: "SUPER_ADMIN", name: "Faizan" },
   { email: "umi@digitalpointllc.com", password: "umi84268", role: "SUPER_ADMIN", name: "Umer" },
+  { email: "faizi@digitalpointllc.com", password: "faizi13579", role: "SUPER_ADMIN", name: "Faizan" },
   { email: "ali@digitalpointllc.com", password: "specialist123", role: "PROJECT_MANAGER", name: "Ali Hassan" },
   { email: "client@example.com", password: "viewer123", role: "EMPLOYEE", name: "Client Demo" },
 ];
@@ -68,7 +68,7 @@ export default function LoginPage() {
 
   const quickLogin = (user: typeof demoUsers[0]) => {
     setEmail(user.email);
-    setPassword(user.password);
+    setPassword("");
   };
 
   return (

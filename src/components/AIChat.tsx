@@ -20,6 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import { clsx } from "clsx";
+import FUMascot from "./FUMascot";
 
 const quickActions = [
   { icon: BarChart3, label: "Analytics", prompt: "Show me a summary of our dashboard analytics with key metrics" },
@@ -152,22 +153,25 @@ export default function AIChat() {
       .join("");
   };
 
-  // Floating button when closed
+  // Mascot emotion based on state
+  const mascotEmotion = isLoading ? "thinking" : messages.length > 0 ? "happy" : "idle";
+
+  // Floating mascot button when closed
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 group"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 group"
       >
-        <div className="absolute -inset-4 bg-gradient-to-r from-#FF6B00 to-#E05500 rounded-full blur-xl opacity-20 group-hover:opacity-40 animate-pulse" />
-        <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-#FF6B00 to-#E05500 shadow-lg shadow-#FF6B00/30 flex items-center justify-center hover:scale-110 transition-transform">
-          <div className="relative">
-            <MessageCircle className="w-8 h-8 text-white" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-bounce" />
-          </div>
+        <div className="absolute -inset-2 bg-[#FF6B00]/10 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative hover:scale-110 transition-transform">
+          <FUMascot emotion="idle" size={70} />
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-[#09090B] flex items-center justify-center">
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-ping absolute" />
+          </span>
         </div>
-        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-white/60 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-          FU AI Assistant
+        <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 text-[10px] text-white/50 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+          FU AI
         </span>
       </button>
     );
@@ -187,12 +191,7 @@ export default function AIChat() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-#FF6B00/10 to-#E05500/10">
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-#FF6B00 to-#E05500 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1a1a2e]" />
-            </div>
+            <FUMascot emotion={mascotEmotion} size={44} />
             <div>
               <h3 className="text-white font-semibold">FU AI</h3>
               <p className="text-xs text-green-400 flex items-center gap-1">
