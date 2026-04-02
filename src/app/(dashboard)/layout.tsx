@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { Search } from "lucide-react";
 import { clsx } from "clsx";
 import Sidebar, { MobileHeader } from "@/components/layout/Sidebar";
 import AIChat from "@/components/AIChat";
+import CommandPalette from "@/components/CommandPalette";
+import NotificationCenter from "@/components/NotificationCenter";
 import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = {
@@ -21,6 +24,9 @@ const pageTitles: Record<string, string> = {
   "/pipeline": "Pipeline",
   "/reports": "Reports",
   "/attendance": "Attendance",
+  "/invoices": "Invoices",
+  "/calendar": "Calendar",
+  "/settings": "Settings",
 };
 
 const demoUsers = [
@@ -132,6 +138,18 @@ export default function DashboardLayout({
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Search shortcut hint */}
+            <button
+              onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+              className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/10 transition-all cursor-pointer"
+            >
+              <Search className="w-4 h-4" />
+              <span className="text-xs">Search...</span>
+              <kbd className="ml-4 px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] font-mono">Ctrl+K</kbd>
+            </button>
+
+            <NotificationCenter />
+
             <button
               onClick={toggleTheme}
               className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
@@ -169,6 +187,9 @@ export default function DashboardLayout({
 
       {/* AI Chat */}
       <AIChat />
+
+      {/* Command Palette */}
+      <CommandPalette />
     </div>
   );
 }

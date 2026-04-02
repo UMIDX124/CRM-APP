@@ -21,6 +21,8 @@ import {
   Menu,
   X,
   ClipboardCheck,
+  FileText,
+  CalendarDays,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
@@ -31,9 +33,12 @@ const navItems = [
   { href: "/clients", label: "Clients", icon: Building2, section: "main" },
   { href: "/pipeline", label: "Pipeline", icon: Briefcase, section: "main" },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays, section: "main" },
   { href: "/employees", label: "Team", icon: Users, section: "hr" },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" },
-  { href: "/reports", label: "Reports", icon: BarChart3, section: "other" },
+  { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" },
+  { href: "/reports", label: "Reports", icon: BarChart3, section: "finance" },
+  { href: "/settings", label: "Settings", icon: Settings, section: "system" },
 ];
 
 const brandColors: Record<string, string> = {
@@ -115,10 +120,10 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-3 px-3 overflow-y-auto">
-          {(["main", "hr", "other"] as const).map((section) => {
+          {(["main", "hr", "finance", "system"] as const).map((section) => {
             const items = navItems.filter((i) => i.section === section);
             if (items.length === 0) return null;
-            const sectionLabels = { main: "", hr: "HR & People", other: "" };
+            const sectionLabels = { main: "", hr: "HR & People", finance: "Finance", system: "System" };
             return (
               <div key={section} className={section !== "main" ? "mt-4" : ""}>
                 {!collapsed && sectionLabels[section] && (
@@ -171,19 +176,14 @@ export default function Sidebar({
             {!collapsed && <span>Notifications</span>}
             <span className="ml-auto px-2 py-0.5 rounded-full bg-[#D4AF37] text-black text-xs font-bold">3</span>
           </button>
-          <div className="flex items-center gap-1">
-            <button className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-white/80 hover:bg-white/5 transition-all">
-              <Settings className="w-5 h-5" />
-              {!collapsed && <span>Settings</span>}
-            </button>
-            <button
-              onClick={onToggleTheme}
-              className="p-2.5 rounded-xl text-white/60 hover:text-white/80 hover:bg-white/5 transition-all"
-              title={theme === "dark" ? "Light mode" : "Dark mode"}
-            >
-              {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </button>
-          </div>
+          <button
+            onClick={onToggleTheme}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-white/80 hover:bg-white/5 transition-all"
+            title={theme === "dark" ? "Light mode" : "Dark mode"}
+          >
+            {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            {!collapsed && <span>{theme === "dark" ? "Dark Mode" : "Light Mode"}</span>}
+          </button>
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center shrink-0">
               <span className="text-black text-xs font-bold">{currentUser?.name?.charAt(0) || "U"}</span>
