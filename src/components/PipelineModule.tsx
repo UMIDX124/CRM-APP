@@ -131,7 +131,19 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
     success("Lead removed");
   };
 
-  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
+  const brandColor = (code?: string) => {
+    if (!code) return "#FF6B00";
+    return brands.find((b) => b.code === code)?.color || "#FF6B00";
+  };
+  // Extract brand from source field (e.g., "Website - BSL" → "BSL")
+  const getBrand = (lead: Lead) => {
+    if (lead.brand) return lead.brand;
+    if (lead.source) {
+      const match = lead.source.match(/- (VCS|BSL|DPL)/);
+      if (match) return match[1];
+    }
+    return "";
+  };
 
   return (
     <div className="space-y-6">
@@ -202,7 +214,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
                       <p className="text-xs text-white/40 mb-2">{lead.contactName}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-white">${lead.value.toLocaleString()}</span>
-                        {lead.brand && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(lead.brand), backgroundColor: brandColor(lead.brand) + "10" }}>{lead.brand}</span>}
+                        {getBrand(lead) && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(getBrand(lead)), backgroundColor: brandColor(getBrand(lead)) + "10" }}>{getBrand(lead)}</span>}
                       </div>
                       {/* Move buttons */}
                       {stage.status !== "WON" && (
