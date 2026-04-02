@@ -58,6 +58,8 @@ interface SidebarProps {
   onLogout: () => void;
   isMobileOpen: boolean;
   onMobileClose: () => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
 export default function Sidebar({
@@ -69,8 +71,10 @@ export default function Sidebar({
   onLogout,
   isMobileOpen,
   onMobileClose,
+  collapsed,
+  onCollapsedChange,
 }: SidebarProps) {
-  const [collapsed, setCollapsed] = useState(false);
+  const setCollapsed = (v: boolean) => onCollapsedChange(v);
   const pathname = usePathname();
   const currentBrand = brands.find((b) => b.id === selectedBrand);
   const brandColor = brandColors[currentBrand?.code || "VCS"] || "#FF6B00";

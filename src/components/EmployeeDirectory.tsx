@@ -393,6 +393,26 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
                 </div>
               </div>
 
+              {/* Password — only when creating new employee */}
+              {!editingEmployee && (
+                <div className="p-4 rounded-xl bg-[#FF6B00]/5 border border-[#FF6B00]/10 space-y-3">
+                  <p className="text-xs text-[#FF6B00] font-semibold uppercase tracking-wider">Login Credentials</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Initial Password *</label>
+                      <input type="text" value={(formData as Record<string, unknown>).password as string || ""} onChange={(e) => setFormData({ ...formData, password: e.target.value } as typeof formData)}
+                        placeholder="Set login password" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">PIN Code (4-digit)</label>
+                      <input type="text" maxLength={4} value={(formData as Record<string, unknown>).pinCode as string || ""} onChange={(e) => setFormData({ ...formData, pinCode: e.target.value.replace(/\D/g, "").slice(0, 4) } as typeof formData)}
+                        placeholder="e.g. 1234" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 font-mono tracking-widest" />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-white/30">Employee will use these credentials to log in. They can change their password from Settings.</p>
+                </div>
+              )}
+
               {/* Skills */}
               <div>
                 <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Skills</label>

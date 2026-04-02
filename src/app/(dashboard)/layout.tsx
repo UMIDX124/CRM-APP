@@ -49,6 +49,7 @@ export default function DashboardLayout({
   const [currentUser, setCurrentUser] = useState<typeof demoUsers[0] | null>(null);
   const [selectedBrand, setSelectedBrand] = useState("1");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   // Check auth on mount
@@ -121,6 +122,8 @@ export default function DashboardLayout({
         onLogout={handleLogout}
         isMobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
       />
 
       {/* Main Content */}
@@ -128,7 +131,7 @@ export default function DashboardLayout({
         className={clsx(
           "min-h-screen pt-16 lg:pt-0 transition-all duration-300",
           "px-5 sm:px-8 lg:px-10 py-6 lg:py-10",
-          "lg:ml-[260px]"
+          sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
         )}
       >
         {/* Desktop Header */}
@@ -183,7 +186,7 @@ export default function DashboardLayout({
       </main>
 
       {/* Footer */}
-      <footer className="lg:ml-[260px] border-t border-white/[0.06] py-5 px-8 text-center text-xs text-white/20">
+      <footer className={clsx(sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]", "border-t border-white/[0.06] py-5 px-8 text-center text-xs text-white/20 transition-all duration-300")}>
         <p>FU Corp Command Center &bull; Built for Excellence</p>
       </footer>
 
