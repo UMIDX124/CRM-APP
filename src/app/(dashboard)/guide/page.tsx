@@ -52,8 +52,9 @@ const sections: Section[] = [
       { heading: "Adding a Client", text: "Click the '+ Add Client' button to create a new client record.",
         steps: ["Click '+ Add Client'", "Fill in company name, contact name, email", "Select the brand (VCS/BSL/DPL)", "Set the client status and country", "Enter the MRR value", "Click 'Save'"] },
       { heading: "Filtering & Searching", text: "Use the search bar to find clients by name or email. Use the dropdown filters to filter by brand, status, or country." },
-      { heading: "Client Health Score", text: "Each client has a health score (0-100) indicating account health. Green (80+) = healthy, Yellow (50-79) = needs attention, Red (below 50) = at risk.",
-        tip: "Regularly review clients with declining health scores to prevent churn." },
+      { heading: "Viewing Client Details", text: "Click the eye icon on any client row to open the detail view showing all information: contact details, company assignment, MRR, health score, services, and results achieved." },
+      { heading: "Client Health Score", text: "Each client has a health score (0-100) with a visual progress bar. Green (80+) = healthy, Amber (50-79) = needs attention, Red (below 50) = at risk.",
+        tip: "Click the edit icon to update a client's health score and MRR as the relationship evolves." },
     ]
   },
   {
@@ -87,28 +88,39 @@ const sections: Section[] = [
   {
     id: "tasks", title: "Task Management", icon: CheckSquare,
     content: [
-      { heading: "Task Board", text: "Tasks are displayed on a kanban board with columns: TODO, In Progress, Review, and Completed. Each card shows the task title, assignee, priority, and due date." },
-      { heading: "Creating a Task", text: "Click '+ New Task' to create a task. Set the title, description, priority (Low/Medium/High/Urgent), assignee, due date, and brand.",
-        tip: "High priority and Urgent tasks are highlighted with colored indicators." },
-      { heading: "Task Priorities", text: "URGENT = red (immediate action needed), HIGH = amber (do today), MEDIUM = blue (this week), LOW = gray (when available)." },
+      { heading: "Task Board (Kanban)", text: "Tasks are displayed on a kanban board with 4 columns: TODO, In Progress, Review, and Done. Each card shows the task title, assignee, priority, due date, and overdue indicator." },
+      { heading: "Creating a Task", text: "Click 'New Task' to create a task.",
+        steps: ["Click 'New Task' button", "Enter task title (required) and description", "Set priority: Critical, Urgent, High, Medium, or Low", "Assign to an employee from the dropdown", "Link to a client (optional)", "Set due date", "Click 'Create Task'"],
+        tip: "Overdue tasks are highlighted in red with an OVERDUE badge." },
+      { heading: "Moving Tasks Between Stages", text: "Each task card has move buttons at the bottom to transition between stages.",
+        steps: ["TODO: click 'Start' to move to In Progress", "In Progress: click 'Review' or 'Done'", "Review: click 'Approve' (moves to Done) or 'Back' (returns to In Progress)"],
+        tip: "You can also switch to List view for a table-based view of all tasks." },
+      { heading: "Task Priorities", text: "CRITICAL/URGENT = red (immediate action), HIGH = amber (today), MEDIUM = blue (this week), LOW = gray (when available)." },
     ]
   },
   {
     id: "pipeline", title: "Sales Pipeline", icon: Briefcase,
     content: [
-      { heading: "Pipeline Stages", text: "Leads move through stages: New > Qualified > Proposal Sent > Negotiation > Won/Lost. The pipeline view shows leads grouped by stage." },
-      { heading: "Adding a Lead", text: "Click '+ Add Lead' and fill in the company name, contact person, estimated value, and source (Website, LinkedIn, Referral, etc.)." },
-      { heading: "Moving Leads", text: "As deals progress, update their status. Won deals become clients, Lost deals are archived for analysis." },
+      { heading: "Pipeline Overview", text: "The pipeline shows all sales leads organized by stage. Stats at the top show total leads, pipeline value, won value, and win rate percentage." },
+      { heading: "Pipeline Stages", text: "Leads move through 6 stages: New, Qualified, Proposal Sent, Negotiation, Won, and Lost. Each stage shows the number of leads and total value." },
+      { heading: "Adding a Lead", text: "Click 'Add Lead' to create a new pipeline entry.",
+        steps: ["Click 'Add Lead'", "Enter company name and contact person", "Set the deal value in dollars", "Choose source: Website, LinkedIn, Referral, Cold Outreach, Conference", "Assign a sales rep", "Add services (comma-separated)", "Click 'Add Lead'"] },
+      { heading: "Moving Leads Through Stages", text: "Each lead card has action buttons to advance or close the deal.",
+        steps: ["New leads: click 'Qualify' to move to Qualified stage", "Qualified: click 'Send Proposal'", "Proposal Sent: click 'Negotiate'", "Negotiation: click 'Won' (deal closed) or 'Lost' (deal lost)"],
+        tip: "Won leads are marked green. You can switch between Kanban and List views." },
+      { heading: "Editing & Deleting Leads", text: "Hover over any lead card to see edit and delete icons. Click edit to update details, or delete to remove from pipeline." },
     ]
   },
   {
     id: "invoices", title: "Invoicing", icon: FileText,
     content: [
-      { heading: "Invoice Dashboard", text: "The invoices page shows stats at the top: total collected, pending, overdue amounts. Below is the full invoice list." },
-      { heading: "Invoice Status", text: "PAID (green) = payment received, PENDING (amber) = awaiting payment, OVERDUE (red) = past due date, DRAFT (gray) = not yet sent." },
-      { heading: "Viewing an Invoice", text: "Click the eye icon on any invoice to see the full breakdown — line items, amounts, dates, and total." },
-      { heading: "Creating an Invoice", text: "Click 'New Invoice' and select the client, add line items with descriptions and amounts, set dates.",
-        tip: "Invoice numbers are auto-generated (INV-2026-001, etc.)" },
+      { heading: "Invoice Dashboard", text: "Stats at the top show: Total Collected (paid), Pending amount, Overdue amount, and total invoice count." },
+      { heading: "Creating an Invoice", text: "Click 'New Invoice' to create a new invoice with line items.",
+        steps: ["Click 'New Invoice'", "Select client from dropdown", "Set due date", "Add line items: description, quantity, and rate for each", "Click '+ Add item' for additional line items", "Total is calculated automatically", "Click 'Create Invoice'"],
+        tip: "Invoice numbers are auto-generated (INV-2026-001, etc.). You can add unlimited line items." },
+      { heading: "Marking Invoices as Paid", text: "For pending or overdue invoices, click the green checkmark icon or open the invoice and click 'Mark as Paid'. The paid date is automatically recorded." },
+      { heading: "Invoice Status", text: "PAID (green) = payment received with date, PENDING (amber) = awaiting payment, OVERDUE (red) = past due date, DRAFT (gray) = not yet sent." },
+      { heading: "Viewing Invoice Details", text: "Click the eye icon to open the full invoice view showing all line items with quantities, rates, and totals." },
     ]
   },
   {
@@ -124,6 +136,45 @@ const sections: Section[] = [
     content: [
       { heading: "Generating Reports", text: "The Reports page lets you generate PDF reports with revenue breakdown, top clients, employee performance, and task status." },
       { heading: "PDF Export", text: "Click 'Generate Report' to create a multi-page PDF with executive summary, charts, and data tables." },
+    ]
+  },
+  {
+    id: "payroll", title: "Payroll", icon: FileText,
+    content: [
+      { heading: "Payroll Overview", text: "The Payroll page shows salary breakdown for all employees — base salary, bonus, deductions, tax, and net pay. Stats at the top show total payroll, bonuses, tax, and payment status." },
+      { heading: "Viewing Payroll", text: "Each row shows: employee name, company assignment, base salary, bonus (green), deductions (red), tax (amber), net pay (white bold), and payment status (Paid/Pending/Processing)." },
+      { heading: "Filtering", text: "Search by employee name, filter by company (VCS/BSL/DPL), and select month to view payroll for different periods.",
+        tip: "Export Payslips button downloads payroll data for the selected month." },
+    ]
+  },
+  {
+    id: "leaves", title: "Leave Management", icon: CalendarDays,
+    content: [
+      { heading: "Leave Dashboard", text: "Stats show pending requests, approved leaves, rejected, and total leave days consumed." },
+      { heading: "Applying for Leave", text: "Click 'Apply Leave' to submit a leave request.",
+        steps: ["Click 'Apply Leave'", "Select employee from dropdown", "Choose leave type: Annual, Sick, Casual, Maternity, or Unpaid", "Set start and end dates", "Enter reason for leave", "Click 'Submit Request'"],
+        tip: "Leave requests start as 'Pending' and need manager approval." },
+      { heading: "Approving / Rejecting Leaves", text: "Managers see approve (green checkmark) and reject (red X) buttons on pending leave requests. Click to change the status.",
+        tip: "Approved leaves should be reflected in the Attendance system." },
+    ]
+  },
+  {
+    id: "expenses", title: "Expense Tracking", icon: FileText,
+    content: [
+      { heading: "Expense Dashboard", text: "Stats show total expenses, approved amount, pending amount, and total claims count." },
+      { heading: "Submitting an Expense", text: "Click 'Submit Expense' to file a new expense claim.",
+        steps: ["Click 'Submit Expense'", "Select employee", "Choose category: Travel, Meals, Software, Hardware, Office, Marketing, or Other", "Enter amount and description", "Set the expense date", "Click 'Submit'"],
+        tip: "Each category has its own color code for easy identification." },
+      { heading: "Approving Expenses", text: "Managers see approve/reject buttons on pending expenses. Approved expenses are tracked for reimbursement." },
+    ]
+  },
+  {
+    id: "email", title: "Email Integration", icon: MessageCircle,
+    content: [
+      { heading: "Sending Emails", text: "Click the envelope icon in the top header bar to open the email compose modal." },
+      { heading: "Composing an Email", text: "The compose modal has fields for recipient (with client email autocomplete), subject, and message body.",
+        steps: ["Click the envelope icon in the header", "Enter recipient email (or select from client list)", "Enter subject line", "Write your message", "Click 'Send'"],
+        tip: "Emails are sent via Resend API if configured, otherwise logged in demo mode." },
     ]
   },
   {
