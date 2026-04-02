@@ -1,614 +1,352 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  Search,
-  Plus,
-  Filter,
-  CheckSquare,
-  Clock,
-  AlertCircle,
-  User,
-  Calendar,
-  MoreVertical,
-  GripVertical,
-  ChevronDown,
-  Flag,
-  Edit,
-  Trash2,
-  X,
-  Save,
+  Search, Plus, CheckSquare, Clock, AlertCircle, Calendar, Edit, Trash2,
+  X, Save, Loader2, AlertTriangle, ArrowRight, Flag, User,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { tasks as mockTasks, brands, employees, clients } from "@/data/mock-data";
+import { useData, apiMutate } from "@/lib/use-data";
+import { useToast } from "@/components/ui/toast";
+
+type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "COMPLETED";
+type TaskPriority = "CRITICAL" | "HIGH" | "NORMAL" | "LOW" | "MEDIUM" | "URGENT";
 
 interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
-  priority: "CRITICAL" | "HIGH" | "NORMAL" | "LOW";
-  assignee: string;
-  client: string;
-  brand: string;
-  dueDate: string;
-  timeSpent: number;
-  subtasks: number;
-  subtasksCompleted: number;
+  id: string; title: string; description: string;
+  status: string; priority: string; assignee: string;
+  client: string; brand: string; dueDate: string;
+  timeSpent: number; subtasks: number; subtasksCompleted: number;
 }
-
-const initialTasks: Task[] = [
-  {
-    id: "1",
-    title: "Monthly SEO Audit Report",
-    description: "Complete SEO audit for Sarah Mitchell E-Commerce",
-    status: "IN_PROGRESS",
-    priority: "HIGH",
-    assignee: "Ahmed Khan",
-    client: "Sarah Mitchell E-Commerce",
-    brand: "VCS",
-    dueDate: "2026-04-05",
-    timeSpent: 6,
-    subtasks: 3,
-    subtasksCompleted: 1,
-  },
-  {
-    id: "2",
-    title: "Meta Ads Campaign Optimization",
-    description: "Optimize lookalike audiences for DTC E-Commerce",
-    status: "TODO",
-    priority: "CRITICAL",
-    assignee: "Faizan",
-    client: "DTC E-Commerce Brand",
-    brand: "DPL",
-    dueDate: "2026-04-02",
-    timeSpent: 0,
-    subtasks: 5,
-    subtasksCompleted: 0,
-  },
-  {
-    id: "3",
-    title: "E-Commerce Platform Migration",
-    description: "Migrate TechMart to new cloud infrastructure",
-    status: "IN_PROGRESS",
-    priority: "HIGH",
-    assignee: "Ali Raza",
-    client: "TechMart",
-    brand: "BSL",
-    dueDate: "2026-04-08",
-    timeSpent: 12,
-    subtasks: 8,
-    subtasksCompleted: 5,
-  },
-  {
-    id: "4",
-    title: "Banking Security Audit",
-    description: "Complete security audit for SecureBank",
-    status: "TODO",
-    priority: "CRITICAL",
-    assignee: "Hamza Ali",
-    client: "SecureBank",
-    brand: "BSL",
-    dueDate: "2026-04-04",
-    timeSpent: 0,
-    subtasks: 10,
-    subtasksCompleted: 0,
-  },
-  {
-    id: "5",
-    title: "AI Analytics Dashboard",
-    description: "Build prediction engine for DataFlow",
-    status: "REVIEW",
-    priority: "HIGH",
-    assignee: "Sarah Williams",
-    client: "DataFlow Analytics",
-    brand: "BSL",
-    dueDate: "2026-04-10",
-    timeSpent: 15,
-    subtasks: 6,
-    subtasksCompleted: 4,
-  },
-  {
-    id: "6",
-    title: "Google Ads ROAS Optimization",
-    description: "Improve ROAS for B2B SaaS client",
-    status: "IN_PROGRESS",
-    priority: "NORMAL",
-    assignee: "Anwaar",
-    client: "B2B SaaS Company",
-    brand: "DPL",
-    dueDate: "2026-04-03",
-    timeSpent: 10,
-    subtasks: 4,
-    subtasksCompleted: 4,
-  },
-  {
-    id: "7",
-    title: "Content Calendar Q2",
-    description: "Plan Q2 content strategy for Marketing Agency",
-    status: "TODO",
-    priority: "NORMAL",
-    assignee: "Usman Tariq",
-    client: "Marketing Agency Partner",
-    brand: "VCS",
-    dueDate: "2026-04-06",
-    timeSpent: 0,
-    subtasks: 2,
-    subtasksCompleted: 0,
-  },
-  {
-    id: "8",
-    title: "PPC Campaign Setup",
-    description: "Set up new PPC campaigns for SaaS Startup",
-    status: "DONE",
-    priority: "HIGH",
-    assignee: "Fatima Hassan",
-    client: "SaaS Startup Client",
-    brand: "VCS",
-    dueDate: "2026-04-01",
-    timeSpent: 5,
-    subtasks: 5,
-    subtasksCompleted: 5,
-  },
-];
 
 const columns = [
-  { id: "TODO", label: "To Do", color: "#6B7280" },
-  { id: "IN_PROGRESS", label: "In Progress", color: "#3B82F6" },
-  { id: "REVIEW", label: "Review", color: "#F59E0B" },
-  { id: "DONE", label: "Done", color: "#22C55E" },
+  { status: "TODO", label: "To Do", color: "#71717A", icon: Clock },
+  { status: "IN_PROGRESS", label: "In Progress", color: "#3B82F6", icon: AlertCircle },
+  { status: "REVIEW", label: "Review", color: "#F59E0B", icon: CheckSquare },
+  { status: "DONE", label: "Done", color: "#10B981", icon: CheckSquare },
 ];
 
-const priorityConfig = {
-  CRITICAL: { color: "#EF4444", label: "Critical" },
-  HIGH: { color: "#F59E0B", label: "High" },
-  NORMAL: { color: "#3B82F6", label: "Normal" },
-  LOW: { color: "#6B7280", label: "Low" },
+const priorityColors: Record<string, { color: string; bg: string; label: string }> = {
+  CRITICAL: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", label: "Critical" },
+  URGENT: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20", label: "Urgent" },
+  HIGH: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", label: "High" },
+  NORMAL: { color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", label: "Normal" },
+  MEDIUM: { color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20", label: "Medium" },
+  LOW: { color: "text-white/40", bg: "bg-white/5 border-white/10", label: "Low" },
 };
 
-const employees = ["Ahmed Khan", "Ali Raza", "Faizan", "Anwaar", "Fatima Hassan", "Usman Tariq", "Hamza Ali", "Sarah Williams"];
-const clients = ["Sarah Mitchell E-Commerce", "SaaS Startup Client", "Marketing Agency Partner", "TechMart", "SecureBank", "DataFlow Analytics", "DTC E-Commerce Brand", "B2B SaaS Company"];
-const brands = ["VCS", "BSL", "DPL"];
-
-interface TaskFormData {
-  title: string;
-  description: string;
-  priority: string;
-  assignee: string;
-  client: string;
-  brand: string;
-  dueDate: string;
-}
-
-const emptyFormData: TaskFormData = {
-  title: "",
-  description: "",
-  priority: "NORMAL",
-  assignee: "",
-  client: "",
-  brand: "VCS",
-  dueDate: "",
+const defaultForm = {
+  title: "", description: "", priority: "MEDIUM", assignee: "", client: "", brand: "VCS", dueDate: "",
 };
 
-export default function TaskManagement({ brandId = "1" }: { brandId?: string }) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterPriority, setFilterPriority] = useState<string>("all");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [formData, setFormData] = useState<TaskFormData>(emptyFormData);
-  const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
+export default function TaskManagement({ brandId }: { brandId: string }) {
+  const { success, error: showError } = useToast();
+  const { data: taskList, setData: setTaskList, loading } = useData<Task[]>({
+    apiUrl: "/api/tasks", mockData: mockTasks as unknown as Task[],
+  });
 
-  const getTasksByStatus = (status: string) => {
-    return tasks.filter((task) => {
-      const matchesStatus = task.status === status;
-      const matchesSearch =
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.assignee.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.client.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesPriority = filterPriority === "all" || task.priority === filterPriority;
-      return matchesStatus && matchesSearch && matchesPriority;
+  const [search, setSearch] = useState("");
+  const [filterPriority, setFilterPriority] = useState("ALL");
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState(defaultForm);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const filtered = useMemo(() => {
+    return taskList.filter((t) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!t.title.toLowerCase().includes(q) && !t.assignee.toLowerCase().includes(q) && !t.client.toLowerCase().includes(q)) return false;
+      }
+      if (filterPriority !== "ALL" && t.priority !== filterPriority) return false;
+      return true;
     });
+  }, [taskList, search, filterPriority]);
+
+  const stats = useMemo(() => ({
+    total: taskList.length,
+    done: taskList.filter(t => t.status === "DONE" || t.status === "COMPLETED").length,
+    inProgress: taskList.filter(t => t.status === "IN_PROGRESS").length,
+    overdue: taskList.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "DONE" && t.status !== "COMPLETED").length,
+  }), [taskList]);
+
+  const openAdd = () => { setEditingId(null); setForm(defaultForm); setShowModal(true); };
+
+  const openEdit = (task: Task) => {
+    setEditingId(task.id);
+    setForm({
+      title: task.title, description: task.description || "",
+      priority: task.priority, assignee: task.assignee, client: task.client,
+      brand: task.brand, dueDate: task.dueDate,
+    });
+    setShowModal(true);
   };
 
-  const handleOpenModal = (task?: Task) => {
-    if (task) {
-      setEditingTask(task);
-      setFormData({
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        assignee: task.assignee,
-        client: task.client,
-        brand: task.brand,
-        dueDate: task.dueDate,
-      });
+  const handleSave = async () => {
+    if (!form.title.trim()) { showError("Task title required"); return; }
+    setSaving(true);
+    if (editingId) {
+      await apiMutate(`/api/tasks/${editingId}`, "PATCH", form);
+      setTaskList((prev) => prev.map((t) => t.id === editingId ? { ...t, ...form } : t));
+      success("Task updated");
     } else {
-      setEditingTask(null);
-      setFormData(emptyFormData);
+      await apiMutate("/api/tasks", "POST", { ...form, status: "TODO" });
+      setTaskList((prev) => [...prev, {
+        id: String(Date.now()), ...form, status: "TODO", timeSpent: 0, subtasks: 0, subtasksCompleted: 0,
+      }]);
+      success("Task created!");
     }
-    setIsModalOpen(true);
+    setSaving(false);
+    setShowModal(false);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingTask(null);
-    setFormData(emptyFormData);
+  const moveTask = async (taskId: string, newStatus: string) => {
+    await apiMutate(`/api/tasks/${taskId}`, "PATCH", { status: newStatus });
+    setTaskList((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t));
+    const col = columns.find(c => c.status === newStatus);
+    success(`Task moved to ${col?.label || newStatus}`);
   };
 
-  const handleSaveTask = () => {
-    if (editingTask) {
-      setTasks(
-        tasks.map((t) =>
-          t.id === editingTask.id
-            ? {
-                ...t,
-                title: formData.title,
-                description: formData.description,
-                priority: formData.priority as Task["priority"],
-                assignee: formData.assignee,
-                client: formData.client,
-                brand: formData.brand,
-                dueDate: formData.dueDate,
-              }
-            : t
-        )
-      );
-    } else {
-      const newTask: Task = {
-        id: Date.now().toString(),
-        title: formData.title,
-        description: formData.description,
-        status: "TODO",
-        priority: formData.priority as Task["priority"],
-        assignee: formData.assignee,
-        client: formData.client,
-        brand: formData.brand,
-        dueDate: formData.dueDate,
-        timeSpent: 0,
-        subtasks: 0,
-        subtasksCompleted: 0,
-      };
-      setTasks([...tasks, newTask]);
-    }
-    handleCloseModal();
+  const handleDelete = async (id: string) => {
+    await apiMutate(`/api/tasks/${id}`, "DELETE");
+    setTaskList((prev) => prev.filter((t) => t.id !== id));
+    setShowDeleteConfirm(null);
+    success("Task deleted");
   };
 
-  const handleDeleteTask = () => {
-    if (deleteTaskId) {
-      setTasks(tasks.filter((t) => t.id !== deleteTaskId));
-      setIsDeleteModalOpen(false);
-      setDeleteTaskId(null);
-    }
-  };
-
-  const handleDragStart = (e: React.DragEvent, task: Task) => {
-    e.dataTransfer.setData("taskId", task.id);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, newStatus: Task["status"]) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData("taskId");
-    setTasks(
-      tasks.map((t) =>
-        t.id === taskId ? { ...t, status: newStatus } : t
-      )
-    );
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map((n) => n[0]).join("").toUpperCase();
-  };
-
-  const isOverdue = (date: string) => {
-    return new Date(date) < new Date();
-  };
-
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
+  const isOverdue = (dueDate: string, status: string) => dueDate && new Date(dueDate) < new Date() && status !== "DONE" && status !== "COMPLETED";
+  const brandColor = (code: string) => brands.find(b => b.code === code)?.color || "#FF6B00";
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-2xl font-display font-bold text-white">Task Management</h2>
-          <p className="text-white/50 mt-1">Track and manage your team's tasks with Kanban board</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { label: "Total Tasks", value: stats.total, icon: CheckSquare, color: "#FF6B00" },
+          { label: "In Progress", value: stats.inProgress, icon: Clock, color: "#3B82F6" },
+          { label: "Completed", value: stats.done, icon: CheckSquare, color: "#10B981" },
+          { label: "Overdue", value: stats.overdue, icon: AlertCircle, color: "#EF4444" },
+        ].map((s, i) => (
+          <div key={i} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <div className="flex items-center gap-2 mb-2"><s.icon className="w-4 h-4" style={{ color: s.color }} /><span className="text-xs text-white/50">{s.label}</span></div>
+            <p className="text-2xl font-bold text-white">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <input type="text" placeholder="Search tasks, assignee, client..." value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
         </div>
-        <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Add Task
+        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          <option value="ALL" className="bg-[#111114]">All Priority</option>
+          {Object.entries(priorityColors).map(([k, v]) => <option key={k} value={k} className="bg-[#111114]">{v.label}</option>)}
+        </select>
+        <div className="flex gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl p-1">
+          <button onClick={() => setViewMode("kanban")} className={clsx("px-3 py-1.5 rounded-lg text-xs font-medium transition-all", viewMode === "kanban" ? "bg-white/10 text-white" : "text-white/40")}>Kanban</button>
+          <button onClick={() => setViewMode("list")} className={clsx("px-3 py-1.5 rounded-lg text-xs font-medium transition-all", viewMode === "list" ? "bg-white/10 text-white" : "text-white/40")}>List</button>
+        </div>
+        <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-bold text-sm">
+          <Plus className="w-4 h-4" /> New Task
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {columns.map((col) => {
-          const count = tasks.filter((t) => t.status === col.id).length;
-          return (
-            <div
-              key={col.id}
-              className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: col.color }} />
-                <span className="text-xs text-white/50">{col.label}</span>
-              </div>
-              <p className="text-2xl font-bold text-white">{count}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-          />
-        </div>
-        <select
-          value={filterPriority}
-          onChange={(e) => setFilterPriority(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-        >
-          <option value="all" className="bg-[#0f0f18]">All Priorities</option>
-          <option value="CRITICAL" className="bg-[#0f0f18]">Critical</option>
-          <option value="HIGH" className="bg-[#0f0f18]">High</option>
-          <option value="NORMAL" className="bg-[#0f0f18]">Normal</option>
-          <option value="LOW" className="bg-[#0f0f18]">Low</option>
-        </select>
-      </div>
-
-      {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {columns.map((column) => {
-          const columnTasks = getTasksByStatus(column.id);
-          return (
-            <div
-              key={column.id}
-              className="flex flex-col bg-white/[0.02] rounded-2xl p-4 min-h-[400px]"
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, column.id as Task["status"])}
-            >
-              {/* Column Header */}
-              <div className="flex items-center justify-between mb-4 px-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: column.color }} />
-                  <span className="text-sm font-medium text-white">{column.label}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-white/10 text-xs text-white/50">
-                    {columnTasks.length}
-                  </span>
+      {/* Kanban */}
+      {loading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-48 skeleton rounded-xl" />)}</div>
+      ) : viewMode === "kanban" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {columns.map((col) => {
+            const colTasks = filtered.filter(t => t.status === col.status || (col.status === "DONE" && t.status === "COMPLETED"));
+            return (
+              <div key={col.status}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: col.color }} />
+                  <span className="text-sm font-medium text-white">{col.label}</span>
+                  <span className="text-xs text-white/30">{colTasks.length}</span>
+                </div>
+                <div className="space-y-2 min-h-[100px]">
+                  {colTasks.map((task) => {
+                    const pCfg = priorityColors[task.priority] || priorityColors.MEDIUM;
+                    const overdue = isOverdue(task.dueDate, task.status);
+                    return (
+                      <div key={task.id} className={clsx("p-3 rounded-xl border transition-all group hover:border-white/[0.12]",
+                        overdue ? "bg-red-500/5 border-red-500/10" : "bg-white/[0.03] border-white/[0.06]"
+                      )}>
+                        <div className="flex items-start justify-between mb-1.5">
+                          <p className="text-sm font-medium text-white flex-1 pr-2">{task.title}</p>
+                          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <button onClick={() => openEdit(task)} className="p-1 rounded hover:bg-white/10 text-white/30"><Edit className="w-3 h-3" /></button>
+                            <button onClick={() => setShowDeleteConfirm(task.id)} className="p-1 rounded hover:bg-red-500/10 text-white/30 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className={clsx("px-1.5 py-0.5 rounded text-[9px] font-bold border", pCfg.bg)}><span className={pCfg.color}>{pCfg.label}</span></span>
+                          {task.brand && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(task.brand), backgroundColor: brandColor(task.brand) + "10" }}>{task.brand}</span>}
+                        </div>
+                        {task.assignee && <p className="text-xs text-white/40 mb-1 flex items-center gap-1"><User className="w-3 h-3" />{task.assignee}</p>}
+                        {task.dueDate && (
+                          <p className={clsx("text-xs flex items-center gap-1", overdue ? "text-red-400" : "text-white/30")}>
+                            <Calendar className="w-3 h-3" />{task.dueDate}
+                            {overdue && <span className="text-red-400 font-medium ml-1">OVERDUE</span>}
+                          </p>
+                        )}
+                        {/* Move buttons */}
+                        <div className="flex gap-1 mt-2 pt-2 border-t border-white/[0.04]">
+                          {col.status === "TODO" && <button onClick={() => moveTask(task.id, "IN_PROGRESS")} className="flex-1 text-[10px] py-1 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all">Start</button>}
+                          {col.status === "IN_PROGRESS" && (
+                            <>
+                              <button onClick={() => moveTask(task.id, "REVIEW")} className="flex-1 text-[10px] py-1 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-all">Review</button>
+                              <button onClick={() => moveTask(task.id, "DONE")} className="flex-1 text-[10px] py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">Done</button>
+                            </>
+                          )}
+                          {col.status === "REVIEW" && (
+                            <>
+                              <button onClick={() => moveTask(task.id, "IN_PROGRESS")} className="flex-1 text-[10px] py-1 rounded bg-white/5 text-white/40 hover:bg-white/10 transition-all">Back</button>
+                              <button onClick={() => moveTask(task.id, "DONE")} className="flex-1 text-[10px] py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">Approve</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {colTasks.length === 0 && (
+                    <div className="p-6 rounded-xl border border-dashed border-white/[0.06] text-center">
+                      <p className="text-xs text-white/20">No tasks</p>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* Column Content */}
-              <div className="flex-1 space-y-3">
-                {columnTasks.map((task) => {
-                  const priority = priorityConfig[task.priority];
-                  const taskOverdue = isOverdue(task.dueDate) && task.status !== "DONE";
-
-                  return (
-                    <div
-                      key={task.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, task)}
-                      className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4 hover:border-white/20 transition-all cursor-grab active:cursor-grabbing group"
-                    >
-                      {/* Priority & Actions */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="px-2 py-0.5 rounded text-xs font-medium"
-                            style={{ backgroundColor: `${priority.color}20`, color: priority.color }}
-                          >
-                            {priority.label}
-                          </div>
-                          <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: `${task.brand === "VCS" ? "#FF6B00" : task.brand === "BSL" ? "#3B82F6" : "#22C55E"}20`, color: task.brand === "VCS" ? "#FF6B00" : task.brand === "BSL" ? "#3B82F6" : "#22C55E" }}>
-                            {task.brand}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => handleOpenModal(task)} className="p-1 rounded hover:bg-white/10">
-                            <Edit className="w-3 h-3 text-white/60" />
-                          </button>
-                          <button onClick={() => { setDeleteTaskId(task.id); setIsDeleteModalOpen(true); }} className="p-1 rounded hover:bg-red-500/20">
-                            <Trash2 className="w-3 h-3 text-red-400" />
-                          </button>
-                        </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* List */
+        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Task</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Priority</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hidden md:table-cell">Assignee</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hidden md:table-cell">Due</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((task) => {
+                const pCfg = priorityColors[task.priority] || priorityColors.MEDIUM;
+                const col = columns.find(c => c.status === task.status) || columns[0];
+                const overdue = isOverdue(task.dueDate, task.status);
+                return (
+                  <tr key={task.id} className={clsx("border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors", overdue && "bg-red-500/[0.02]")}>
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-white">{task.title}</p>
+                      <p className="text-xs text-white/40">{task.client}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ color: col.color, backgroundColor: col.color + "15" }}>{col.label}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={clsx("px-2 py-0.5 rounded-md text-[10px] font-bold border", pCfg.bg)}><span className={pCfg.color}>{pCfg.label}</span></span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-white/50 hidden md:table-cell">{task.assignee}</td>
+                    <td className={clsx("px-4 py-3 text-sm hidden md:table-cell", overdue ? "text-red-400" : "text-white/50")}>{task.dueDate || "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openEdit(task)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => setShowDeleteConfirm(task.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
                       </div>
-
-                      {/* Title */}
-                      <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">
-                        {task.title}
-                      </h4>
-
-                      {/* Client */}
-                      <div className="flex items-center gap-1 mb-3">
-                        <span className="px-2 py-0.5 rounded bg-white/5 text-xs text-white/60">
-                          {task.client}
-                        </span>
-                      </div>
-
-                      {/* Footer */}
-                      <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#E05500] flex items-center justify-center text-black text-[10px] font-bold">
-                            {getInitials(task.assignee)}
-                          </div>
-                          <span className="text-xs text-white/60">{task.assignee.split(" ")[0]}</span>
-                        </div>
-                        <div className={clsx("flex items-center gap-1 text-xs", taskOverdue ? "text-red-400" : "text-white/50")}>
-                          <Calendar className="w-3 h-3" />
-                          <span>{formatDate(task.dueDate)}</span>
-                        </div>
-                      </div>
-
-                      {task.timeSpent > 0 && (
-                        <div className="mt-2 flex items-center gap-1 text-xs text-white/40">
-                          <Clock className="w-3 h-3" />
-                          <span>{task.timeSpent}h logged</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Add Task Button */}
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="w-full py-3 rounded-xl border-2 border-dashed border-white/10 text-white/40 hover:text-white/60 hover:border-white/20 transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span className="text-sm">Add Task</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold text-white">
-                {editingTask ? "Edit Task" : "Add New Task"}
-              </h3>
-              <button onClick={handleCloseModal} className="p-2 rounded-lg hover:bg-white/10">
-                <X className="w-5 h-5 text-white/60" />
-              </button>
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#111114] border border-white/10 rounded-2xl shadow-2xl">
+            <div className="sticky top-0 bg-[#111114] border-b border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-semibold text-white">{editingId ? "Edit Task" : "New Task"}</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm text-white/60 mb-2">Task Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                  placeholder="Enter task title"
-                />
+                <label className="block text-xs text-white/40 mb-1.5">Task Title *</label>
+                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="What needs to be done?" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
               </div>
               <div>
-                <label className="block text-sm text-white/60 mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 min-h-[80px]"
-                  placeholder="Task description..."
-                />
+                <label className="block text-xs text-white/40 mb-1.5">Description</label>
+                <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Details..." className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30 resize-none" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Priority</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-                  >
-                    <option value="CRITICAL" className="bg-[#0f0f18]">Critical</option>
-                    <option value="HIGH" className="bg-[#0f0f18]">High</option>
-                    <option value="NORMAL" className="bg-[#0f0f18]">Normal</option>
-                    <option value="LOW" className="bg-[#0f0f18]">Low</option>
+                  <label className="block text-xs text-white/40 mb-1.5">Priority</label>
+                  <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {Object.entries(priorityColors).map(([k, v]) => <option key={k} value={k} className="bg-[#111114]">{v.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Brand</label>
-                  <select
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-                  >
-                    <option value="VCS" className="bg-[#0f0f18]">VCS</option>
-                    <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
-                    <option value="DPL" className="bg-[#0f0f18]">Digital Point</option>
-                  </select>
+                  <label className="block text-xs text-white/40 mb-1.5">Due Date</label>
+                  <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Assignee</label>
-                  <select
-                    value={formData.assignee}
-                    onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-                  >
-                    <option value="" className="bg-[#0f0f18]">Select Assignee</option>
-                    {employees.map((emp) => (
-                      <option key={emp} value={emp} className="bg-[#0f0f18]">{emp}</option>
-                    ))}
+                  <label className="block text-xs text-white/40 mb-1.5">Assign To</label>
+                  <select value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    <option value="" className="bg-[#111114]">Unassigned</option>
+                    {employees.map(e => <option key={e.id} value={e.name} className="bg-[#111114]">{e.name} — {e.title}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Client</label>
-                  <select
-                    value={formData.client}
-                    onChange={(e) => setFormData({ ...formData, client: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50 cursor-pointer"
-                  >
-                    <option value="" className="bg-[#0f0f18]">Select Client</option>
-                    {clients.map((client) => (
-                      <option key={client} value={client} className="bg-[#0f0f18]">{client}</option>
-                    ))}
+                  <label className="block text-xs text-white/40 mb-1.5">Client</label>
+                  <select value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    <option value="" className="bg-[#111114]">No client</option>
+                    {clients.map(c => <option key={c.id} value={c.companyName} className="bg-[#111114]">{c.companyName}</option>)}
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Due Date</label>
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/50"
-                />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-              <button onClick={handleCloseModal} className="px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all">
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveTask}
-                disabled={!formData.title}
-                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all disabled:opacity-50"
-              >
-                {editingTask ? "Update" : "Add"} Task
+            <div className="sticky bottom-0 bg-[#111114] border-t border-white/[0.06] px-6 py-4 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm disabled:opacity-50 flex items-center gap-2">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editingId ? "Save" : "Create Task"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-md">
-            <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white text-center mb-2">Delete Task?</h3>
-              <p className="text-white/60 text-center text-sm">Are you sure you want to delete this task?</p>
-            </div>
-            <div className="flex items-center gap-3 p-6 border-t border-white/10">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all">Cancel</button>
-              <button onClick={handleDeleteTask} className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-all">Delete</button>
+      {/* Delete Confirm */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
+          <div className="relative w-full max-w-md bg-[#111114] border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div><h3 className="text-white font-semibold">Delete Task</h3></div>
+            <p className="text-sm text-white/60 mb-6">Delete <strong className="text-white">{taskList.find(t => t.id === showDeleteConfirm)?.title}</strong>?</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
+              <button onClick={() => handleDelete(showDeleteConfirm)} className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium">Delete</button>
             </div>
           </div>
         </div>
