@@ -226,18 +226,77 @@ body {
   --background-secondary: #F1F5F9;
   --surface: #FFFFFF;
   --surface-elevated: #F8FAFC;
-  --surface-hover: #F1F5F9;
-  --gold: #B8860B;
-  --gold-light: #D4AF37;
-  --gold-dark: #8B6914;
-  --cyan: #0284C7;
-  --cyan-light: #0EA5E9;
+  --surface-hover: #EFF2F5;
+  --gold: #9A7209;
+  --gold-light: #B8860B;
+  --gold-dark: #7A5A07;
+  --gold-glow: rgba(154, 114, 9, 0.15);
+  --cyan: #0369A1;
+  --cyan-light: #0284C7;
+  --cyan-dark: #075985;
+  --emerald: #059669;
   --foreground: #0F172A;
   --foreground-muted: #475569;
   --foreground-dim: #64748B;
-  --border: rgba(15, 23, 42, 0.08);
-  --border-gold: rgba(184, 134, 11, 0.2);
+  --border: rgba(15, 23, 42, 0.1);
+  --border-gold: rgba(154, 114, 9, 0.2);
+  --border-cyan: rgba(3, 105, 161, 0.15);
+  --shadow-gold: 0 0 20px rgba(154, 114, 9, 0.08);
+  --shadow-gold-hover: 0 0 30px rgba(154, 114, 9, 0.15);
+  --shadow-deep: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
+
+.light body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Light mode component overrides */
+.light .glass,
+.light .glass-gold,
+.light .glass-cyan {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.light .premium-card {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.light .skeleton {
+  background: linear-gradient(90deg, #F1F5F9 0%, #E2E8F0 50%, #F1F5F9 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Light mode text helpers — use these in components */
+.light [class*="text-white"] { color: var(--foreground) !important; }
+.light [class*="text-white/"] { color: var(--foreground-muted) !important; }
+.light [class*="border-white/"] { border-color: var(--border) !important; }
+.light [class*="bg-white/"] { background-color: rgba(15, 23, 42, 0.04) !important; }
+
+/* Restore actual white text on colored backgrounds */
+.light .bg-gradient-to-r[class*="from-\\[#D4AF37\\]"] [class*="text-black"],
+.light [class*="bg-\\[#D4AF37\\]"] [class*="text-black"],
+.light [style*="background-color"] [class*="text-black"] { color: #000 !important; }
+.light [class*="bg-gradient-to-r"][class*="from-\\[#D4AF37\\]"] { color: #000; }
+
+/* Light sidebar */
+.light aside {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
+  border-color: var(--border) !important;
+}
+
+/* Light mode scrollbar */
+.light *::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Light background for main app areas */
+.light .min-h-screen[class*="bg-gradient"] {
+  background: var(--background) !important;
+}
+
 
 /* Thin scrollbar */
 .scrollbar-thin::-webkit-scrollbar { width: 4px; }
