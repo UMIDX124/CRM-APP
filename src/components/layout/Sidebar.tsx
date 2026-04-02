@@ -4,29 +4,10 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  Briefcase,
-  CheckSquare,
-  BarChart3,
-  Building2,
-  Crown,
-  Bell,
-  Settings,
-  ChevronLeft,
-  Search,
-  Moon,
-  Sun,
-  LogOut,
-  Menu,
-  X,
-  ClipboardCheck,
-  FileText,
-  CalendarDays,
-  Shield,
-  Book,
-  DollarSign,
-  CalendarOff,
+  LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
+  Crown, Bell, Settings, ChevronLeft, Search, Moon, Sun, LogOut, Menu, X,
+  ClipboardCheck, FileText, CalendarDays, Shield, Book, DollarSign,
+  CalendarOff, Receipt, Command,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
@@ -42,10 +23,12 @@ const navItems = [
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" },
   { href: "/leaves", label: "Leaves", icon: CalendarOff, section: "hr" },
   { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" },
+  { href: "/expenses", label: "Expenses", icon: Receipt, section: "finance" },
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" },
   { href: "/reports", label: "Reports", icon: BarChart3, section: "finance" },
   { href: "/audit", label: "Audit Log", icon: Shield, section: "system" },
   { href: "/guide", label: "User Guide", icon: Book, section: "system" },
+  { href: "/shortcuts", label: "Shortcuts", icon: Command, section: "system" },
   { href: "/settings", label: "Settings", icon: Settings, section: "system" },
 ];
 

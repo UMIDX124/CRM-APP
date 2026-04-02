@@ -11,6 +11,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import { ToastProvider } from "@/components/ui/toast";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import EmailCompose from "@/components/EmailCompose";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = {
@@ -32,8 +33,10 @@ const pageTitles: Record<string, string> = {
   "/calendar": "Calendar",
   "/leaves": "Leave Management",
   "/payroll": "Payroll",
+  "/expenses": "Expenses",
   "/audit": "Audit Log",
   "/guide": "User Guide",
+  "/shortcuts": "Keyboard Shortcuts",
   "/settings": "Settings",
 };
 
@@ -196,7 +199,7 @@ export default function DashboardLayout({
         <Breadcrumbs />
 
         {/* Page Content */}
-        <div className="animate-fade-in-up pb-8">
+        <div className="animate-fade-in-up pb-8 lg:pb-8 pb-20">
           {children}
         </div>
       </main>
@@ -208,6 +211,9 @@ export default function DashboardLayout({
 
       {/* AI Chat */}
       <AIChat />
+
+      {/* Mobile Bottom Nav */}
+      <MobileBottomNav />
 
       {/* Email Compose */}
       <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />

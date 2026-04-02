@@ -30,6 +30,7 @@ import {
   Activity,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { dashboardKPIs, clients, employees, tasks, revenueData, activities } from "@/data/mock-data";
 
 interface DashboardModuleProps {
@@ -143,7 +144,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
               </div>
               <p className="text-white/50 text-xs font-medium mb-1">{kpi.label}</p>
               <div className="flex items-end justify-between">
-                <p className="text-2xl font-bold text-white">{loading ? "..." : kpi.value}</p>
+                <p className="text-2xl font-bold text-white">{loading ? <span className="skeleton h-7 w-20 inline-block" /> : kpi.value}</p>
                 <span
                   className={clsx(
                     "flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full",
