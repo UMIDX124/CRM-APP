@@ -96,12 +96,12 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-white">Welcome back</h2>
-          <p className="text-white/50 text-sm mt-1">Here's what's happening today</p>
+          <h2 className="text-xl font-semibold text-white tracking-tight">Welcome back</h2>
+          <p className="text-white/40 text-sm mt-1.5">Here&apos;s what&apos;s happening today</p>
         </div>
         <div className="flex gap-2">
           {["7d", "30d", "90d"].map((range) => (
@@ -122,7 +122,7 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {kpis.map((kpi, i) => (
           <div
             key={i}

@@ -92,8 +92,8 @@ export default function Sidebar({
 
       <aside
         className={clsx(
-          "fixed top-0 left-0 h-full flex flex-col border-r border-white/10 transition-all duration-300 z-50",
-          "bg-gradient-to-b from-[#0D0D10] via-[#111114] to-[#0D0D10] carbon-bg",
+          "fixed top-0 left-0 h-full flex flex-col border-r border-white/[0.06] transition-all duration-300 z-50",
+          "bg-gradient-to-b from-[#0D0D10] via-[#111114] to-[#0D0D10]",
           collapsed ? "w-[72px]" : "w-[260px]",
           !isMobileOpen && "-translate-x-full lg:translate-x-0"
         )}

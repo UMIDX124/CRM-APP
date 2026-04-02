@@ -77,7 +77,16 @@ body {
   color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
 }
+
+/* Better heading typography */
+h1, h2, h3 { letter-spacing: -0.02em; }
+h1 { font-weight: 600; }
+
+/* Global section spacing */
+.space-y-6 > * + * { margin-top: 1.75rem; }
+.space-y-8 > * + * { margin-top: 2.25rem; }
 
 /* ═══ TEXTURES ═══ */
 

@@ -126,15 +126,15 @@ export default function DashboardLayout({
       <main
         className={clsx(
           "min-h-screen pt-16 lg:pt-0 transition-all duration-300",
-          "px-4 sm:px-6 lg:px-8 py-6 lg:py-8",
+          "px-5 sm:px-8 lg:px-10 py-6 lg:py-10",
           "lg:ml-[260px]"
         )}
       >
         {/* Desktop Header */}
-        <div className="hidden lg:flex items-center justify-between mb-6">
+        <div className="hidden lg:flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">{pageTitle}</h1>
-            <p className="text-white/50 text-sm mt-1">
+            <h1 className="text-2xl font-semibold text-white tracking-tight">{pageTitle}</h1>
+            <p className="text-white/40 text-sm mt-1.5">
               {currentBrandData?.name} &bull; {currentUser?.role}
             </p>
           </div>
@@ -176,13 +176,13 @@ export default function DashboardLayout({
         </div>
 
         {/* Page Content */}
-        <div className="animate-fade-in-up">
+        <div className="animate-fade-in-up pb-8">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="lg:ml-[260px] border-t border-white/10 py-4 px-6 text-center text-xs text-white/30">
+      <footer className="lg:ml-[260px] border-t border-white/[0.06] py-5 px-8 text-center text-xs text-white/20">
         <p>FU Corp Command Center &bull; Built for Excellence</p>
       </footer>
 
