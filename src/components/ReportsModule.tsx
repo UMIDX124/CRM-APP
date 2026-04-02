@@ -251,7 +251,7 @@ export default function ReportsModule() {
           </button>
           <button
             onClick={generatePDF}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all"
           >
             <Download className="w-4 h-4" />
             Export PDF

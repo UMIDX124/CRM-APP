@@ -11,7 +11,7 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
         "relative overflow-hidden rounded-lg bg-surface-elevated",
         "before:absolute before:inset-0 before:-translate-x-full",
         "before:animate-[shimmer_1.5s_infinite]",
-        "before:bg-gradient-to-r before:from-transparent before:via-gold/5 before:to-transparent",
+        "before:bg-gradient-to-r before:from-transparent before:via-primary/5 before:to-transparent",
         className
       )}
       {...props}

@@ -4,14 +4,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-gold text-background hover:bg-gold-light shadow-md hover:shadow-gold",
+          "bg-primary text-background hover:bg-primary-light shadow-md hover:shadow-primary",
         secondary:
-          "bg-surface-elevated text-foreground border border-border hover:border-gold/30 hover:bg-surface",
+          "bg-surface-elevated text-foreground border border-border hover:border-primary/30 hover:bg-surface",
         ghost:
           "text-foreground-muted hover:text-foreground hover:bg-surface",
         danger:
@@ -19,7 +19,7 @@ const buttonVariants = cva(
         success:
           "bg-emerald/20 text-emerald border border-emerald/30 hover:bg-emerald/30",
         outline:
-          "border border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/50",
+          "border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50",
       },
       size: {
         default: "h-10 px-4 py-2",

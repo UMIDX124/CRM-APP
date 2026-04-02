@@ -323,7 +323,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all"
         >
           <Plus className="w-4 h-4" />
           Add Task
@@ -586,7 +586,7 @@ export default function TaskManagement({ brandId = "1" }: { brandId?: string }) 
               <button
                 onClick={handleSaveTask}
                 disabled={!formData.title}
-                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
+                className="px-4 py-2.5 rounded-xl bg-[#FF6B00] text-black font-medium hover:bg-[#FF8A33] transition-all disabled:opacity-50"
               >
                 {editingTask ? "Update" : "Add"} Task
               </button>

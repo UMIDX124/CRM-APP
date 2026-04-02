@@ -32,19 +32,19 @@ export function getInitials(name: string): string {
 
 export function getHealthColor(score: number): string {
   if (score >= 80) return "text-emerald";
-  if (score >= 50) return "text-yellow-500";
+  if (score >= 50) return "text-amber-500";
   return "text-red-500";
 }
 
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
     active: "bg-emerald/20 text-emerald border-emerald/30",
-    at_risk: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+    at_risk: "bg-amber-500/20 text-amber-500 border-amber-500/30",
     churning: "bg-red-500/20 text-red-500 border-red-500/30",
     new: "bg-blue-500/20 text-blue-500 border-blue-500/30",
     completed: "bg-emerald/20 text-emerald border-emerald/30",
     in_progress: "bg-blue-500/20 text-blue-500 border-blue-500/30",
-    pending: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30",
+    pending: "bg-amber-500/20 text-amber-500 border-amber-500/30",
     overdue: "bg-red-500/20 text-red-500 border-red-500/30",
   };
   return colors[status.toLowerCase()] || colors.pending;

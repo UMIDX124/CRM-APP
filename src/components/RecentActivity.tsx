@@ -112,7 +112,7 @@ export default function RecentActivity() {
           <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
           <p className="text-sm text-white/40 mt-0.5">Latest updates across all modules</p>
         </div>
-        <button className="text-xs text-[#FF6B00] hover:text-[#E5C158] transition-colors font-medium">
+        <button className="text-xs text-[#FF6B00] hover:text-[#FF8A33] transition-colors font-medium">
           View All
         </button>
       </div>
