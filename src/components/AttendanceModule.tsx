@@ -365,7 +365,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-white/80">{row.employee.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                        <span className="text-xs font-bold text-white/80">{(row.employee?.name || "?").split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white">{row.employee.name}</p>

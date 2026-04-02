@@ -57,7 +57,7 @@ export default function ExpenseModule() {
   const filtered = useMemo(() => {
     return expenses.map((e) => ({ ...e, employee: employees.find((emp) => emp.id === e.employeeId) }))
       .filter((e) => {
-        if (search && !e.employee?.name.toLowerCase().includes(search.toLowerCase()) && !e.description.toLowerCase().includes(search.toLowerCase())) return false;
+        if (search && !(e.employee?.name || "").toLowerCase().includes(search.toLowerCase()) && !(e.description || "").toLowerCase().includes(search.toLowerCase())) return false;
         if (filterStatus !== "ALL" && e.status !== filterStatus) return false;
         return true;
       }).sort((a, b) => b.date.localeCompare(a.date));

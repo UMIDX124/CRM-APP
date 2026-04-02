@@ -80,7 +80,7 @@ export default function CommandPalette() {
     // Search clients
     clients.forEach((c) => {
       items.push({
-        id: `client-${c.id}`, label: c.companyName, description: `${c.contactName} · ${c.brand} · $${c.mrr.toLocaleString()}/mo`,
+        id: `client-${c.id}`, label: c.companyName, description: `${c.contactName} · ${c.brand} · $${(c.mrr || 0).toLocaleString()}/mo`,
         icon: Building2, category: "Clients", action: () => navigate("/clients"),
         keywords: [c.contactName, c.email, c.brand],
       });

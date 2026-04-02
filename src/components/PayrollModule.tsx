@@ -55,11 +55,11 @@ export default function PayrollModule() {
   const [selectedMonth, setSelectedMonth] = useState("2026-04");
 
   const filtered = useMemo(() => {
-    return payroll.map((p) => ({ ...p, employee: employees.find((e) => e.id === p.employeeId)! }))
+    return payroll.map((p) => ({ ...p, employee: employees.find((e) => e.id === p.employeeId) }))
       .filter((p) => {
         if (!p.employee) return false;
-        if (search && !p.employee.name.toLowerCase().includes(search.toLowerCase())) return false;
-        if (filterBrand !== "ALL" && p.employee.brand !== filterBrand) return false;
+        if (search && !(p.employee.name || "").toLowerCase().includes(search.toLowerCase())) return false;
+        if (filterBrand !== "ALL" && (p.employee.brand || "") !== filterBrand) return false;
         return true;
       });
   }, [payroll, search, filterBrand]);
@@ -138,16 +138,16 @@ export default function PayrollModule() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center">
-                        <span className="text-xs font-bold text-white/80">{p.employee.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</span>
+                        <span className="text-xs font-bold text-white/80">{(p.employee?.name || "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">{p.employee.name}</p>
-                        <p className="text-xs text-white/40">{p.employee.title}</p>
+                        <p className="text-sm font-medium text-white">{p.employee?.name || ""}</p>
+                        <p className="text-xs text-white/40">{p.employee?.title || ""}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ color: brandColor(p.employee.brand), backgroundColor: brandColor(p.employee.brand) + "10" }}>{p.employee.brand}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ color: brandColor(p.employee?.brand || ""), backgroundColor: brandColor(p.employee?.brand || "") + "10" }}>{p.employee?.brand || ""}</span>
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-white/70 font-mono">${p.baseSalary.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right text-sm text-emerald-400 font-mono">{p.bonus > 0 ? `+$${p.bonus}` : "—"}</td>

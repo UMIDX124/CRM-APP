@@ -147,7 +147,7 @@ export default function AIChat() {
   };
 
   const getMessageText = (message: typeof messages[0]): string => {
-    return message.parts
+    return (message.parts || [])
       .filter((part): part is { type: "text"; text: string } => part.type === "text")
       .map((part) => part.text)
       .join("");

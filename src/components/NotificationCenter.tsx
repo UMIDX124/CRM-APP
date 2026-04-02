@@ -99,7 +99,7 @@ export default function NotificationCenter() {
                 </div>
               ) : (
                 notifications.map((notif) => {
-                  const cfg = iconMap[notif.type];
+                  const cfg = iconMap[notif.type] || iconMap.info;
                   const Icon = cfg.icon;
                   return (
                     <div
