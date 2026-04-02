@@ -20,18 +20,20 @@ import {
   LogOut,
   Menu,
   X,
+  ClipboardCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
 import { LogoMini } from "./Logo";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clients", label: "Clients", icon: Building2 },
-  { href: "/employees", label: "Team", icon: Users },
-  { href: "/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/pipeline", label: "Pipeline", icon: Briefcase },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" },
+  { href: "/clients", label: "Clients", icon: Building2, section: "main" },
+  { href: "/pipeline", label: "Pipeline", icon: Briefcase, section: "main" },
+  { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" },
+  { href: "/employees", label: "Team", icon: Users, section: "hr" },
+  { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" },
+  { href: "/reports", label: "Reports", icon: BarChart3, section: "other" },
 ];
 
 const brandColors: Record<string, string> = {
@@ -113,39 +115,53 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-3 px-3 overflow-y-auto">
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onMobileClose}
-                    className={clsx(
-                      "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
-                      active
-                        ? "text-white"
-                        : "text-white/60 hover:text-white/80 hover:bg-white/5"
-                    )}
-                    style={
-                      active
-                        ? {
-                            background: `linear-gradient(135deg, ${brandColor}20, ${brandColor}10)`,
-                            boxShadow: `0 0 20px ${brandColor}15`,
+          {(["main", "hr", "other"] as const).map((section) => {
+            const items = navItems.filter((i) => i.section === section);
+            if (items.length === 0) return null;
+            const sectionLabels = { main: "", hr: "HR & People", other: "" };
+            return (
+              <div key={section} className={section !== "main" ? "mt-4" : ""}>
+                {!collapsed && sectionLabels[section] && (
+                  <p className="px-3 mb-2 text-[10px] font-semibold text-white/25 uppercase tracking-widest">
+                    {sectionLabels[section]}
+                  </p>
+                )}
+                <ul className="space-y-1">
+                  {items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={onMobileClose}
+                          className={clsx(
+                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                            active
+                              ? "text-white"
+                              : "text-white/60 hover:text-white/80 hover:bg-white/5"
+                          )}
+                          style={
+                            active
+                              ? {
+                                  background: `linear-gradient(135deg, ${brandColor}20, ${brandColor}10)`,
+                                  boxShadow: `0 0 20px ${brandColor}15`,
+                                }
+                              : undefined
                           }
-                        : undefined
-                    }
-                  >
-                    <item.icon
-                      className="w-5 h-5 shrink-0"
-                      style={active ? { color: brandColor } : undefined}
-                    />
-                    {!collapsed && <span>{item.label}</span>}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+                        >
+                          <item.icon
+                            className="w-5 h-5 shrink-0"
+                            style={active ? { color: brandColor } : undefined}
+                          />
+                          {!collapsed && <span>{item.label}</span>}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom Section */}

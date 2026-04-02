@@ -1,732 +1,453 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  Search,
-  Plus,
-  Filter,
-  Users,
-  Mail,
-  Phone,
-  MapPin,
-  Star,
-  MoreVertical,
-  ChevronRight,
-  Briefcase,
-  Clock,
-  CheckCircle,
-  Edit,
-  Trash2,
-  X,
-  Save,
-  UserPlus,
+  Search, Plus, Users, Mail, Phone, Star, Edit, Trash2, X, Save,
+  UserPlus, Building2, DollarSign, Calendar, Shield, ChevronDown,
+  LayoutGrid, List, Filter, MoreVertical, BadgeCheck, AlertTriangle,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { employees as initialEmployees, brands, parentCompany } from "@/data/mock-data";
+import type { Employee, EmployeeStatus } from "@/data/mock-data";
 
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string | null;
-  title: string;
-  department: string;
-  brand: string;
-  performanceScore: number;
-  availability: "AVAILABLE" | "BUSY" | "ON_LEAVE";
-  skills: string[];
-  workload: number;
-  tasksCompleted: number;
-  totalTasks: number;
-}
-
-const initialEmployees: Employee[] = [
-  {
-    id: "1",
-    name: "Faizan",
-    email: "faizan@digitalpointllc.com",
-    avatar: null,
-    title: "Co-Founder",
-    department: "LEADERSHIP",
-    brand: "DPL",
-    performanceScore: 98,
-    availability: "AVAILABLE",
-    skills: ["Media Buying", "Meta", "Google", "YouTube", "Attribution"],
-    workload: 85,
-    tasksCompleted: 52,
-    totalTasks: 55,
-  },
-  {
-    id: "2",
-    name: "Anwaar",
-    email: "anwaar@digitalpointllc.com",
-    avatar: null,
-    title: "Co-Founder",
-    department: "LEADERSHIP",
-    brand: "DPL",
-    performanceScore: 97,
-    availability: "AVAILABLE",
-    skills: ["Performance Marketing", "Analytics", "Scaling", "Attribution"],
-    workload: 80,
-    tasksCompleted: 48,
-    totalTasks: 52,
-  },
-  {
-    id: "3",
-    name: "Ahmed Khan",
-    email: "ahmed.khan@vcs.pk",
-    avatar: null,
-    title: "Senior SEO Manager",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 94,
-    availability: "AVAILABLE",
-    skills: ["SEO", "Google Analytics", "Content Strategy"],
-    workload: 78,
-    tasksCompleted: 47,
-    totalTasks: 50,
-  },
-  {
-    id: "4",
-    name: "Ali Raza",
-    email: "ali.raza@vcs.pk",
-    avatar: null,
-    title: "Full Stack Developer",
-    department: "DEV",
-    brand: "VCS",
-    performanceScore: 96,
-    availability: "AVAILABLE",
-    skills: ["React", "Node.js", "PostgreSQL", "AWS"],
-    workload: 65,
-    tasksCompleted: 52,
-    totalTasks: 55,
-  },
-  {
-    id: "5",
-    name: "Hamza Ali",
-    email: "hamza@backupsolutions.pk",
-    avatar: null,
-    title: "DevOps Engineer",
-    department: "DEV",
-    brand: "BSL",
-    performanceScore: 92,
-    availability: "BUSY",
-    skills: ["AWS", "Docker", "CI/CD", "Security"],
-    workload: 88,
-    tasksCompleted: 33,
-    totalTasks: 38,
-  },
-  {
-    id: "6",
-    name: "Sarah Williams",
-    email: "sarah@backupsolutions.pk",
-    avatar: null,
-    title: "AI Engineer",
-    department: "DEV",
-    brand: "BSL",
-    performanceScore: 95,
-    availability: "AVAILABLE",
-    skills: ["ML Models", "Python", "TensorFlow", "Data Science"],
-    workload: 75,
-    tasksCompleted: 45,
-    totalTasks: 48,
-  },
-  {
-    id: "7",
-    name: "Fatima Hassan",
-    email: "fatima.h@vcs.pk",
-    avatar: null,
-    title: "PPC Specialist",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 88,
-    availability: "BUSY",
-    skills: ["Google Ads", "Facebook Ads", "Analytics"],
-    workload: 92,
-    tasksCompleted: 38,
-    totalTasks: 42,
-  },
-  {
-    id: "8",
-    name: "Usman Tariq",
-    email: "usman.t@vcs.pk",
-    avatar: null,
-    title: "Social Media Manager",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 87,
-    availability: "AVAILABLE",
-    skills: ["Instagram", "LinkedIn", "Content Creation"],
-    workload: 70,
-    tasksCompleted: 29,
-    totalTasks: 35,
-  },
-];
-
-const departments = ["All", "LEADERSHIP", "MARKETING", "WORKFORCE", "DEV", "SUPPORT", "OPS"];
-const brands = ["All", "VCS", "BSL", "DPL"];
-
-const brandColors: Record<string, string> = {
-  VCS: "#D4AF37",
-  BSL: "#3B82F6",
-  DPL: "#22C55E",
+const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  PROJECT_MANAGER: "Project Manager",
+  DEPT_HEAD: "Department Head",
+  TEAM_LEAD: "Team Lead",
+  EMPLOYEE: "Employee",
 };
 
-const brandNames: Record<string, string> = {
-  VCS: "Virtual Customer Solution",
-  BSL: "Backup Solutions LLC",
-  DPL: "Digital Point LLC",
+const statusColors: Record<EmployeeStatus, { label: string; dot: string; bg: string }> = {
+  ACTIVE: { label: "Active", dot: "bg-emerald-400", bg: "bg-emerald-500/10 text-emerald-400" },
+  ON_LEAVE: { label: "On Leave", dot: "bg-amber-400", bg: "bg-amber-500/10 text-amber-400" },
+  TERMINATED: { label: "Terminated", dot: "bg-red-400", bg: "bg-red-500/10 text-red-400" },
+  PROBATION: { label: "Probation", dot: "bg-cyan-400", bg: "bg-cyan-500/10 text-cyan-400" },
 };
 
-const availabilityConfig = {
-  AVAILABLE: { color: "#22C55E", label: "Available" },
-  BUSY: { color: "#F59E0B", label: "Busy" },
-  ON_LEAVE: { color: "#6B7280", label: "On Leave" },
+const departments = ["LEADERSHIP", "MARKETING", "DEV", "CREATIVE", "SUPPORT", "ADMIN", "SALES", "OPS"];
+
+const emptyEmployee: Omit<Employee, "id"> = {
+  name: "", email: "", phone: "", avatar: null, title: "", department: "DEV",
+  brand: "VCS", hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE",
+  hireDate: new Date().toISOString().split("T")[0], salary: 0, currency: "USD",
+  performanceScore: 0, availability: "AVAILABLE", skills: [],
+  workload: 0, tasksCompleted: 0, totalTasks: 0,
 };
 
-interface EmployeeFormData {
-  name: string;
-  email: string;
-  title: string;
-  department: string;
-  brand: string;
-  availability: string;
-  skills: string;
-}
-
-const emptyFormData: EmployeeFormData = {
-  name: "",
-  email: "",
-  title: "",
-  department: "DEV",
-  brand: "VCS",
-  availability: "AVAILABLE",
-  skills: "",
-};
-
-export default function EmployeeDirectory({ brandId = "1" }: { brandId?: string }) {
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("All");
-  const [filterBrand, setFilterBrand] = useState("All");
+export default function EmployeeDirectory({ brandId }: { brandId: string }) {
+  const [employeeList, setEmployeeList] = useState<Employee[]>(initialEmployees);
+  const [search, setSearch] = useState("");
+  const [filterBrand, setFilterBrand] = useState<string>("ALL");
+  const [filterDept, setFilterDept] = useState<string>("ALL");
+  const [filterStatus, setFilterStatus] = useState<string>("ALL");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [formData, setFormData] = useState<EmployeeFormData>(emptyFormData);
-  const [deleteEmployeeId, setDeleteEmployeeId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<Omit<Employee, "id">>(emptyEmployee);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [newSkill, setNewSkill] = useState("");
 
-  const filteredEmployees = employees.filter((emp) => {
-    const matchesSearch =
-      emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      emp.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDept = filterDepartment === "All" || emp.department === filterDepartment;
-    const matchesBrand = filterBrand === "All" || emp.brand === filterBrand;
-    return matchesSearch && matchesDept && matchesBrand;
-  });
+  const filtered = useMemo(() => {
+    return employeeList.filter((e) => {
+      if (search && !e.name.toLowerCase().includes(search.toLowerCase()) && !e.email.toLowerCase().includes(search.toLowerCase()) && !e.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (filterBrand !== "ALL" && e.brand !== filterBrand) return false;
+      if (filterDept !== "ALL" && e.department !== filterDept) return false;
+      if (filterStatus !== "ALL" && e.status !== filterStatus) return false;
+      return true;
+    });
+  }, [employeeList, search, filterBrand, filterDept, filterStatus]);
 
-  const handleOpenModal = (employee?: Employee) => {
-    if (employee) {
-      setEditingEmployee(employee);
-      setFormData({
-        name: employee.name,
-        email: employee.email,
-        title: employee.title,
-        department: employee.department,
-        brand: employee.brand,
-        availability: employee.availability,
-        skills: employee.skills.join(", "),
-      });
-    } else {
-      setEditingEmployee(null);
-      setFormData(emptyFormData);
-    }
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const openAddModal = () => {
     setEditingEmployee(null);
-    setFormData(emptyFormData);
+    setFormData(emptyEmployee);
+    setShowModal(true);
   };
 
-  const handleSaveEmployee = () => {
-    const skillsArray = formData.skills.split(",").map((s) => s.trim()).filter(Boolean);
+  const openEditModal = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setFormData({ ...emp });
+    setShowModal(true);
+  };
 
+  const handleSave = () => {
+    if (!formData.name || !formData.email) return;
     if (editingEmployee) {
-      setEmployees(
-        employees.map((e) =>
-          e.id === editingEmployee.id
-            ? {
-                ...e,
-                name: formData.name,
-                email: formData.email,
-                title: formData.title,
-                department: formData.department,
-                brand: formData.brand,
-                availability: formData.availability as Employee["availability"],
-                skills: skillsArray,
-              }
-            : e
-        )
-      );
+      setEmployeeList((prev) => prev.map((e) => e.id === editingEmployee.id ? { ...formData, id: editingEmployee.id } : e));
     } else {
-      const newEmployee: Employee = {
-        id: Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        avatar: null,
-        title: formData.title,
-        department: formData.department,
-        brand: formData.brand,
-        performanceScore: 75,
-        availability: formData.availability as Employee["availability"],
-        skills: skillsArray,
-        workload: 50,
-        tasksCompleted: 0,
-        totalTasks: 10,
-      };
-      setEmployees([...employees, newEmployee]);
+      const newId = String(Date.now());
+      setEmployeeList((prev) => [...prev, { ...formData, id: newId }]);
     }
-    handleCloseModal();
+    setShowModal(false);
   };
 
-  const handleDeleteEmployee = () => {
-    if (deleteEmployeeId) {
-      setEmployees(employees.filter((e) => e.id !== deleteEmployeeId));
-      setIsDeleteModalOpen(false);
-      setDeleteEmployeeId(null);
+  const handleDelete = (id: string) => {
+    setEmployeeList((prev) => prev.filter((e) => e.id !== id));
+    setShowDeleteConfirm(null);
+  };
+
+  const addSkill = () => {
+    if (newSkill.trim() && !formData.skills.includes(newSkill.trim())) {
+      setFormData({ ...formData, skills: [...formData.skills, newSkill.trim()] });
+      setNewSkill("");
     }
   };
+
+  const removeSkill = (skill: string) => {
+    setFormData({ ...formData, skills: formData.skills.filter((s) => s !== skill) });
+  };
+
+  const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#D4AF37";
+
+  const stats = useMemo(() => ({
+    total: employeeList.length,
+    active: employeeList.filter((e) => e.status === "ACTIVE").length,
+    onLeave: employeeList.filter((e) => e.status === "ON_LEAVE").length,
+    avgPerformance: Math.round(employeeList.reduce((a, e) => a + e.performanceScore, 0) / employeeList.length),
+  }), [employeeList]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-white">Employee Directory</h2>
-          <p className="text-white/50 mt-1">Manage your team members and their performance</p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold tracking-wider">
+              {parentCompany.code} CORP
+            </span>
+            <span className="text-white/30 text-xs">Hires all employees</span>
+          </div>
+          <p className="text-white/50 text-sm">
+            {stats.total} employees &bull; {stats.active} active &bull; {stats.avgPerformance}% avg performance
+          </p>
         </div>
         <button
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
+          onClick={openAddModal}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all"
         >
           <UserPlus className="w-4 h-4" />
-          Add Employee
+          Hire Employee
         </button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/20">
-              <Users className="w-5 h-5 text-[#D4AF37]" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {brands.map((brand) => {
+          const count = employeeList.filter((e) => e.brand === brand.code && e.status === "ACTIVE").length;
+          return (
+            <div key={brand.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: brand.color }} />
+                <span className="text-xs text-white/50">{brand.code}</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{count}</p>
+              <p className="text-xs text-white/40">active employees</p>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-white">{employees.length}</p>
-              <p className="text-xs text-white/50">Total Employees</p>
-            </div>
+          );
+        })}
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex items-center gap-2 mb-2">
+            <Star className="w-3 h-3 text-[#D4AF37]" />
+            <span className="text-xs text-white/50">Avg Performance</span>
           </div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#22C55E]/20">
-              <CheckCircle className="w-5 h-5 text-[#22C55E]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                {employees.filter((e) => e.availability === "AVAILABLE").length}
-              </p>
-              <p className="text-xs text-white/50">Available Now</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#F59E0B]/20">
-              <Clock className="w-5 h-5 text-[#F59E0B]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                {employees.filter((e) => e.availability === "BUSY").length}
-              </p>
-              <p className="text-xs text-white/50">Busy</p>
-            </div>
-          </div>
-        </div>
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
-              <Star className="w-5 h-5 text-[#8B5CF6]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-white">
-                {Math.round(employees.reduce((sum, e) => sum + e.performanceScore, 0) / employees.length)}%
-              </p>
-              <p className="text-xs text-white/50">Avg Performance</p>
-            </div>
-          </div>
+          <p className="text-2xl font-bold text-white">{stats.avgPerformance}%</p>
+          <p className="text-xs text-white/40">across all companies</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
           <input
-            type="text"
-            placeholder="Search employees..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
+            type="text" placeholder="Search by name, email, or title..."
+            value={search} onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30"
           />
         </div>
-        <select
-          value={filterDepartment}
-          onChange={(e) => setFilterDepartment(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
-        >
-          {departments.map((dept) => (
-            <option key={dept} value={dept} className="bg-[#0f0f18]">
-              {dept === "All" ? "All Departments" : dept}
-            </option>
-          ))}
+        <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          <option value="ALL" className="bg-[#0f0f1e]">All Companies</option>
+          {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#0f0f1e]">{b.code}</option>)}
         </select>
-        <select
-          value={filterBrand}
-          onChange={(e) => setFilterBrand(e.target.value)}
-          className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
-        >
-          {brands.map((brand) => (
-            <option key={brand} value={brand} className="bg-[#0f0f18]">
-              {brand === "All" ? "All Brands" : brand}
-            </option>
-          ))}
+        <select value={filterDept} onChange={(e) => setFilterDept(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          <option value="ALL" className="bg-[#0f0f1e]">All Depts</option>
+          {departments.map((d) => <option key={d} value={d} className="bg-[#0f0f1e]">{d}</option>)}
         </select>
-        <div className="flex items-center gap-1 bg-white/5 rounded-xl p-1">
-          <button
-            onClick={() => setViewMode("grid")}
-            className={clsx(
-              "px-3 py-2 rounded-lg text-sm transition-all",
-              viewMode === "grid" ? "bg-[#D4AF37] text-black" : "text-white/60 hover:text-white"
-            )}
-          >
-            Grid
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          <option value="ALL" className="bg-[#0f0f1e]">All Status</option>
+          {Object.entries(statusColors).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v.label}</option>)}
+        </select>
+        <div className="flex gap-1 bg-white/[0.04] border border-white/[0.08] rounded-xl p-1">
+          <button onClick={() => setViewMode("grid")} className={clsx("p-2 rounded-lg transition-all", viewMode === "grid" ? "bg-white/10 text-white" : "text-white/40")}>
+            <LayoutGrid className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={clsx(
-              "px-3 py-2 rounded-lg text-sm transition-all",
-              viewMode === "list" ? "bg-[#D4AF37] text-black" : "text-white/60 hover:text-white"
-            )}
-          >
-            List
+          <button onClick={() => setViewMode("list")} className={clsx("p-2 rounded-lg transition-all", viewMode === "list" ? "bg-white/10 text-white" : "text-white/40")}>
+            <List className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Employee Grid/List */}
-      <div className={clsx(
-        viewMode === "grid"
-          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
-          : "space-y-3"
-      )}>
-        {filteredEmployees.map((employee) => {
-          const brandColor = brandColors[employee.brand] || "#D4AF37";
-          const availConfig = availabilityConfig[employee.availability];
-
-          return (
-            <div
-              key={employee.id}
-              className={clsx(
-                "rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 hover:border-white/20 transition-all group",
-                viewMode === "list" && "flex items-center gap-4 p-4"
-              )}
-            >
-              {viewMode === "grid" ? (
-                <div className="p-5">
-                  {/* Avatar & Basic Info */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-black font-bold text-lg">
-                          {employee.name.split(" ").map((n) => n[0]).join("")}
-                        </div>
-                        <div
-                          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0f0f18]"
-                          style={{ backgroundColor: availConfig.color }}
-                        />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white group-hover:text-[#D4AF37] transition-colors">
-                          {employee.name}
-                        </p>
-                        <p className="text-xs text-white/50">{employee.title}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenModal(employee)}
-                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Edit className="w-4 h-4 text-white/60" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteEmployeeId(employee.id);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-1.5 rounded-lg hover:bg-red-500/20 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400/60" />
-                      </button>
-                    </div>
+      {viewMode === "grid" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filtered.map((emp, i) => {
+            const sc = statusColors[emp.status];
+            return (
+              <div key={emp.id} className={clsx("p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all hover-lift group animate-fade-in-up", `stagger-${(i % 6) + 1}`)}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center">
+                    <span className="text-lg font-bold text-white/80">{emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</span>
                   </div>
-
-                  {/* Brand & Department */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <span
-                      className="px-2 py-0.5 rounded text-xs font-medium"
-                      style={{ backgroundColor: `${brandColor}20`, color: brandColor }}
-                    >
-                      {employee.brand}
-                    </span>
-                    <span className="text-white/30 text-xs">|</span>
-                    <span className="text-xs text-white/50">{employee.department}</span>
-                  </div>
-
-                  {/* Skills */}
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {employee.skills.slice(0, 3).map((skill) => (
-                      <span key={skill} className="px-2 py-0.5 rounded bg-white/5 text-xs text-white/60">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Performance */}
-                  <div className="pt-4 border-t border-white/10">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-white/50">Performance</span>
-                      <span className="text-sm font-semibold text-[#D4AF37]">{employee.performanceScore}%</span>
-                    </div>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-3">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${employee.performanceScore}%`,
-                          backgroundColor: brandColor,
-                        }}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/50">
-                        {employee.tasksCompleted}/{employee.totalTasks} tasks
-                      </span>
-                      <span
-                        className="px-2 py-0.5 rounded"
-                        style={{ backgroundColor: `${availConfig.color}20`, color: availConfig.color }}
-                      >
-                        {availConfig.label}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEditModal(emp)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all">
+                      <Edit className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setShowDeleteConfirm(emp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-all">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  {/* List View */}
-                  <div className="relative shrink-0">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center text-black font-bold text-sm">
-                      {employee.name.split(" ").map((n) => n[0]).join("")}
-                    </div>
-                    <div
-                      className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0f0f18]"
-                      style={{ backgroundColor: availConfig.color }}
-                    />
+                <h3 className="text-sm font-semibold text-white mb-0.5">{emp.name}</h3>
+                <p className="text-xs text-white/50 mb-3">{emp.title}</p>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: brandColor(emp.brand), borderColor: brandColor(emp.brand) + "30", backgroundColor: brandColor(emp.brand) + "10" }}>
+                    {emp.brand}
+                  </span>
+                  <span className={clsx("px-2 py-0.5 rounded-md text-[10px] font-medium", sc.bg)}>{sc.label}</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-white/40">
+                  <div className="flex items-center gap-2"><Mail className="w-3 h-3" /><span className="truncate">{emp.email}</span></div>
+                  <div className="flex items-center gap-2"><Building2 className="w-3 h-3" /><span>{emp.department}</span></div>
+                  <div className="flex items-center gap-2"><Shield className="w-3 h-3" /><span>{roleLabels[emp.role]}</span></div>
+                </div>
+                {/* Performance bar */}
+                <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-white/40">Performance</span>
+                    <span className={clsx("font-medium", emp.performanceScore >= 90 ? "text-emerald-400" : emp.performanceScore >= 70 ? "text-amber-400" : "text-red-400")}>
+                      {emp.performanceScore}%
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-white">{employee.name}</p>
-                      <span
-                        className="px-2 py-0.5 rounded text-xs font-medium"
-                        style={{ backgroundColor: `${brandColor}20`, color: brandColor }}
-                      >
-                        {employee.brand}
-                      </span>
-                    </div>
-                    <p className="text-xs text-white/50">{employee.title} | {employee.department}</p>
+                  <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${emp.performanceScore}%`, backgroundColor: emp.performanceScore >= 90 ? "#10B981" : emp.performanceScore >= 70 ? "#F59E0B" : "#EF4444" }} />
                   </div>
-                  <div className="flex items-center gap-6 shrink-0">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-sm font-semibold text-[#D4AF37]">{employee.performanceScore}%</p>
-                      <p className="text-xs text-white/50">Performance</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleOpenModal(employee)}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                      >
-                        <Edit className="w-4 h-4 text-white/60" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteEmployeeId(employee.id);
-                          setIsDeleteModalOpen(true);
-                        }}
-                        className="p-2 rounded-lg hover:bg-red-500/20 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-400/60" />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Employee</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Company</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Role</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Performance</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Hired</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((emp) => {
+                const sc = statusColors[emp.status];
+                return (
+                  <tr key={emp.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-white/80">{emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">{emp.name}</p>
+                          <p className="text-xs text-white/40">{emp.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded-md text-[11px] font-bold border" style={{ color: brandColor(emp.brand), borderColor: brandColor(emp.brand) + "30", backgroundColor: brandColor(emp.brand) + "10" }}>{emp.brand}</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-white/60">{emp.title}</td>
+                    <td className="px-4 py-3">
+                      <span className={clsx("px-2 py-0.5 rounded-md text-[11px] font-medium", sc.bg)}>{sc.label}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={clsx("text-sm font-medium", emp.performanceScore >= 90 ? "text-emerald-400" : emp.performanceScore >= 70 ? "text-amber-400" : "text-red-400")}>{emp.performanceScore}%</span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-white/50">{emp.hireDate}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openEditModal(emp)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all"><Edit className="w-4 h-4" /></button>
+                        <button onClick={() => setShowDeleteConfirm(emp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-all"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {filtered.length === 0 && (
+        <div className="text-center py-16">
+          <Users className="w-12 h-12 text-white/10 mx-auto mb-3" />
+          <p className="text-white/30 text-sm">No employees found</p>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h3 className="text-lg font-semibold text-white">
-                {editingEmployee ? "Edit Employee" : "Add New Employee"}
-              </h3>
-              <button onClick={handleCloseModal} className="p-2 rounded-lg hover:bg-white/10">
-                <X className="w-5 h-5 text-white/60" />
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#0f0f1e] border border-white/10 rounded-2xl shadow-2xl">
+            <div className="sticky top-0 bg-[#0f0f1e] border-b border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-semibold text-white">
+                {editingEmployee ? "Edit Employee" : "Hire New Employee"}
+              </h2>
+              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all">
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                  placeholder="Enter full name"
-                />
+
+            <div className="p-6 space-y-5">
+              {/* Hired by FU Corp badge */}
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-[#D4AF37]/5 border border-[#D4AF37]/10">
+                <BadgeCheck className="w-5 h-5 text-[#D4AF37]" />
+                <span className="text-sm text-white/70">Hired by <strong className="text-[#D4AF37]">FU Corp</strong> — Mother Company</span>
               </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Email *</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                  placeholder="email@company.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Job Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                  placeholder="e.g. Senior Developer"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Name */}
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Department</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
-                  >
-                    <option value="LEADERSHIP" className="bg-[#0f0f18]">Leadership</option>
-                    <option value="MARKETING" className="bg-[#0f0f18]">Marketing</option>
-                    <option value="DEV" className="bg-[#0f0f18]">Development</option>
-                    <option value="WORKFORCE" className="bg-[#0f0f18]">Workforce</option>
-                    <option value="SUPPORT" className="bg-[#0f0f18]">Support</option>
-                    <option value="OPS" className="bg-[#0f0f18]">Operations</option>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Full Name *</label>
+                  <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Employee name" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
+                {/* Email */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Email *</label>
+                  <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="employee@fu-corp.com" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
+                {/* Phone */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Phone</label>
+                  <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+92 300-1234567" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
+                {/* Title */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Job Title *</label>
+                  <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g. Senior Developer" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
+                {/* Assign to Subsidiary */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Assign to Company *</label>
+                  <select value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#0f0f1e]">{b.code} - {b.name}</option>)}
                   </select>
                 </div>
+                {/* Department */}
                 <div>
-                  <label className="block text-sm text-white/60 mb-2">Brand</label>
-                  <select
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
-                  >
-                    <option value="VCS" className="bg-[#0f0f18]">VCS</option>
-                    <option value="BSL" className="bg-[#0f0f18]">Backup Solutions</option>
-                    <option value="DPL" className="bg-[#0f0f18]">Digital Point</option>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Department</label>
+                  <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {departments.map((d) => <option key={d} value={d} className="bg-[#0f0f1e]">{d}</option>)}
                   </select>
                 </div>
+                {/* Role */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Role</label>
+                  <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value as Employee["role"] })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {Object.entries(roleLabels).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v}</option>)}
+                  </select>
+                </div>
+                {/* Status */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Status</label>
+                  <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as EmployeeStatus })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
+                    {Object.entries(statusColors).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v.label}</option>)}
+                  </select>
+                </div>
+                {/* Salary */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Salary (USD/mo)</label>
+                  <input type="number" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: Number(e.target.value) })}
+                    placeholder="5000" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
+                {/* Hire Date */}
+                <div>
+                  <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Hire Date</label>
+                  <input type="date" value={formData.hireDate} onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                </div>
               </div>
+
+              {/* Skills */}
               <div>
-                <label className="block text-sm text-white/60 mb-2">Availability</label>
-                <select
-                  value={formData.availability}
-                  onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 cursor-pointer"
-                >
-                  <option value="AVAILABLE" className="bg-[#0f0f18]">Available</option>
-                  <option value="BUSY" className="bg-[#0f0f18]">Busy</option>
-                  <option value="ON_LEAVE" className="bg-[#0f0f18]">On Leave</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-white/60 mb-2">Skills (comma separated)</label>
-                <input
-                  type="text"
-                  value={formData.skills}
-                  onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white/80 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50"
-                  placeholder="React, Node.js, AWS"
-                />
+                <label className="block text-xs text-white/40 mb-1.5 uppercase tracking-wider font-medium">Skills</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {formData.skills.map((skill) => (
+                    <span key={skill} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70">
+                      {skill}
+                      <button onClick={() => removeSkill(skill)} className="text-white/30 hover:text-red-400"><X className="w-3 h-3" /></button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input type="text" value={newSkill} onChange={(e) => setNewSkill(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addSkill())}
+                    placeholder="Add skill..." className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30" />
+                  <button onClick={addSkill} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 text-sm transition-all">Add</button>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10">
-              <button
-                onClick={handleCloseModal}
-                className="px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all"
-              >
+
+            {/* Footer */}
+            <div className="sticky bottom-0 bg-[#0f0f1e] border-t border-white/[0.06] px-6 py-4 flex justify-end gap-3">
+              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white text-sm transition-all">
                 Cancel
               </button>
-              <button
-                onClick={handleSaveEmployee}
-                disabled={!formData.name || !formData.email || !formData.title}
-                className="px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all disabled:opacity-50"
-              >
-                {editingEmployee ? "Update" : "Add"} Employee
+              <button onClick={handleSave} disabled={!formData.name || !formData.email}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#B8860B] text-black font-semibold text-sm hover:shadow-lg hover:shadow-[#D4AF37]/20 transition-all disabled:opacity-50 flex items-center gap-2">
+                <Save className="w-4 h-4" />
+                {editingEmployee ? "Save Changes" : "Hire Employee"}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-[#1a1a24] to-[#0f0f18] border border-white/10 rounded-2xl w-full max-w-md">
-            <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-6 h-6 text-red-400" />
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
+          <div className="relative w-full max-w-md bg-[#0f0f1e] border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
               </div>
-              <h3 className="text-lg font-semibold text-white text-center mb-2">Delete Employee?</h3>
-              <p className="text-white/60 text-center text-sm">
-                Are you sure you want to delete this employee? This action cannot be undone.
-              </p>
+              <div>
+                <h3 className="text-white font-semibold">Remove Employee</h3>
+                <p className="text-xs text-white/40">This action cannot be undone</p>
+              </div>
             </div>
-            <div className="flex items-center gap-3 p-6 border-t border-white/10">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-white/10 text-white/80 hover:bg-white/20 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteEmployee}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-all"
-              >
-                Delete
-              </button>
+            <p className="text-sm text-white/60 mb-6">
+              Are you sure you want to remove <strong className="text-white">{employeeList.find((e) => e.id === showDeleteConfirm)?.name}</strong> from FU Corp?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm transition-all hover:text-white">Cancel</button>
+              <button onClick={() => handleDelete(showDeleteConfirm)} className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm transition-all hover:bg-red-500/20 font-medium">Remove</button>
             </div>
           </div>
         </div>

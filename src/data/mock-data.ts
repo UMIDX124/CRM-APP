@@ -1,10 +1,22 @@
 // Mock data for FU Corp Command Center CRM
-// Real data from: VCS, Backup Solutions, Digital Point LLC
+// FU Corp = Mother Company | VCS, BSL, DPL = Daughter Companies
+// All employees hired by FU Corp, assigned to subsidiaries
+
+export const parentCompany = {
+  id: "0",
+  name: "FU Corp",
+  code: "FU",
+  color: "#D4AF37",
+  website: "fu-corp.com",
+  tagline: "Enterprise Command Center",
+  founded: "2023",
+  ceo: "Faizan & Umer",
+};
 
 export const brands = [
-  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#D4AF37", website: "virtualcustomersolution.com" },
-  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app" },
-  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com" },
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#D4AF37", website: "virtualcustomersolution.com", parentId: "0" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", parentId: "0" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", parentId: "0" },
 ];
 
 export const departments = [
@@ -28,130 +40,205 @@ export const countries = [
   { name: "Singapore", code: "SG", flag: "SG" },
 ];
 
-export const employees = [
+export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "TERMINATED" | "PROBATION";
+export type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "REMOTE" | "LEAVE";
+
+export interface Employee {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  title: string;
+  department: string;
+  brand: string; // Daughter company assigned to
+  hiredBy: string; // Always "FU" — mother company hires
+  role: "SUPER_ADMIN" | "PROJECT_MANAGER" | "DEPT_HEAD" | "TEAM_LEAD" | "EMPLOYEE";
+  status: EmployeeStatus;
+  hireDate: string;
+  salary: number;
+  currency: string;
+  performanceScore: number;
+  availability: "AVAILABLE" | "BUSY" | "ON_LEAVE" | "OFFLINE";
+  skills: string[];
+  workload: number;
+  tasksCompleted: number;
+  totalTasks: number;
+  address?: string;
+  emergencyContact?: string;
+}
+
+export const employees: Employee[] = [
+  // FU Corp Leadership (works across all subsidiaries)
+  {
+    id: "1", name: "Faizan", email: "faizi@digitalpointllc.com", phone: "+92 300-1234567",
+    avatar: null, title: "Co-Founder & CEO", department: "LEADERSHIP", brand: "DPL",
+    hiredBy: "FU", role: "SUPER_ADMIN", status: "ACTIVE", hireDate: "2023-01-15",
+    salary: 15000, currency: "USD", performanceScore: 98, availability: "AVAILABLE",
+    skills: ["Media Buying", "Meta", "Google", "YouTube", "Attribution", "Strategy"],
+    workload: 85, tasksCompleted: 52, totalTasks: 55,
+  },
+  {
+    id: "2", name: "Umer", email: "umi@digitalpointllc.com", phone: "+92 300-7654321",
+    avatar: null, title: "Co-Founder & CTO", department: "LEADERSHIP", brand: "DPL",
+    hiredBy: "FU", role: "SUPER_ADMIN", status: "ACTIVE", hireDate: "2023-01-15",
+    salary: 15000, currency: "USD", performanceScore: 97, availability: "AVAILABLE",
+    skills: ["Performance Marketing", "Analytics", "Scaling", "Attribution", "Tech"],
+    workload: 80, tasksCompleted: 48, totalTasks: 52,
+  },
   // VCS Team
   {
-    id: "1",
-    name: "Faizan",
-    email: "faizan@digitalpointllc.com",
-    avatar: null,
-    title: "Co-Founder",
-    department: "LEADERSHIP",
-    brand: "DPL",
-    performanceScore: 98,
-    availability: "AVAILABLE",
-    skills: ["Media Buying", "Meta", "Google", "YouTube", "Attribution"],
-    workload: 85,
-    tasksCompleted: 52,
-    totalTasks: 55,
-  },
-  {
-    id: "2",
-    name: "Anwaar",
-    email: "anwaar@digitalpointllc.com",
-    avatar: null,
-    title: "Co-Founder",
-    department: "LEADERSHIP",
-    brand: "DPL",
-    performanceScore: 97,
-    availability: "AVAILABLE",
-    skills: ["Performance Marketing", "Analytics", "Scaling", "Attribution"],
-    workload: 80,
-    tasksCompleted: 48,
-    totalTasks: 52,
-  },
-  {
-    id: "3",
-    name: "Ahmed Khan",
-    email: "ahmed.khan@vcs.pk",
-    avatar: null,
-    title: "Senior SEO Manager",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 94,
-    availability: "AVAILABLE",
+    id: "3", name: "Ahmed Khan", email: "ahmed.khan@vcs.pk", phone: "+92 321-5551234",
+    avatar: null, title: "Senior SEO Manager", department: "MARKETING", brand: "VCS",
+    hiredBy: "FU", role: "TEAM_LEAD", status: "ACTIVE", hireDate: "2023-06-10",
+    salary: 4500, currency: "USD", performanceScore: 94, availability: "AVAILABLE",
     skills: ["SEO", "Google Analytics", "Content Strategy"],
-    workload: 78,
-    tasksCompleted: 47,
-    totalTasks: 50,
+    workload: 78, tasksCompleted: 47, totalTasks: 50,
   },
   {
-    id: "4",
-    name: "Ali Raza",
-    email: "ali.raza@vcs.pk",
-    avatar: null,
-    title: "Full Stack Developer",
-    department: "DEV",
-    brand: "VCS",
-    performanceScore: 96,
-    availability: "AVAILABLE",
-    skills: ["React", "Node.js", "PostgreSQL", "AWS"],
-    workload: 65,
-    tasksCompleted: 52,
-    totalTasks: 55,
-  },
-  // Backup Solutions Team
-  {
-    id: "5",
-    name: "Hamza Ali",
-    email: "hamza@backupsolutions.pk",
-    avatar: null,
-    title: "DevOps Engineer",
-    department: "DEV",
-    brand: "BSL",
-    performanceScore: 92,
-    availability: "BUSY",
-    skills: ["AWS", "Docker", "CI/CD", "Security"],
-    workload: 88,
-    tasksCompleted: 33,
-    totalTasks: 38,
+    id: "4", name: "Ali Hassan", email: "ali@digitalpointllc.com", phone: "+92 333-5559876",
+    avatar: null, title: "Full Stack Developer", department: "DEV", brand: "VCS",
+    hiredBy: "FU", role: "PROJECT_MANAGER", status: "ACTIVE", hireDate: "2023-04-20",
+    salary: 5500, currency: "USD", performanceScore: 96, availability: "AVAILABLE",
+    skills: ["React", "Node.js", "PostgreSQL", "AWS", "Next.js"],
+    workload: 65, tasksCompleted: 52, totalTasks: 55,
   },
   {
-    id: "6",
-    name: "Sarah Williams",
-    email: "sarah@backupsolutions.pk",
-    avatar: null,
-    title: "AI Engineer",
-    department: "DEV",
-    brand: "BSL",
-    performanceScore: 95,
-    availability: "AVAILABLE",
-    skills: ["ML Models", "Python", "TensorFlow", "Data Science"],
-    workload: 75,
-    tasksCompleted: 45,
-    totalTasks: 48,
-  },
-  {
-    id: "7",
-    name: "Fatima Hassan",
-    email: "fatima.h@vcs.pk",
-    avatar: null,
-    title: "PPC Specialist",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 88,
-    availability: "BUSY",
+    id: "5", name: "Fatima Hassan", email: "fatima.h@vcs.pk", phone: "+92 345-5553333",
+    avatar: null, title: "PPC Specialist", department: "MARKETING", brand: "VCS",
+    hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE", hireDate: "2024-01-08",
+    salary: 3000, currency: "USD", performanceScore: 88, availability: "BUSY",
     skills: ["Google Ads", "Facebook Ads", "Analytics"],
-    workload: 92,
-    tasksCompleted: 38,
-    totalTasks: 42,
+    workload: 92, tasksCompleted: 38, totalTasks: 42,
   },
   {
-    id: "8",
-    name: "Usman Tariq",
-    email: "usman.t@vcs.pk",
-    avatar: null,
-    title: "Social Media Manager",
-    department: "MARKETING",
-    brand: "VCS",
-    performanceScore: 87,
-    availability: "AVAILABLE",
-    skills: ["Instagram", "LinkedIn", "Content Creation"],
-    workload: 70,
-    tasksCompleted: 29,
-    totalTasks: 35,
+    id: "6", name: "Usman Tariq", email: "usman.t@vcs.pk", phone: "+92 300-5554444",
+    avatar: null, title: "Social Media Manager", department: "MARKETING", brand: "VCS",
+    hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE", hireDate: "2024-03-15",
+    salary: 2500, currency: "USD", performanceScore: 87, availability: "AVAILABLE",
+    skills: ["Instagram", "LinkedIn", "Content Creation", "TikTok"],
+    workload: 70, tasksCompleted: 29, totalTasks: 35,
+  },
+  // BSL Team
+  {
+    id: "7", name: "Hamza Ali", email: "hamza@backupsolutions.pk", phone: "+92 311-5552222",
+    avatar: null, title: "DevOps Engineer", department: "DEV", brand: "BSL",
+    hiredBy: "FU", role: "TEAM_LEAD", status: "ACTIVE", hireDate: "2023-08-01",
+    salary: 5000, currency: "USD", performanceScore: 92, availability: "BUSY",
+    skills: ["AWS", "Docker", "CI/CD", "Security", "Kubernetes"],
+    workload: 88, tasksCompleted: 33, totalTasks: 38,
+  },
+  {
+    id: "8", name: "Sarah Williams", email: "sarah@backupsolutions.pk", phone: "+1 555-5551111",
+    avatar: null, title: "AI Engineer", department: "DEV", brand: "BSL",
+    hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE", hireDate: "2024-02-01",
+    salary: 6000, currency: "USD", performanceScore: 95, availability: "AVAILABLE",
+    skills: ["ML Models", "Python", "TensorFlow", "Data Science", "LLMs"],
+    workload: 75, tasksCompleted: 45, totalTasks: 48,
+  },
+  {
+    id: "9", name: "Bilal Rashid", email: "bilal@vcs.pk", phone: "+92 322-5556666",
+    avatar: null, title: "Video Editor", department: "CREATIVE", brand: "VCS",
+    hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE", hireDate: "2024-06-01",
+    salary: 2000, currency: "USD", performanceScore: 85, availability: "AVAILABLE",
+    skills: ["Premiere Pro", "After Effects", "Motion Graphics"],
+    workload: 60, tasksCompleted: 22, totalTasks: 28,
+  },
+  {
+    id: "10", name: "Zainab Malik", email: "zainab@digitalpointllc.com", phone: "+92 315-5557777",
+    avatar: null, title: "Graphic Designer", department: "CREATIVE", brand: "DPL",
+    hiredBy: "FU", role: "EMPLOYEE", status: "ACTIVE", hireDate: "2024-04-10",
+    salary: 2200, currency: "USD", performanceScore: 90, availability: "AVAILABLE",
+    skills: ["Figma", "Photoshop", "Illustrator", "UI/UX"],
+    workload: 72, tasksCompleted: 35, totalTasks: 40,
+  },
+  {
+    id: "11", name: "Owais Ahmed", email: "owais@backupsolutions.pk", phone: "+92 302-5558888",
+    avatar: null, title: "Support Lead", department: "SUPPORT", brand: "BSL",
+    hiredBy: "FU", role: "TEAM_LEAD", status: "ACTIVE", hireDate: "2023-11-20",
+    salary: 3500, currency: "USD", performanceScore: 86, availability: "AVAILABLE",
+    skills: ["Customer Support", "Zendesk", "Troubleshooting", "Documentation"],
+    workload: 68, tasksCompleted: 41, totalTasks: 45,
+  },
+  {
+    id: "12", name: "Nadia Khan", email: "nadia@vcs.pk", phone: "+92 331-5559999",
+    avatar: null, title: "HR Manager", department: "ADMIN", brand: "VCS",
+    hiredBy: "FU", role: "DEPT_HEAD", status: "ACTIVE", hireDate: "2023-09-01",
+    salary: 4000, currency: "USD", performanceScore: 91, availability: "AVAILABLE",
+    skills: ["Recruitment", "HR Policy", "Payroll", "Training"],
+    workload: 55, tasksCompleted: 30, totalTasks: 32,
   },
 ];
+
+// Attendance Records
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  date: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  status: AttendanceStatus;
+  hoursWorked: number;
+  notes?: string;
+}
+
+// Generate attendance for last 7 days
+const generateAttendance = (): AttendanceRecord[] => {
+  const records: AttendanceRecord[] = [];
+  const today = new Date("2026-04-02");
+
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - dayOffset);
+    const dateStr = date.toISOString().split("T")[0];
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+
+    employees.forEach((emp) => {
+      if (isWeekend) return;
+      const rand = Math.random();
+      let status: AttendanceStatus;
+      let checkIn: string | null = null;
+      let checkOut: string | null = null;
+      let hours = 0;
+
+      if (rand < 0.7) {
+        status = "PRESENT";
+        checkIn = `09:0${Math.floor(Math.random() * 10)}`;
+        checkOut = dayOffset === 0 ? null : `18:${10 + Math.floor(Math.random() * 20)}`;
+        hours = dayOffset === 0 ? 0 : 8 + Math.random() * 1.5;
+      } else if (rand < 0.8) {
+        status = "REMOTE";
+        checkIn = `09:${15 + Math.floor(Math.random() * 15)}`;
+        checkOut = dayOffset === 0 ? null : `17:${30 + Math.floor(Math.random() * 30)}`;
+        hours = dayOffset === 0 ? 0 : 7.5 + Math.random();
+      } else if (rand < 0.88) {
+        status = "LATE";
+        checkIn = `10:${Math.floor(Math.random() * 30)}`;
+        checkOut = dayOffset === 0 ? null : `18:${30 + Math.floor(Math.random() * 30)}`;
+        hours = dayOffset === 0 ? 0 : 7 + Math.random();
+      } else if (rand < 0.94) {
+        status = "LEAVE";
+        hours = 0;
+      } else {
+        status = "ABSENT";
+        hours = 0;
+      }
+
+      records.push({
+        id: `att-${emp.id}-${dateStr}`,
+        employeeId: emp.id,
+        date: dateStr,
+        checkIn,
+        checkOut,
+        status,
+        hoursWorked: Math.round(hours * 10) / 10,
+      });
+    });
+  }
+  return records;
+};
+
+export const attendanceRecords: AttendanceRecord[] = generateAttendance();
 
 export const clients = [
   // VCS Clients
