@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   FileText,
   Download,
@@ -93,81 +95,138 @@ export default function ReportsModule() {
   const revenueGrowth = Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100);
 
   const generatePDF = () => {
-    const reportContent = `
-================================================================================
-                    FU CORP COMMAND CENTER - BUSINESS REPORT
-                              Generated: ${new Date().toLocaleDateString()}
-================================================================================
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
-EXECUTIVE SUMMARY
------------------
-Total Revenue (March 2026): ${formatCurrency(totalRevenue)}
-Revenue Growth: +${revenueGrowth}%
-Total Clients: ${reportData.clients.length}
-Total Employees: ${reportData.employees.length}
-Active Tasks: ${reportData.tasks.reduce((acc, t) => acc + t.count, 0)}
+    const addFooter = (pageNum: number, totalPages: number) => {
+      doc.setFontSize(9);
+      doc.setTextColor(150);
+      doc.text("FU Corp Command Center", 14, pageHeight - 10);
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: "right" });
+    };
 
-================================================================================
-COMPANY OVERVIEW
-================================================================================
+    // --- Page 1: Title & Summary ---
+    doc.setFontSize(28);
+    doc.setTextColor(40);
+    doc.text("FU Corp Business Report", pageWidth / 2, 40, { align: "center" });
 
-1. VIRTUAL CUSTOMER SOLUTION (VCS)
-   Website: virtualcustomersolution.com
-   Services: AI CX, Cloud Infrastructure, Cybersecurity, Digital Engineering
-   Founded: 2016 | 8+ Years Experience
-   Clients Served: 200+
-   Countries: 15+
+    doc.setFontSize(12);
+    doc.setTextColor(120);
+    doc.text(`Generated: ${today}`, pageWidth / 2, 52, { align: "center" });
 
-2. BACKUP SOLUTIONS LLC
-   Website: backup-solutions.vercel.app
-   Services: Web Architecture, Software Engineering, AI Modeling
-   Founded: 2018 | 8+ Years Experience
-   Focus: Enterprise Technology
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(0.8);
+    doc.line(14, 60, pageWidth - 14, 60);
 
-3. DIGITAL POINT LLC
-   Website: digitalpointllc.com
-   Services: Performance Marketing, Systems & Reporting, Remote Workforce
-   Founded: 2018 | 8+ Years Experience
-   Ad Spend Managed: $50M+
-   Average Client ROAS: 4.2x
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text("Executive Summary", 14, 78);
 
-================================================================================
-TOP CLIENTS BY MRR
-================================================================================
-${reportData.clients.map((c, i) => `${i + 1}. ${c.name}: ${formatCurrency(c.mrr)}/month`).join('\n')}
+    const summaryData = [
+      ["Total Revenue (Latest Month)", formatCurrency(totalRevenue)],
+      ["Revenue Growth", `+${revenueGrowth}%`],
+      ["Total Clients", String(reportData.clients.length)],
+      ["Total Employees", String(reportData.employees.length)],
+      ["Active Tasks", String(reportData.tasks.reduce((acc, t) => acc + t.count, 0))],
+    ];
 
-================================================================================
-EMPLOYEE PERFORMANCE
-================================================================================
-${reportData.employees.map((e, i) => `${i + 1}. ${e.name} (${e.department}): ${e.performance}%`).join('\n')}
+    autoTable(doc, {
+      startY: 85,
+      head: [["Metric", "Value"]],
+      body: summaryData,
+      theme: "grid",
+      headStyles: { fillColor: [212, 175, 55], textColor: [0, 0, 0], fontStyle: "bold" },
+      styles: { fontSize: 11, cellPadding: 6 },
+      columnStyles: { 0: { fontStyle: "bold" }, 1: { halign: "right" } },
+    });
 
-================================================================================
-SERVICE BREAKDOWN
-================================================================================
-${reportData.brands.map(b => `${b.name}: ${formatCurrency(b.revenue)}`).join('\n')}
+    // --- Page 2: Revenue Table ---
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text("Revenue Breakdown by Month", 14, 25);
 
-================================================================================
-REVENUE TREND
-================================================================================
-${reportData.revenue.map(r => `${r.month}: VCS ${formatCurrency(r.vcs)} | BSL ${formatCurrency(r.bsl)} | DPL ${formatCurrency(r.dpl)}`).join('\n')}
+    const revenueRows = reportData.revenue.map((r) => [
+      r.month,
+      formatCurrency(r.vcs),
+      formatCurrency(r.bsl),
+      formatCurrency(r.dpl),
+      formatCurrency(r.vcs + r.bsl + r.dpl),
+    ]);
 
-================================================================================
-TASK STATUS
-================================================================================
-${reportData.tasks.map(t => `${t.status}: ${t.count} tasks`).join('\n')}
+    autoTable(doc, {
+      startY: 32,
+      head: [["Month", "VCS", "BSL", "DPL", "Total"]],
+      body: revenueRows,
+      theme: "striped",
+      headStyles: { fillColor: [212, 175, 55], textColor: [0, 0, 0], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: {
+        1: { halign: "right" },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right", fontStyle: "bold" },
+      },
+    });
 
-================================================================================
-                               Report Generated by FU Corp Command Center
-================================================================================
-    `;
+    // --- Page 3: Top Clients ---
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text("Top Clients", 14, 25);
 
-    const blob = new Blob([reportContent], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `FU-Corp-Report-${new Date().toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const clientRows = reportData.clients.map((c) => [
+      c.name,
+      formatCurrency(c.mrr),
+      c.status,
+    ]);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [["Company", "MRR", "Health Score"]],
+      body: clientRows,
+      theme: "striped",
+      headStyles: { fillColor: [212, 175, 55], textColor: [0, 0, 0], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: { 1: { halign: "right" } },
+    });
+
+    // --- Page 4: Employee Performance ---
+    doc.addPage();
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text("Employee Performance", 14, 25);
+
+    const employeeRows = reportData.employees.map((e) => [
+      e.name,
+      e.department,
+      `${e.performance}%`,
+    ]);
+
+    autoTable(doc, {
+      startY: 32,
+      head: [["Name", "Department", "Score"]],
+      body: employeeRows,
+      theme: "striped",
+      headStyles: { fillColor: [212, 175, 55], textColor: [0, 0, 0], fontStyle: "bold" },
+      styles: { fontSize: 10, cellPadding: 5 },
+      columnStyles: { 2: { halign: "right" } },
+    });
+
+    // Add footers to all pages
+    const totalPages = (doc as any).getNumberOfPages() as number;
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooter(i, totalPages);
+    }
+
+    doc.save(`FU-Corp-Report-${new Date().toISOString().split("T")[0]}.pdf`);
   };
 
   const printReport = () => {
@@ -195,7 +254,7 @@ ${reportData.tasks.map(t => `${t.status}: ${t.count} tasks`).join('\n')}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] text-black font-medium hover:bg-[#E5C158] transition-all"
           >
             <Download className="w-4 h-4" />
-            Export Report
+            Export PDF
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -26,7 +26,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { brands } from "@/data/mock-data";
+import { brands, clients, employees, tasks, leads } from "@/data/mock-data";
 import ClientManagement from "@/components/ClientManagement";
 import EmployeeDirectory from "@/components/EmployeeDirectory";
 import TaskManagement from "@/components/TaskManagement";
@@ -259,6 +259,13 @@ function AuthScreen({ onLogin }: { onLogin: (user: typeof demoUsers[0]) => void 
   );
 }
 
+interface SearchResult {
+  type: "client" | "employee" | "task" | "lead";
+  title: string;
+  subtitle: string;
+  module: ModuleType;
+}
+
 function Sidebar({
   activeModule,
   onModuleChange,
@@ -266,6 +273,13 @@ function Sidebar({
   onClose,
   currentUser,
   onLogout,
+  globalSearch,
+  setGlobalSearch,
+  showSearchResults,
+  setShowSearchResults,
+  searchResults,
+  theme,
+  onToggleTheme,
 }: {
   activeModule: ModuleType;
   onModuleChange: (module: ModuleType) => void;
@@ -273,15 +287,32 @@ function Sidebar({
   onClose: () => void;
   currentUser: typeof demoUsers[0] | null;
   onLogout: () => void;
+  globalSearch: string;
+  setGlobalSearch: (v: string) => void;
+  showSearchResults: boolean;
+  setShowSearchResults: (v: boolean) => void;
+  searchResults: SearchResult[];
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedBrand, setSelectedBrand] = useState("1");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const currentBrand = brands.find((b) => b.id === selectedBrand);
   const brandColor = brandColors[currentBrand?.code || "VCS"] || "#D4AF37";
 
   const handleNavClick = (moduleId: string) => {
     onModuleChange(moduleId as ModuleType);
     onClose();
+  };
+
+  const searchIconForType = (type: SearchResult["type"]) => {
+    switch (type) {
+      case "client": return <Building2 className="w-4 h-4 text-[#3B82F6]" />;
+      case "employee": return <Users className="w-4 h-4 text-[#22C55E]" />;
+      case "task": return <CheckSquare className="w-4 h-4 text-[#D4AF37]" />;
+      case "lead": return <Briefcase className="w-4 h-4 text-[#8B5CF6]" />;
+    }
   };
 
   return (
@@ -331,15 +362,57 @@ function Sidebar({
 
         {/* Search */}
         {!collapsed && (
-          <div className="p-4">
+          <div className="p-4 relative">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
               <input
+                ref={searchInputRef}
                 type="text"
-                placeholder="Search..."
+                placeholder="Search... (Ctrl+K)"
+                value={globalSearch}
+                onChange={(e) => {
+                  setGlobalSearch(e.target.value);
+                  setShowSearchResults(e.target.value.length >= 2);
+                }}
+                onFocus={() => {
+                  if (globalSearch.length >= 2) setShowSearchResults(true);
+                }}
+                onBlur={() => {
+                  setTimeout(() => setShowSearchResults(false), 200);
+                }}
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-white/20"
               />
             </div>
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="absolute left-4 right-4 top-[calc(100%-4px)] z-50 backdrop-blur-xl bg-white/[0.08] border border-white/15 rounded-xl shadow-2xl overflow-hidden">
+                {searchResults.map((result, idx) => (
+                  <button
+                    key={`${result.type}-${idx}`}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors text-left"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      onModuleChange(result.module);
+                      setGlobalSearch("");
+                      setShowSearchResults(false);
+                      onClose();
+                    }}
+                  >
+                    {searchIconForType(result.type)}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white truncate">{result.title}</p>
+                      <p className="text-xs text-white/40 truncate">{result.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] uppercase text-white/30 font-medium">{result.type}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {showSearchResults && globalSearch.length >= 2 && searchResults.length === 0 && (
+              <div className="absolute left-4 right-4 top-[calc(100%-4px)] z-50 backdrop-blur-xl bg-white/[0.08] border border-white/15 rounded-xl shadow-2xl p-4 text-center text-sm text-white/40">
+                No results found
+              </div>
+            )}
           </div>
         )}
 
@@ -383,10 +456,19 @@ function Sidebar({
             {!collapsed && <span>Notifications</span>}
             <span className="ml-auto px-2 py-0.5 rounded-full bg-[#D4AF37] text-black text-xs font-bold">3</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-white/80 hover:bg-white/5 transition-all">
-            <Settings className="w-5 h-5" />
-            {!collapsed && <span>Settings</span>}
-          </button>
+          <div className="flex items-center gap-1">
+            <button className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/60 hover:text-white/80 hover:bg-white/5 transition-all">
+              <Settings className="w-5 h-5" />
+              {!collapsed && <span>Settings</span>}
+            </button>
+            <button
+              onClick={onToggleTheme}
+              className="p-2.5 rounded-xl text-white/60 hover:text-white/80 hover:bg-white/5 transition-all"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+          </div>
           <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/5">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#B8860B] flex items-center justify-center shrink-0">
               <span className="text-black text-xs font-bold">{currentUser?.name?.charAt(0) || "U"}</span>
@@ -425,6 +507,74 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<typeof demoUsers[0] | null>(null);
   const [selectedBrand, setSelectedBrand] = useState("1");
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Theme effect
+  useEffect(() => {
+    document.documentElement.className = theme;
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }, []);
+
+  // Cmd+K / Ctrl+K keyboard shortcut to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        const searchInput = document.querySelector<HTMLInputElement>('input[placeholder*="Search"]');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Global search logic
+  const searchResults: SearchResult[] = useMemo(() => {
+    if (globalSearch.length < 2) return [];
+    const query = globalSearch.toLowerCase();
+    const results: SearchResult[] = [];
+
+    // Search clients
+    for (const c of clients) {
+      if (results.length >= 8) break;
+      if (c.companyName.toLowerCase().includes(query) || c.contactName.toLowerCase().includes(query)) {
+        results.push({ type: "client", title: c.companyName, subtitle: c.contactName, module: "clients" });
+      }
+    }
+
+    // Search employees
+    for (const e of employees) {
+      if (results.length >= 8) break;
+      if (e.name.toLowerCase().includes(query) || e.title.toLowerCase().includes(query)) {
+        results.push({ type: "employee", title: e.name, subtitle: e.title, module: "employees" });
+      }
+    }
+
+    // Search tasks
+    for (const t of tasks) {
+      if (results.length >= 8) break;
+      if (t.title.toLowerCase().includes(query) || t.client.toLowerCase().includes(query)) {
+        results.push({ type: "task", title: t.title, subtitle: t.client, module: "tasks" });
+      }
+    }
+
+    // Search leads
+    for (const l of leads) {
+      if (results.length >= 8) break;
+      if (l.companyName.toLowerCase().includes(query)) {
+        results.push({ type: "lead", title: l.companyName, subtitle: l.contactName, module: "pipeline" });
+      }
+    }
+
+    return results.slice(0, 8);
+  }, [globalSearch]);
 
   useEffect(() => {
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
@@ -498,6 +648,13 @@ export default function Home() {
         onClose={() => setSidebarOpen(false)}
         currentUser={currentUser}
         onLogout={handleLogout}
+        globalSearch={globalSearch}
+        setGlobalSearch={setGlobalSearch}
+        showSearchResults={showSearchResults}
+        setShowSearchResults={setShowSearchResults}
+        searchResults={searchResults}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Main Content */}
@@ -517,6 +674,13 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
             <select
               value={selectedBrand}
               onChange={(e) => setSelectedBrand(e.target.value)}
@@ -532,12 +696,14 @@ export default function Home() {
         </div>
 
         {/* Module Content */}
-        {activeModule === "dashboard" && <DashboardModule brandId={selectedBrand} brandColor={brandColor} />}
-        {activeModule === "clients" && <ClientManagement brandId={selectedBrand} />}
-        {activeModule === "employees" && <EmployeeDirectory brandId={selectedBrand} />}
-        {activeModule === "tasks" && <TaskManagement brandId={selectedBrand} />}
-        {activeModule === "pipeline" && <PipelineModule brandId={selectedBrand} />}
-        {activeModule === "reports" && <ReportsModule />}
+        <div key={activeModule} className="animate-fade-in-up">
+          {activeModule === "dashboard" && <DashboardModule brandId={selectedBrand} brandColor={brandColor} />}
+          {activeModule === "clients" && <ClientManagement brandId={selectedBrand} />}
+          {activeModule === "employees" && <EmployeeDirectory brandId={selectedBrand} />}
+          {activeModule === "tasks" && <TaskManagement brandId={selectedBrand} />}
+          {activeModule === "pipeline" && <PipelineModule brandId={selectedBrand} />}
+          {activeModule === "reports" && <ReportsModule />}
+        </div>
       </main>
 
       {/* Footer */}

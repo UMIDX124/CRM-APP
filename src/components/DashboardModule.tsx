@@ -2,6 +2,18 @@
 
 import { useState, useEffect } from "react";
 import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import {
   Users,
   Building2,
   DollarSign,
@@ -115,9 +127,9 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
           <div
             key={i}
             className={clsx(
-              "group relative overflow-hidden rounded-2xl p-5 transition-all duration-500",
+              "group relative overflow-hidden rounded-2xl p-5 transition-all duration-500 hover-lift",
               "bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10",
-"hover:border-white/20 hover:shadow-xl hover:shadow-black/20"
+"hover:border-white/20 hover:shadow-xl hover:shadow-black/20 hover:-translate-y-1"
             )}
             style={{ animationDelay: `${i * 100}ms` }}
           >
@@ -188,24 +200,95 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
             </div>
           </div>
           
-          {/* Simple Bar Chart */}
-          <div className="h-48 flex items-end gap-3">
-            {revenueData.slice(0, 6).map((data, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                <div className="w-full flex flex-col items-center">
-                  <span className="text-xs text-white/40 mb-1">${((data.vcs + data.bsl + data.dpl) / 1000).toFixed(0)}K</span>
-                  <div
-                    className="w-full rounded-t-lg transition-all duration-700"
-                    style={{
-                      height: `${(Math.max(data.vcs, data.bsl, data.dpl) / Math.max(...revenueData.map(d => Math.max(d.vcs, d.bsl, d.dpl)))) * 100}%`,
-                      backgroundColor: i === 5 ? brandColor : `${brandColor}60`,
-                      minHeight: "20px",
-                    }}
-                  />
-                </div>
-                <span className="text-xs text-white/40">{data.month.slice(0, 3)}</span>
-              </div>
-            ))}
+          {/* Recharts Area Chart */}
+          <div className="h-[280px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="dashVcsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#D4AF37" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#D4AF37" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="dashBslGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="dashDplGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22C55E" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#22C55E" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 12 }}
+                  tickFormatter={(value) => `$${value / 1000}k`}
+                  dx={-10}
+                />
+                <Tooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload) return null;
+                    const total = payload.reduce((sum, entry) => sum + (entry.value as number), 0);
+                    return (
+                      <div className="bg-[#0f0f18] border border-white/20 rounded-xl p-4 shadow-2xl">
+                        <p className="text-white/60 text-sm mb-3 font-medium">{label}</p>
+                        <div className="space-y-2">
+                          {payload.map((entry) => (
+                            <div key={entry.name} className="flex items-center justify-between gap-6">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                                <span className="text-white/60 text-xs">{(entry.name as string).toUpperCase()}</span>
+                              </div>
+                              <span className="text-white font-medium text-sm">
+                                ${(entry.value as number).toLocaleString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-white/10 flex justify-between">
+                          <span className="text-white/40 text-xs">Total</span>
+                          <span className="text-[#D4AF37] font-semibold text-sm">${total.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="vcs"
+                  stroke="#D4AF37"
+                  strokeWidth={2}
+                  fill="url(#dashVcsGradient)"
+                  animationDuration={1500}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="bsl"
+                  stroke="#3B82F6"
+                  strokeWidth={2}
+                  fill="url(#dashBslGradient)"
+                  animationDuration={1500}
+                  animationBegin={200}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="dpl"
+                  stroke="#22C55E"
+                  strokeWidth={2}
+                  fill="url(#dashDplGradient)"
+                  animationDuration={1500}
+                  animationBegin={400}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -266,30 +349,74 @@ export default function DashboardModule({ brandId, brandColor }: DashboardModule
             <h3 className="text-lg font-semibold text-white">Task Status</h3>
             <button className="text-xs text-[#D4AF37] hover:underline">View All</button>
           </div>
-          <div className="space-y-4">
-            {[
-              { label: "Completed", count: brandTasks.filter(t => t.status === "DONE").length, color: "#22C55E" },
-              { label: "In Progress", count: brandTasks.filter(t => t.status === "IN_PROGRESS").length, color: "#3B82F6" },
-              { label: "To Do", count: brandTasks.filter(t => t.status === "TODO").length, color: "#F59E0B" },
-              { label: "Blocked", count: brandTasks.filter(t => t.status === "BLOCKED").length, color: "#EF4444" },
-            ].map((status, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/70">{status.label}</span>
-                  <span className="text-sm font-semibold text-white">{status.count}</span>
+          {(() => {
+            const taskStatuses = [
+              { name: "Completed", value: brandTasks.filter(t => t.status === "DONE").length, color: "#22C55E" },
+              { name: "In Progress", value: brandTasks.filter(t => t.status === "IN_PROGRESS").length, color: "#3B82F6" },
+              { name: "Review", value: brandTasks.filter(t => t.status === "TODO").length, color: "#F59E0B" },
+              { name: "To Do", value: brandTasks.filter(t => t.status === "BLOCKED").length, color: "#EF4444" },
+            ];
+            const totalTasks = taskStatuses.reduce((sum, s) => sum + s.value, 0);
+            return (
+              <div className="flex items-center gap-6">
+                {/* Donut Chart */}
+                <div className="relative w-[170px] h-[170px] shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={taskStatuses}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={75}
+                        paddingAngle={3}
+                        dataKey="value"
+                        animationDuration={1200}
+                        animationBegin={200}
+                      >
+                        {taskStatuses.map((entry, index) => (
+                          <Cell
+                            key={`task-cell-${index}`}
+                            fill={entry.color}
+                            stroke="transparent"
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-[#0f0f18] border border-white/20 rounded-xl p-3 shadow-2xl">
+                              <p className="text-white font-medium text-sm">{data.name}</p>
+                              <p className="text-white/60 text-xs mt-1">{data.value} tasks</p>
+                            </div>
+                          );
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  {/* Center Label */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold text-white">{totalTasks}</span>
+                    <span className="text-xs text-white/40">Total</span>
+                  </div>
                 </div>
-                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${brandTasks.length > 0 ? (status.count / brandTasks.length) * 100 : 0}%`,
-                      backgroundColor: status.color,
-                    }}
-                  />
+                {/* Legend */}
+                <div className="flex-1 space-y-3">
+                  {taskStatuses.map((status) => (
+                    <div key={status.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: status.color }} />
+                        <span className="text-sm text-white/70">{status.name}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-white">{status.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
       </div>
     </div>
