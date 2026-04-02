@@ -24,6 +24,7 @@ import {
   FileText,
   CalendarDays,
   Shield,
+  Book,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { brands } from "@/data/mock-data";
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" },
   { href: "/reports", label: "Reports", icon: BarChart3, section: "finance" },
   { href: "/audit", label: "Audit Log", icon: Shield, section: "system" },
+  { href: "/guide", label: "User Guide", icon: Book, section: "system" },
   { href: "/settings", label: "Settings", icon: Settings, section: "system" },
 ];
 
