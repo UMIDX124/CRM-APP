@@ -1,14 +1,16 @@
-// FU Corp Elite CRM - Enterprise Database Schema
+// FU Corp Elite CRM — Enterprise Database Schema
+// FU Corp = Mother Company | VCS, BSL, DPL = Subsidiaries
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-// Enums
+// ─── Enums ───────────────────────────────────────────
+
 enum Role {
   SUPER_ADMIN
   PROJECT_MANAGER
@@ -18,14 +20,21 @@ enum Role {
 }
 
 enum Department {
-  WEB_DEVELOPMENT
-  SEO
-  VIDEO_EDITING
-  DESIGN
-  SOCIAL_MEDIA
+  LEADERSHIP
+  MARKETING
+  DEV
+  CREATIVE
+  SUPPORT
   ADMIN
   SALES
-  SUPPORT
+  OPS
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  ON_LEAVE
+  TERMINATED
+  PROBATION
 }
 
 enum TaskStatus {
@@ -50,56 +59,95 @@ enum ClientStatus {
   CANCELLED
 }
 
-// Brand/Company
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum LeadStatus {
+  NEW
+  QUALIFIED
+  PROPOSAL_SENT
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  REMOTE
+  LEAVE
+}
+
+// ─── Models ──────────────────────────────────────────
+
 model Brand {
   id        String   @id @default(cuid())
   name      String
   code      String   @unique // VCS, BSL, DPL
-  color     String   // Brand color
+  color     String
   website   String?
+  parentId  String?  // "FU" for subsidiaries
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  users     User[]
   clients   Client[]
-  employees Employee[]
-  packages  Package[]
+  tasks     Task[]
+  leads     Lead[]
+  invoices  Invoice[]
 
   @@map("brands")
 }
 
-// Users/Employees with RBAC
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
+  id             String         @id @default(cuid())
+  email          String         @unique
   passwordHash   String
   firstName      String
   lastName       String
-  avatar         String?
   phone          String?
-  role           Role      @default(EMPLOYEE)
+  avatar         String?
+  title          String?
+  role           Role           @default(EMPLOYEE)
   department     Department?
-  designation     String?   // e.g., "Senior Web Developer", "SEO Specialist"
+  status         EmployeeStatus @default(ACTIVE)
   brandId        String?
-  managerId      String?   // Reports to
-  isActive       Boolean   @default(true)
+  hireDate       DateTime?
+  salary         Float?
+  currency       String         @default("USD")
+  skills         String[]       @default([])
+  managerId      String?
+  isActive       Boolean        @default(true)
   lastLogin      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  twoFactorEnabled Boolean      @default(false)
+  language       String         @default("en")
+  timezone       String         @default("Asia/Karachi")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  brand          Brand?     @relation(fields: [brandId], references: [id])
-  manager        User?      @relation("ManagerRelation", fields: [managerId], references: [id])
-  subordinates   User[]     @relation("ManagerRelation")
+  brand          Brand?         @relation(fields: [brandId], references: [id])
+  manager        User?          @relation("ManagerRelation", fields: [managerId], references: [id])
+  subordinates   User[]         @relation("ManagerRelation")
 
-  assignedTasks  Task[]     @relation("AssignedTasks")
-  createdTasks   Task[]     @relation("CreatedTasks")
-  clientTasks    ClientTask[]
+  assignedTasks  Task[]         @relation("TaskAssignee")
+  createdTasks   Task[]         @relation("TaskCreator")
   comments       Comment[]
   notifications  Notification[]
+  attendance     Attendance[]
+  auditLogs      AuditLog[]
+  notes          Note[]         @relation("NoteAuthor")
+  attachments    Attachment[]
 
   @@map("users")
 }
 
-// Clients
 model Client {
   id           String       @id @default(cuid())
   companyName  String
@@ -109,149 +157,167 @@ model Client {
   country      String?
   countryFlag  String?
   website      String?
-  source       String?      // Referral, Website, Cold Call, etc.
+  source       String?
   status       ClientStatus @default(ACTIVE)
+  healthScore  Int          @default(80)
+  mrr          Float        @default(0)
   brandId      String
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
   brand        Brand        @relation(fields: [brandId], references: [id])
-  packages     Package[]
+  invoices     Invoice[]
   notes        Note[]
+  tasks        Task[]       @relation("ClientTasks")
+  attachments  Attachment[] @relation("ClientAttachments")
 
   @@map("clients")
 }
 
-// Service Packages per Client
-model Package {
-  id          String   @id @default(cuid())
-  name        String   // e.g., "Web Development Premium", "SEO Basic"
-  description String?
-  price       Float    @default(0)
-  currency    String   @default("USD")
-  duration    Int?     // Duration in days
-  startDate   DateTime?
-  endDate     DateTime?
-  isActive    Boolean  @default(true)
-  brandId     String
-  clientId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  brand       Brand        @relation(fields: [brandId], references: [id])
-  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  tasks       ClientTask[]
-
-  @@map("packages")
-}
-
-// Tasks within a Package (assigned to specific employees)
-model ClientTask {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus  @default(TODO)
-  priority    Priority    @default(MEDIUM)
-  department  Department
-  assignedToId String?
-  packageId   String
-  createdById String
-  dueDate     DateTime?
-  completedAt DateTime?
-  order       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  package     Package     @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  assignedTo  User?       @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  createdBy   User        @relation("CreatedTasks", fields: [createdById], references: [id])
-  comments    Comment[]
-  attachments Attachment[]
-
-  @@map("client_tasks")
-}
-
-// Standalone Tasks (not tied to a package)
 model Task {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus  @default(TODO)
-  priority    Priority    @default(MEDIUM)
-  department  Department
-  assignedToId String?
-  createdById String
-  brandId     String?
-  dueDate     DateTime?
-  completedAt DateTime?
-  order       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus @default(TODO)
+  priority     Priority   @default(MEDIUM)
+  department   Department?
+  assigneeId   String?
+  creatorId    String
+  clientId     String?
+  brandId      String?
+  dueDate      DateTime?
+  completedAt  DateTime?
+  timeSpent    Float      @default(0)
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
-  assignedTo  User?       @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  createdBy   User        @relation("CreatedTasks", fields: [createdById], references: [id])
+  assignee     User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator      User       @relation("TaskCreator", fields: [creatorId], references: [id])
+  client       Client?    @relation("ClientTasks", fields: [clientId], references: [id])
+  brand        Brand?     @relation(fields: [brandId], references: [id])
+  comments     Comment[]
+  attachments  Attachment[] @relation("TaskAttachments")
 
   @@map("tasks")
 }
 
-// Comments on Tasks
+model Lead {
+  id           String     @id @default(cuid())
+  companyName  String
+  contactName  String
+  email        String?
+  phone        String?
+  country      String?
+  countryFlag  String?
+  services     String[]   @default([])
+  source       String?
+  status       LeadStatus @default(NEW)
+  value        Float      @default(0)
+  probability  Int        @default(50)
+  salesRepId   String?
+  brandId      String?
+  expectedClose DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  brand        Brand?     @relation(fields: [brandId], references: [id])
+
+  @@map("leads")
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  number      String        @unique
+  clientId    String
+  brandId     String
+  items       Json          // Array of { description, quantity, rate }
+  subtotal    Float
+  tax         Float         @default(0)
+  total       Float
+  status      InvoiceStatus @default(DRAFT)
+  issueDate   DateTime
+  dueDate     DateTime
+  paidDate    DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  client      Client        @relation(fields: [clientId], references: [id])
+  brand       Brand         @relation(fields: [brandId], references: [id])
+
+  @@map("invoices")
+}
+
+model Attendance {
+  id          String           @id @default(cuid())
+  userId      String
+  date        DateTime         @db.Date
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      AttendanceStatus @default(PRESENT)
+  hoursWorked Float            @default(0)
+  notes       String?
+  createdAt   DateTime         @default(now())
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("attendance")
+}
+
 model Comment {
   id        String   @id @default(cuid())
   content   String
-  taskId    String
-  clientTaskId String?
+  taskId    String?
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  task      Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  clientTask ClientTask? @relation(fields: [clientTaskId], references: [id], onDelete: Cascade)
-  author    User      @relation(fields: [authorId], references: [id])
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
 
   @@map("comments")
 }
 
-// File Attachments
-model Attachment {
-  id          String      @id @default(cuid())
-  filename    String
-  url         String
-  mimeType    String?
-  size        Int?
-  taskId      String?
-  clientTaskId String?
-  uploadedById String
-  createdAt   DateTime    @default(now())
-
-  task        Task?       @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  clientTask  ClientTask? @relation(fields: [clientTaskId], references: [id], onDelete: Cascade)
-  uploadedBy  User        @relation(fields: [uploadedById], references: [id])
-
-  @@map("attachments")
-}
-
-// Notes on Clients
 model Note {
   id        String   @id @default(cuid())
   content   String
-  clientId  String
+  clientId  String?
   authorId  String
-  isPrivate Boolean  @default(true)
+  isPrivate Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  author    User     @relation("NoteAuthor", fields: [authorId], references: [id])
 
   @@map("notes")
 }
 
-// Notifications
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  url          String
+  mimeType     String?
+  size         Int?
+  taskId       String?
+  clientId     String?
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  task         Task?    @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
+  client       Client?  @relation("ClientAttachments", fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
 model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String
-  type      String    // TASK_ASSIGNED, TASK_COMPLETED, COMMENT_ADDED, etc.
+  type      String
   userId    String
   isRead    Boolean  @default(false)
   data      Json?
@@ -262,12 +328,30 @@ model Notification {
   @@map("notifications")
 }
 
-// Sessions for Auth
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // CREATE, UPDATE, DELETE
+  entity    String   // User, Client, Task, Invoice, etc.
+  entityId  String
+  userId    String
+  changes   Json?    // { field: { old, new } }
+  metadata  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
 model Session {
   id           String   @id @default(cuid())
+  sessionToken String   @unique
   userId       String
-  token        String   @unique
-  expiresAt    DateTime
+  expires      DateTime
   ipAddress    String?
   userAgent    String?
   createdAt    DateTime @default(now())
