@@ -14,21 +14,20 @@ import { brands } from "@/data/mock-data";
 import { LogoMini } from "./Logo";
 
 const navItems = [
+  // Core CRM — what users need most
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" },
   { href: "/clients", label: "Clients", icon: Building2, section: "main" },
   { href: "/pipeline", label: "Pipeline", icon: Briefcase, section: "main" },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" },
-  { href: "/calendar", label: "Calendar", icon: CalendarDays, section: "main" },
+  // People — HR stuff
   { href: "/employees", label: "Team", icon: Users, section: "hr" },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" },
   { href: "/leaves", label: "Leaves", icon: CalendarOff, section: "hr" },
-  { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" },
-  { href: "/expenses", label: "Expenses", icon: Receipt, section: "finance" },
+  // Money
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" },
-  { href: "/reports", label: "Reports", icon: BarChart3, section: "finance" },
-  { href: "/audit", label: "Audit Log", icon: Shield, section: "system" },
-  { href: "/guide", label: "User Guide", icon: Book, section: "system" },
-  { href: "/shortcuts", label: "Shortcuts", icon: Command, section: "system" },
+  { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" },
+  // System (fewer items — merged expenses into payroll, calendar into dashboard)
+  { href: "/reports", label: "Reports", icon: BarChart3, section: "system" },
   { href: "/settings", label: "Settings", icon: Settings, section: "system" },
 ];
 
