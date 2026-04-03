@@ -208,6 +208,27 @@ export async function POST(req: Request) {
   }
 }
 
+// GET — show info page when visited in browser
+export async function GET() {
+  return new Response(
+    `<!DOCTYPE html>
+    <html><head><title>FU Corp CRM Webhook</title></head>
+    <body style="font-family:system-ui;background:#09090B;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+      <div style="text-align:center;max-width:500px;padding:40px;">
+        <div style="width:60px;height:60px;background:#FF6B00;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#000;">FU</div>
+        <h1 style="font-size:24px;margin:0 0 8px;">Webhook Active</h1>
+        <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions via POST and creates leads in FU Corp CRM + Google Sheets.</p>
+        <div style="background:#111;border:1px solid #222;border-radius:12px;padding:20px;text-align:left;font-size:13px;">
+          <p style="color:#FF6B00;margin:0 0 8px;font-weight:600;">Usage:</p>
+          <code style="color:#71717A;">POST ${"{name, email, phone, company, service, budget, message, source}"}</code>
+        </div>
+        <p style="color:#333;font-size:11px;margin-top:20px;">FU Corp Command Center</p>
+      </div>
+    </body></html>`,
+    { headers: { "Content-Type": "text/html" } }
+  );
+}
+
 // Handle CORS preflight
 export async function OPTIONS() {
   return NextResponse.json({}, {
