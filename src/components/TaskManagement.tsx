@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { tasks as mockTasks, brands, employees, clients } from "@/data/mock-data";
-import { useData, apiMutate } from "@/lib/use-data";
+import { apiMutate } from "@/lib/use-data";
 import { useToast } from "@/components/ui/toast";
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "COMPLETED";
@@ -42,9 +42,8 @@ const defaultForm = {
 
 export default function TaskManagement({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
-  const { data: taskList, setData: setTaskList, loading } = useData<Task[]>({
-    apiUrl: "/api/tasks", mockData: mockTasks as unknown as Task[],
-  });
+  const [taskList, setTaskList] = useState<Task[]>(mockTasks as unknown as Task[]);
+  const loading = false;
 
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("ALL");

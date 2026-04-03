@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { clients as mockClients, brands } from "@/data/mock-data";
-import { useData, apiMutate } from "@/lib/use-data";
+import { apiMutate } from "@/lib/use-data";
 import { useToast } from "@/components/ui/toast";
 
 interface Client {
@@ -39,9 +39,8 @@ const countries = ["United States", "United Kingdom", "Canada", "Australia", "Ge
 
 export default function ClientManagement({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
-  const { data: clientList, setData: setClientList, loading } = useData<Client[]>({
-    apiUrl: "/api/clients", mockData: mockClients,
-  });
+  const [clientList, setClientList] = useState<Client[]>(mockClients);
+  const loading = false;
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

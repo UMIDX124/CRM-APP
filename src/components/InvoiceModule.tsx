@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { clients, brands } from "@/data/mock-data";
-import { useData, apiMutate } from "@/lib/use-data";
+import { apiMutate } from "@/lib/use-data";
 import { useToast } from "@/components/ui/toast";
 
 type InvoiceStatus = "PAID" | "PENDING" | "OVERDUE" | "DRAFT" | "CANCELLED";
@@ -41,9 +41,8 @@ const defaultForm = { clientName: "", brand: "VCS", items: [{ description: "", q
 
 export default function InvoiceModule() {
   const { success, error: showError } = useToast();
-  const { data: invoices, setData: setInvoices, loading } = useData<Invoice[]>({
-    apiUrl: "/api/invoices", mockData: sampleInvoices,
-  });
+  const [invoices, setInvoices] = useState<Invoice[]>(sampleInvoices);
+  const loading = false;
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<InvoiceStatus | "ALL">("ALL");

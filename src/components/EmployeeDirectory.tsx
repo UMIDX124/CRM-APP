@@ -8,7 +8,7 @@ import {
 import { clsx } from "clsx";
 import { employees as mockEmployees, brands, parentCompany } from "@/data/mock-data";
 import type { Employee, EmployeeStatus } from "@/data/mock-data";
-import { useData, apiMutate } from "@/lib/use-data";
+import { apiMutate } from "@/lib/use-data";
 import { useToast } from "@/components/ui/toast";
 
 const roleLabels: Record<string, string> = {
@@ -34,9 +34,8 @@ const defaultForm = {
 
 export default function EmployeeDirectory({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
-  const { data: employeeList, setData: setEmployeeList, loading, refetch } = useData<Employee[]>({
-    apiUrl: "/api/employees", mockData: mockEmployees,
-  });
+  const [employeeList, setEmployeeList] = useState<Employee[]>(mockEmployees);
+  const loading = false;
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

@@ -7,8 +7,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { leads as mockLeads, brands, employees } from "@/data/mock-data";
-import { useData, apiMutate } from "@/lib/use-data";
-import { useToast } from "@/components/ui/toast";
+import { apiMutate } from "@/lib/use-data";
 
 type LeadStatus = "NEW" | "QUALIFIED" | "PROPOSAL_SENT" | "NEGOTIATION" | "WON" | "LOST";
 
@@ -43,10 +42,8 @@ const defaultForm = {
 };
 
 export default function PipelineModule({ brandId }: { brandId: string }) {
-  const { success, error: showError } = useToast();
-  const { data: leadList, setData: setLeadList, loading } = useData<Lead[]>({
-    apiUrl: "/api/leads", mockData: mockLeads as unknown as Lead[],
-  });
+  const [leadList, setLeadList] = useState<Lead[]>(mockLeads as unknown as Lead[]);
+  const loading = false;
 
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
@@ -85,8 +82,8 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
   };
 
   const handleSave = async () => {
-    if (!form.companyName.trim()) { showError("Company name required"); return; }
-    if (!form.contactName.trim()) { showError("Contact name required"); return; }
+    if (!form.companyName.trim()) { alert("Company name required"); return; }
+    if (!form.contactName.trim()) { alert("Contact name required"); return; }
 
     setSaving(true);
     if (editingId) {
@@ -97,7 +94,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
         value: form.value, salesRep: form.salesRep,
         services: form.services.split(",").map(s => s.trim()).filter(Boolean),
       } : l));
-      success("Lead updated");
+      // success("Lead updated");
     } else {
       await apiMutate("/api/leads", "POST", {
         companyName: form.companyName, contactName: form.contactName,
@@ -111,7 +108,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
         brand: form.brand, source: form.source, status: "NEW" as LeadStatus,
         value: form.value, salesRep: form.salesRep, createdAt: new Date().toISOString().split("T")[0],
       }]);
-      success(`${form.companyName} added to pipeline!`);
+      // Lead added
     }
     setSaving(false);
     setShowModal(false);
@@ -121,14 +118,14 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
     await apiMutate(`/api/leads/${leadId}`, "PATCH", { status: newStatus });
     setLeadList((prev) => prev.map((l) => l.id === leadId ? { ...l, status: newStatus } : l));
     const lead = leadList.find(l => l.id === leadId);
-    success(`${lead?.companyName} moved to ${stages.find(s => s.status === newStatus)?.label}`);
+    // Lead moved
   };
 
   const handleDelete = async (id: string) => {
     await apiMutate(`/api/leads/${id}`, "DELETE");
     setLeadList((prev) => prev.filter((l) => l.id !== id));
     setShowDeleteConfirm(null);
-    success("Lead removed");
+    // success("Lead removed");
   };
 
   const brandColor = (code?: string) => {
