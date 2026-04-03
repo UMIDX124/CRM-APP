@@ -1,9 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-
-// Generic hook to fetch data from API with fallback to mock data
-// This is the bridge between components and the database
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface UseDataOptions<T> {
   apiUrl: string;
@@ -21,53 +18,61 @@ interface UseDataResult<T> {
 }
 
 export function useData<T>({ apiUrl, mockData, params }: UseDataOptions<T>): UseDataResult<T> {
+  // Use ref for mockData to avoid infinite re-render loop
+  const mockRef = useRef(mockData);
   const [data, setData] = useState<T>(mockData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dbConnected, setDbConnected] = useState(false);
+  const fetchedRef = useRef(false);
 
-  const buildUrl = useCallback(() => {
-    if (!params) return apiUrl;
-    const searchParams = new URLSearchParams();
-    Object.entries(params).forEach(([k, v]) => {
-      if (v && v !== "ALL") searchParams.set(k, v);
-    });
-    const qs = searchParams.toString();
-    return qs ? `${apiUrl}?${qs}` : apiUrl;
-  }, [apiUrl, params]);
+  const paramsStr = params ? JSON.stringify(params) : "";
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(buildUrl());
+      let url = apiUrl;
+      if (paramsStr) {
+        const p = JSON.parse(paramsStr);
+        const sp = new URLSearchParams();
+        Object.entries(p).forEach(([k, v]) => {
+          if (v && v !== "ALL") sp.set(k, String(v));
+        });
+        const qs = sp.toString();
+        if (qs) url = `${apiUrl}?${qs}`;
+      }
+      const res = await fetch(url);
       if (res.ok) {
         const json = await res.json();
-        setData(json);
-        setDbConnected(true);
-      } else if (res.status === 401) {
-        // Not authenticated — use mock data silently
-        setData(mockData);
-        setDbConnected(false);
+        if (json !== null) {
+          setData(json);
+          setDbConnected(true);
+        } else {
+          setData(mockRef.current);
+          setDbConnected(false);
+        }
       } else {
-        throw new Error(`API error ${res.status}`);
+        setData(mockRef.current);
+        setDbConnected(false);
       }
     } catch {
-      // API not available — fallback to mock data
-      setData(mockData);
+      setData(mockRef.current);
       setDbConnected(false);
     }
     setLoading(false);
-  }, [buildUrl, mockData]);
+  }, [apiUrl, paramsStr]);
 
   useEffect(() => {
-    fetchData();
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchData();
+    }
   }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData, setData, dbConnected };
 }
 
-// POST/PATCH/DELETE helper that falls back gracefully
 export async function apiMutate<T>(
   url: string,
   method: "POST" | "PATCH" | "PUT" | "DELETE",
@@ -86,7 +91,6 @@ export async function apiMutate<T>(
     const err = await res.json().catch(() => ({ error: "Request failed" }));
     return { ok: false, error: err.error || `Error ${res.status}` };
   } catch {
-    // API not available — return success anyway for demo mode
     return { ok: true, data: body as T };
   }
 }
