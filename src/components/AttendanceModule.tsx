@@ -16,7 +16,7 @@ const statusConfig: Record<AttendanceStatus, { label: string; color: string; bg:
   LATE: { label: "Late", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", icon: AlertCircle },
   HALF_DAY: { label: "Half Day", color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/20", icon: Timer },
   REMOTE: { label: "Remote", color: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/20", icon: Laptop },
-  LEAVE: { label: "On Leave", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20", icon: CalendarOff },
+  LEAVE: { label: "On Leave", color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", icon: CalendarOff },
 };
 
 type ViewMode = "daily" | "monthly" | "range";
@@ -128,35 +128,35 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
   const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   const statusDot = (status?: AttendanceStatus) => {
-    if (!status) return "bg-white/10";
-    const map: Record<string, string> = { PRESENT: "bg-emerald-400", REMOTE: "bg-cyan-400", LATE: "bg-amber-400", ABSENT: "bg-red-400", LEAVE: "bg-purple-400", HALF_DAY: "bg-orange-400" };
-    return map[status] || "bg-white/10";
+    if (!status) return "bg-[var(--surface-hover)]";
+    const map: Record<string, string> = { PRESENT: "bg-emerald-400", REMOTE: "bg-cyan-400", LATE: "bg-amber-400", ABSENT: "bg-red-400", LEAVE: "bg-amber-400", HALF_DAY: "bg-orange-400" };
+    return map[status] || "bg-[var(--surface-hover)]";
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2 py-0.5 rounded-md bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00] text-[10px] font-bold tracking-wider">{parentCompany.code} CORP</span>
-            <span className="text-white/30 text-xs">Centralized Attendance</span>
+            <span className="text-[var(--foreground-dim)] text-xs">Centralized Attendance</span>
           </div>
-          <p className="text-white/50 text-sm">Track attendance across all subsidiaries</p>
+          <p className="text-[var(--foreground-dim)] text-sm">Track attendance across all subsidiaries</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => downloadCSV("attendance")} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all text-sm">
+          <button onClick={() => downloadCSV("attendance")} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-all text-sm">
             <Download className="w-4 h-4" /> Export CSV
           </button>
         </div>
       </div>
 
       {/* View Mode Tabs */}
-      <div className="flex gap-2 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] w-fit">
+      <div className="flex gap-2 p-1 rounded-xl bg-[var(--surface)] border border-[var(--border)] w-fit">
         {([["daily", "Daily", Clock], ["monthly", "Monthly", Calendar], ["range", "Date Range", BarChart3]] as const).map(([mode, label, Icon]) => (
           <button key={mode} onClick={() => setViewMode(mode)}
             className={clsx("flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-              viewMode === mode ? "bg-white/[0.08] text-white" : "text-white/40 hover:text-white/60")}>
+              viewMode === mode ? "bg-[var(--surface-hover)] text-[var(--foreground)]" : "text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)]")}>
             <Icon className="w-4 h-4" />{label}
           </button>
         ))}
@@ -164,36 +164,36 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
 
       {/* Date Controls */}
       {viewMode === "daily" && (
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-          <button onClick={() => navigateDate(-1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all"><ChevronLeft className="w-5 h-5" /></button>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
+          <button onClick={() => navigateDate(-1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"><ChevronLeft className="w-5 h-5" /></button>
           <div className="text-center">
-            <p className="text-lg font-semibold text-white">{formatDate(selectedDate)}</p>
-            <p className="text-xs text-white/40 mt-0.5">{dailyStats.total} employees &bull; {dailyStats.avgHours}h avg</p>
+            <p className="text-lg font-semibold text-[var(--foreground)]">{formatDate(selectedDate)}</p>
+            <p className="text-xs text-[var(--foreground-dim)] mt-0.5">{dailyStats.total} employees &bull; {dailyStats.avgHours}h avg</p>
           </div>
-          <button onClick={() => navigateDate(1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all"><ChevronRight className="w-5 h-5" /></button>
+          <button onClick={() => navigateDate(1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"><ChevronRight className="w-5 h-5" /></button>
         </div>
       )}
 
       {viewMode === "monthly" && (
-        <div className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-          <button onClick={() => navigateMonth(-1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all"><ChevronLeft className="w-5 h-5" /></button>
-          <p className="text-lg font-semibold text-white">{formatMonth(selectedMonth)}</p>
-          <button onClick={() => navigateMonth(1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all"><ChevronRight className="w-5 h-5" /></button>
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
+          <button onClick={() => navigateMonth(-1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"><ChevronLeft className="w-5 h-5" /></button>
+          <p className="text-lg font-semibold text-[var(--foreground)]">{formatMonth(selectedMonth)}</p>
+          <button onClick={() => navigateMonth(1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"><ChevronRight className="w-5 h-5" /></button>
         </div>
       )}
 
       {viewMode === "range" && (
-        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
+        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
           <div className="flex items-center gap-2">
-            <label className="text-xs text-white/40 uppercase tracking-wider">From</label>
+            <label className="text-xs text-[var(--foreground-dim)] uppercase tracking-wider">From</label>
             <input type="date" value={rangeStart} onChange={(e) => setRangeStart(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+              className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20" />
           </div>
-          <span className="text-white/30">to</span>
+          <span className="text-[var(--foreground-dim)]">to</span>
           <div className="flex items-center gap-2">
-            <label className="text-xs text-white/40 uppercase tracking-wider">To</label>
+            <label className="text-xs text-[var(--foreground-dim)] uppercase tracking-wider">To</label>
             <input type="date" value={rangeEnd} onChange={(e) => setRangeEnd(e.target.value)}
-              className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+              className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-3 py-2 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20" />
           </div>
         </div>
       )}
@@ -206,15 +206,15 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
             { label: "Remote", value: dailyStats.remote, color: "#0EA5E9" },
             { label: "Late", value: dailyStats.late, color: "#F59E0B" },
             { label: "Absent", value: dailyStats.absent, color: "#EF4444" },
-            { label: "On Leave", value: dailyStats.leave, color: "#8B5CF6" },
+            { label: "On Leave", value: dailyStats.leave, color: "#F59E0B" },
             { label: "Avg Hours", value: `${dailyStats.avgHours}h`, color: "#3B82F6" },
           ].map((s, i) => (
-            <div key={i} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <div key={i} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                <span className="text-xs text-white/50">{s.label}</span>
+                <span className="text-xs text-[var(--foreground-dim)]">{s.label}</span>
               </div>
-              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="text-2xl font-bold text-[var(--foreground)]">{s.value}</p>
             </div>
           ))}
         </div>
@@ -223,19 +223,19 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-dim)]" />
           <input type="text" placeholder="Search employee..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+            className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20" />
         </div>
         {viewMode === "daily" && (
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as AttendanceStatus | "ALL")}
-            className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+            className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground-muted)] cursor-pointer">
             <option value="ALL" className="bg-[#0f0f1e]">All Status</option>
             {Object.entries(statusConfig).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v.label}</option>)}
           </select>
         )}
         <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}
-          className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 cursor-pointer">
+          className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground-muted)] cursor-pointer">
           <option value="ALL" className="bg-[#0f0f1e]">All Companies</option>
           {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#0f0f1e]">{b.code}</option>)}
         </select>
@@ -243,32 +243,32 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
 
       {/* DAILY TABLE */}
       {viewMode === "daily" && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-2xl border border-[var(--border)] overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Employee</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Company</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Check In</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Check Out</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Hours</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--surface)]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Employee</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Company</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Check In</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Check Out</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Hours</th>
               </tr>
             </thead>
             <tbody>
               {dailyRecords.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-white/30 text-sm">No records for this date</td></tr>
+                <tr><td colSpan={6} className="text-center py-12 text-[var(--foreground-dim)] text-sm">No records for this date</td></tr>
               ) : dailyRecords.map((r) => {
                 const cfg = statusConfig[r.status];
                 const Icon = cfg.icon;
                 return (
-                  <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <tr key={r.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-hover)] transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
-                          <span className="text-sm font-bold text-white/80">{r.employee?.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                          <span className="text-sm font-bold text-[var(--foreground-muted)]">{r.employee?.name.split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                         </div>
-                        <div><p className="text-sm font-medium text-white">{r.employee?.name}</p><p className="text-xs text-white/40">{r.employee?.title}</p></div>
+                        <div><p className="text-sm font-medium text-[var(--foreground)]">{r.employee?.name}</p><p className="text-xs text-[var(--foreground-dim)]">{r.employee?.title}</p></div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -279,9 +279,9 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                         <Icon className={clsx("w-3.5 h-3.5", cfg.color)} /><span className={cfg.color}>{cfg.label}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3"><span className="text-sm text-white/70 font-mono">{r.checkIn || "—"}</span></td>
-                    <td className="px-4 py-3"><span className="text-sm text-white/70 font-mono">{r.checkOut || (r.checkIn ? <span className="text-cyan-400 text-xs">Active</span> : "—")}</span></td>
-                    <td className="px-4 py-3"><span className={clsx("text-sm font-medium", r.hoursWorked >= 8 ? "text-emerald-400" : r.hoursWorked > 0 ? "text-amber-400" : "text-white/30")}>{r.hoursWorked > 0 ? `${r.hoursWorked}h` : "—"}</span></td>
+                    <td className="px-4 py-3"><span className="text-sm text-[var(--foreground-muted)] font-mono">{r.checkIn || "—"}</span></td>
+                    <td className="px-4 py-3"><span className="text-sm text-[var(--foreground-muted)] font-mono">{r.checkOut || (r.checkIn ? <span className="text-cyan-400 text-xs">Active</span> : "—")}</span></td>
+                    <td className="px-4 py-3"><span className={clsx("text-sm font-medium", r.hoursWorked >= 8 ? "text-emerald-400" : r.hoursWorked > 0 ? "text-amber-400" : "text-[var(--foreground-dim)]")}>{r.hoursWorked > 0 ? `${r.hoursWorked}h` : "—"}</span></td>
                   </tr>
                 );
               })}
@@ -292,29 +292,29 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
 
       {/* MONTHLY GRID */}
       {viewMode === "monthly" && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-x-auto">
+        <div className="rounded-2xl border border-[var(--border)] overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider sticky left-0 bg-[#0a0a14] z-10 min-w-[180px]">Employee</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--surface)]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider sticky left-0 bg-[var(--surface)] z-10 min-w-[180px]">Employee</th>
                 {monthlyData[0]?.days.map((day) => {
                   const d = new Date(day);
                   const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                   return (
-                    <th key={day} className={clsx("text-center px-1 py-3 text-[10px] font-medium uppercase tracking-wider min-w-[28px]", isWeekend ? "text-white/20" : "text-white/40")}>
+                    <th key={day} className={clsx("text-center px-1 py-3 text-[10px] font-medium uppercase tracking-wider min-w-[28px]", isWeekend ? "text-[var(--foreground-dim)]" : "text-[var(--foreground-dim)]")}>
                       {d.getDate()}
                     </th>
                   );
                 })}
-                <th className="text-center px-3 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Rate</th>
+                <th className="text-center px-3 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Rate</th>
               </tr>
             </thead>
             <tbody>
               {monthlyData.map((row) => (
-                <tr key={row.employee.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                <tr key={row.employee.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-hover)] transition-colors">
                   <td className="px-4 py-2 sticky left-0 bg-[#060610] z-10">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-white font-medium truncate">{row.employee.name}</span>
+                      <span className="text-sm text-[var(--foreground)] font-medium truncate">{row.employee.name}</span>
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(row.employee.brand), backgroundColor: brandColor(row.employee.brand) + "10" }}>{row.employee.brand}</span>
                     </div>
                   </td>
@@ -325,9 +325,9 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                     return (
                       <td key={day} className="text-center px-1 py-2">
                         {isWeekend ? (
-                          <div className="w-4 h-4 mx-auto rounded-full bg-white/[0.03]" />
+                          <div className="w-4 h-4 mx-auto rounded-full bg-[var(--surface)]" />
                         ) : (
-                          <div className={clsx("w-4 h-4 mx-auto rounded-full", record ? statusDot(record.status) : "bg-white/[0.06]")}
+                          <div className={clsx("w-4 h-4 mx-auto rounded-full", record ? statusDot(record.status) : "bg-[var(--surface-elevated)]")}
                             title={record ? `${statusConfig[record.status].label}${record.hoursWorked ? ` (${record.hoursWorked}h)` : ""}` : "No record"} />
                         )}
                       </td>
@@ -345,31 +345,31 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
 
       {/* RANGE REPORT */}
       {viewMode === "range" && (
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+        <div className="rounded-2xl border border-[var(--border)] overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Employee</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--surface)]">
+                <th className="text-left px-4 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Employee</th>
                 <th className="text-center px-3 py-3 text-xs font-medium text-emerald-400/60 uppercase tracking-wider">Present</th>
                 <th className="text-center px-3 py-3 text-xs font-medium text-cyan-400/60 uppercase tracking-wider">Remote</th>
                 <th className="text-center px-3 py-3 text-xs font-medium text-amber-400/60 uppercase tracking-wider">Late</th>
                 <th className="text-center px-3 py-3 text-xs font-medium text-red-400/60 uppercase tracking-wider">Absent</th>
-                <th className="text-center px-3 py-3 text-xs font-medium text-purple-400/60 uppercase tracking-wider">Leave</th>
-                <th className="text-center px-3 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Total Hrs</th>
-                <th className="text-center px-3 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Avg/Day</th>
+                <th className="text-center px-3 py-3 text-xs font-medium text-amber-400/60 uppercase tracking-wider">Leave</th>
+                <th className="text-center px-3 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Total Hrs</th>
+                <th className="text-center px-3 py-3 text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">Avg/Day</th>
               </tr>
             </thead>
             <tbody>
               {rangeData.map((row) => (
-                <tr key={row.employee.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                <tr key={row.employee.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-hover)] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF6B00]/20 to-[#0EA5E9]/20 flex items-center justify-center shrink-0">
-                        <span className="text-xs font-bold text-white/80">{(row.employee?.name || "?").split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
+                        <span className="text-xs font-bold text-[var(--foreground-muted)]">{(row.employee?.name || "?").split(" ").map(n => n[0]).join("").slice(0, 2)}</span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-white">{row.employee.name}</p>
-                        <p className="text-[10px] text-white/30">{row.employee.title}</p>
+                        <p className="text-sm font-medium text-[var(--foreground)]">{row.employee.name}</p>
+                        <p className="text-[10px] text-[var(--foreground-dim)]">{row.employee.title}</p>
                       </div>
                     </div>
                   </td>
@@ -377,9 +377,9 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
                   <td className="text-center px-3 py-3"><span className="text-sm font-medium text-cyan-400">{row.remote}</span></td>
                   <td className="text-center px-3 py-3"><span className="text-sm font-medium text-amber-400">{row.late}</span></td>
                   <td className="text-center px-3 py-3"><span className="text-sm font-medium text-red-400">{row.absent}</span></td>
-                  <td className="text-center px-3 py-3"><span className="text-sm font-medium text-purple-400">{row.leave}</span></td>
-                  <td className="text-center px-3 py-3"><span className="text-sm text-white/70">{row.totalHours}h</span></td>
-                  <td className="text-center px-3 py-3"><span className={clsx("text-sm font-medium", row.avgHours >= 8 ? "text-emerald-400" : row.avgHours > 0 ? "text-amber-400" : "text-white/30")}>{row.avgHours}h</span></td>
+                  <td className="text-center px-3 py-3"><span className="text-sm font-medium text-amber-400">{row.leave}</span></td>
+                  <td className="text-center px-3 py-3"><span className="text-sm text-[var(--foreground-muted)]">{row.totalHours}h</span></td>
+                  <td className="text-center px-3 py-3"><span className={clsx("text-sm font-medium", row.avgHours >= 8 ? "text-emerald-400" : row.avgHours > 0 ? "text-amber-400" : "text-[var(--foreground-dim)]")}>{row.avgHours}h</span></td>
                 </tr>
               ))}
             </tbody>
@@ -399,22 +399,22 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
           const rate = total > 0 ? Math.round((present / total) * 100) : 0;
 
           return (
-            <div key={brand.id} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+            <div key={brand.id} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: brand.color }} />
-                  <span className="text-sm font-medium text-white">{brand.code}</span>
+                  <span className="text-sm font-medium text-[var(--foreground)]">{brand.code}</span>
                 </div>
-                <span className="text-xs text-white/40">{brandEmployees.length} people</span>
+                <span className="text-xs text-[var(--foreground-dim)]">{brandEmployees.length} people</span>
               </div>
               <div className="flex items-end justify-between">
                 <div>
-                  <p className="text-2xl font-bold text-white">{rate}%</p>
-                  <p className="text-xs text-white/40">attendance rate</p>
+                  <p className="text-2xl font-bold text-[var(--foreground)]">{rate}%</p>
+                  <p className="text-xs text-[var(--foreground-dim)]">attendance rate</p>
                 </div>
-                <p className="text-sm text-white/50">{present}/{total}</p>
+                <p className="text-sm text-[var(--foreground-dim)]">{present}/{total}</p>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="mt-3 h-2 rounded-full bg-[var(--surface-elevated)] overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-500" style={{ width: `${rate}%`, backgroundColor: brand.color }} />
               </div>
             </div>
@@ -423,15 +423,15 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-4 text-xs text-white/40 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-        <span className="text-white/30 uppercase tracking-wider text-[10px] font-medium">Legend:</span>
+      <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--foreground-dim)] p-4 rounded-xl bg-[var(--surface)] border border-[var(--border-subtle)]">
+        <span className="text-[var(--foreground-dim)] uppercase tracking-wider text-[10px] font-medium">Legend:</span>
         {Object.entries(statusConfig).map(([key, cfg]) => (
           <div key={key} className="flex items-center gap-1.5">
             <div className={clsx("w-3 h-3 rounded-full", statusDot(key as AttendanceStatus))} />
             <span>{cfg.label}</span>
           </div>
         ))}
-        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-white/[0.06]" /><span>Weekend/No data</span></div>
+        <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-[var(--surface-elevated)]" /><span>Weekend/No data</span></div>
       </div>
     </div>
   );

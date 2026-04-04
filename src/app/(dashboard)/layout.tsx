@@ -2,94 +2,66 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 import Sidebar, { MobileHeader } from "@/components/layout/Sidebar";
 import AIChat from "@/components/AIChat";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationCenter from "@/components/NotificationCenter";
 import { ToastProvider } from "@/components/ui/toast";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
 import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
+import { CompanyProvider, useCompany } from "@/components/CompanyContext";
+import CompanySwitcher from "@/components/CompanySwitcher";
 import { brands } from "@/data/mock-data";
 
-const brandColors: Record<string, string> = {
-  VCS: "#FF6B00",
-  BSL: "#3B82F6",
-  DPL: "#22C55E",
-};
+const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
 
 const pageTitles: Record<string, string> = {
-  "/": "Dashboard",
-  "/clients": "Clients",
-  "/employees": "Team",
-  "/tasks": "Tasks",
-  "/pipeline": "Pipeline",
-  "/reports": "Reports",
-  "/attendance": "Attendance",
-  "/attendance/checkin": "Check In",
-  "/invoices": "Invoices",
-  "/calendar": "Calendar",
-  "/leaves": "Leave Management",
-  "/payroll": "Payroll",
-  "/expenses": "Expenses",
-  "/audit": "Audit Log",
-  "/guide": "User Guide",
-  "/shortcuts": "Keyboard Shortcuts",
+  "/": "Dashboard", "/clients": "Clients", "/employees": "Team", "/tasks": "Tasks",
+  "/pipeline": "Pipeline", "/reports": "Reports", "/attendance": "Attendance",
+  "/attendance/checkin": "Check In", "/invoices": "Invoices", "/calendar": "Calendar",
+  "/leaves": "Leave Management", "/payroll": "Payroll", "/expenses": "Expenses",
+  "/audit": "Audit Log", "/guide": "User Guide", "/shortcuts": "Keyboard Shortcuts",
   "/settings": "Settings",
 };
 
-const demoUsers = [
-  { email: "admin@fu-corp.com", password: "admin123", role: "SUPER_ADMIN", name: "Umer Khan" },
-  { email: "pm@fu-corp.com", password: "pm123", role: "PROJECT_MANAGER", name: "Sarah Williams" },
-  { email: "dev@fu-corp.com", password: "dev123", role: "EMPLOYEE", name: "John Smith" },
-];
+const pageDescriptions: Record<string, string> = {
+  "/": "Overview of your business performance",
+  "/clients": "Manage client relationships and revenue",
+  "/employees": "Your team across all subsidiaries",
+  "/tasks": "Track and manage all work items",
+  "/pipeline": "Sales pipeline and lead management",
+  "/invoices": "Billing, invoices, and payments",
+  "/reports": "Business intelligence and insights",
+  "/attendance": "Team attendance and tracking",
+  "/settings": "System configuration and preferences",
+};
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<typeof demoUsers[0] | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: string; email: string } | null>(null);
   const [selectedBrand, setSelectedBrand] = useState("1");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showEmailCompose, setShowEmailCompose] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Check auth on mount
   useEffect(() => {
     const stored = localStorage.getItem("fu-crm-user");
     if (stored) {
-      try {
-        const user = JSON.parse(stored);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-      } catch {}
+      try { const user = JSON.parse(stored); setCurrentUser(user); setIsAuthenticated(true); } catch {}
     }
     setCheckingAuth(false);
   }, []);
 
-  // Theme effect
-  useEffect(() => {
-    document.documentElement.className = theme;
-  }, [theme]);
+  useEffect(() => { document.documentElement.className = theme; }, [theme]);
+  useEffect(() => { if (!checkingAuth && !isAuthenticated) router.push("/login"); }, [checkingAuth, isAuthenticated, router]);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!checkingAuth && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [checkingAuth, isAuthenticated, router]);
-
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  }, []);
+  const toggleTheme = useCallback(() => setTheme((p) => (p === "dark" ? "light" : "dark")), []);
 
   const handleLogout = () => {
     localStorage.removeItem("fu-crm-user");
@@ -101,12 +73,75 @@ export default function DashboardLayout({
   const currentBrandData = brands.find((b) => b.id === selectedBrand);
   const brandColor = brandColors[currentBrandData?.code || "VCS"] || "#FF6B00";
   const pageTitle = pageTitles[pathname] || "Dashboard";
+  const pageDesc = pageDescriptions[pathname] || "";
 
-  // Show nothing while checking auth
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#FF6B00]/30 border-t-[#FF6B00] rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--background)] flex">
+        {/* Sidebar skeleton */}
+        <aside className="hidden lg:flex flex-col w-[256px] h-screen border-r border-[var(--border)] bg-[var(--surface)]/60 p-4 gap-4 shrink-0">
+          <div className="flex items-center gap-3 px-2 mb-4">
+            <div className="w-9 h-9 rounded-xl skeleton" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 skeleton rounded" />
+              <div className="h-2 w-16 skeleton rounded" />
+            </div>
+          </div>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2">
+              <div className="w-5 h-5 skeleton rounded" />
+              <div className="h-3 skeleton rounded" style={{ width: `${60 + (i * 7) % 40}%` }} />
+            </div>
+          ))}
+        </aside>
+        {/* Main content skeleton */}
+        <div className="flex-1 min-h-screen">
+          {/* Top bar skeleton */}
+          <div className="h-[56px] border-b border-[var(--border)] bg-[var(--surface)]/60 flex items-center justify-between px-6">
+            <div className="h-4 w-28 skeleton rounded" />
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-40 skeleton rounded-lg" />
+              <div className="w-8 h-8 skeleton rounded-lg" />
+              <div className="w-8 h-8 skeleton rounded-lg" />
+            </div>
+          </div>
+          {/* KPI cards skeleton */}
+          <div className="px-6 py-6 space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-[var(--border)] p-5 space-y-3" style={{ background: 'var(--surface)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="w-9 h-9 skeleton rounded-xl" />
+                    <div className="h-5 w-16 skeleton rounded-full" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-7 w-24 skeleton rounded" />
+                    <div className="h-3 w-20 skeleton rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Chart area skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 rounded-2xl border border-[var(--border)] p-5" style={{ background: 'var(--surface)' }}>
+                <div className="h-4 w-32 skeleton rounded mb-4" />
+                <div className="h-[200px] skeleton rounded-xl" />
+              </div>
+              <div className="rounded-2xl border border-[var(--border)] p-5 space-y-3" style={{ background: 'var(--surface)' }}>
+                <div className="h-4 w-24 skeleton rounded" />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <div className="flex justify-between">
+                      <div className="h-3 w-16 skeleton rounded" />
+                      <div className="h-3 w-8 skeleton rounded" />
+                    </div>
+                    <div className="h-2 skeleton rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -114,113 +149,79 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
+    <CompanyProvider>
     <ToastProvider>
-    <div className="min-h-screen bg-[#09090B] carbon-bg">
-      {/* Mobile Header */}
-      <MobileHeader
-        onMenuOpen={() => setSidebarOpen(true)}
-        brandColor={brandColor}
-        title={pageTitle}
-      />
+      <div className="min-h-screen bg-[var(--background)] noise-overlay">
+        {/* Cybercity atmosphere */}
+        <div className="cybercity-bg" />
+        <div className="cyber-grid" />
+        <div className="ambient-glow" />
 
-      {/* Sidebar */}
-      <Sidebar
-        currentUser={currentUser}
-        selectedBrand={selectedBrand}
-        onBrandChange={setSelectedBrand}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onLogout={handleLogout}
-        isMobileOpen={sidebarOpen}
-        onMobileClose={() => setSidebarOpen(false)}
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
-      />
+        <MobileHeader onMenuOpen={() => setSidebarOpen(true)} brandColor={brandColor} title={pageTitle} />
 
-      {/* Main Content */}
-      <main
-        className={clsx(
-          "min-h-screen pt-16 lg:pt-0 transition-all duration-300",
-          "px-5 sm:px-8 lg:px-10 py-6 lg:py-10",
-          sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]"
-        )}
-      >
-        {/* Desktop Header */}
-        <div className="hidden lg:flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">{pageTitle}</h1>
-            <p className="text-white/40 text-sm mt-1.5">
-              {currentBrandData?.name} &bull; {currentUser?.role}
-            </p>
+        <Sidebar
+          currentUser={currentUser} selectedBrand={selectedBrand} onBrandChange={setSelectedBrand}
+          theme={theme} onToggleTheme={toggleTheme} onLogout={handleLogout}
+          isMobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)}
+          collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed}
+        />
+
+        <main className={clsx(
+          "min-h-screen transition-all duration-300 ease-out",
+          "pt-14 lg:pt-0",
+          sidebarCollapsed ? "lg:ml-[68px]" : "lg:ml-[256px]"
+        )}>
+          {/* Desktop Header */}
+          <header className="hidden lg:flex items-center justify-between h-[56px] px-6 border-b border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-xl sticky top-0 z-20">
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{pageTitle}</h1>
+                {pageDesc && <p className="text-[11px] text-[var(--foreground-dim)] -mt-0.5">{pageDesc}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Search */}
+              <button
+                onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--background-secondary)] border border-[var(--border)] text-[var(--foreground-dim)] hover:border-[var(--border-hover)] transition-all cursor-pointer group"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="text-[12px]">Search</span>
+                <kbd className="ml-4 px-1.5 py-0.5 rounded text-[9px] font-mono bg-[var(--surface)] text-[var(--foreground-dim)] border border-[var(--border-subtle)]">
+                  <span className="opacity-60">Ctrl</span> K
+                </kbd>
+              </button>
+
+              <NotificationCenter />
+
+              <button
+                onClick={() => setShowEmailCompose(true)}
+                className="p-2 rounded-lg text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)] transition-all"
+                title="Compose"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+              </button>
+
+              <CompanySwitcher />
+            </div>
+          </header>
+
+          {/* Page Content with transition */}
+          <div className="px-4 sm:px-6 lg:px-6 py-5 lg:py-6 mobile-safe-bottom relative z-10">
+            <div key={pathname} className="animate-fade-in-up">
+              {children}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Search shortcut hint */}
-            <button
-              onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
-              className="hidden xl:flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-white/50 hover:border-white/10 transition-all cursor-pointer"
-            >
-              <Search className="w-4 h-4" />
-              <span className="text-xs">Search...</span>
-              <kbd className="ml-4 px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] font-mono">Ctrl+K</kbd>
-            </button>
+        </main>
 
-            <button onClick={() => setShowEmailCompose(true)}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all" title="Compose Email">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-            </button>
-
-            <NotificationCenter />
-
-            <button
-              onClick={toggleTheme}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
-            >
-              {theme === "dark" ? (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              )}
-            </button>
-            <select
-              value={selectedBrand}
-              onChange={(e) => setSelectedBrand(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white/80 cursor-pointer"
-            >
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id} className="bg-[#0f0f18]">
-                  {brand.code} - {brand.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Breadcrumbs */}
-        <Breadcrumbs />
-
-        {/* Page Content */}
-        <div className="animate-fade-in-up pb-8 lg:pb-8 pb-20">
-          {children}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className={clsx(sidebarCollapsed ? "lg:ml-[72px]" : "lg:ml-[260px]", "border-t border-white/[0.06] py-5 px-8 text-center text-xs text-white/20 transition-all duration-300")}>
-        <p>FU Corp Command Center &bull; Built for Excellence</p>
-      </footer>
-
-      {/* AI Chat */}
-      <AIChat />
-
-      {/* Mobile Bottom Nav */}
-      <MobileBottomNav />
-
-      {/* Email Compose */}
-      <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
-
-      {/* Command Palette */}
-      <CommandPalette />
-    </div>
+        <AIChat />
+        <MobileBottomNav />
+        <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
+        <CommandPalette />
+      </div>
     </ToastProvider>
+    </CompanyProvider>
   );
 }

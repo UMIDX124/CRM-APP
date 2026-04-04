@@ -2,34 +2,19 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Search, Plus, Briefcase, DollarSign, User, ChevronRight, X, Save,
-  Trash2, Edit, Loader2, AlertTriangle, TrendingUp, Target, ArrowRight,
+  Search, Plus, Briefcase, DollarSign, User, X, Save,
+  Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { leads as mockLeads, brands, employees } from "@/data/mock-data";
-import { apiMutate } from "@/lib/use-data";
-
-type LeadStatus = "NEW" | "QUALIFIED" | "PROPOSAL_SENT" | "NEGOTIATION" | "WON" | "LOST";
-
-interface Lead {
-  id: string;
-  companyName: string;
-  contactName: string;
-  email: string;
-  country: string;
-  countryFlag: string;
-  services: string[];
-  brand?: string;
-  source: string;
-  status: LeadStatus;
-  value: number;
-  salesRep: string;
-  createdAt: string;
-}
+import { apiMutate } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+import { formatCurrency, extractBrandFromSource } from "@/lib/types";
+import type { Lead, LeadStatus } from "@/lib/types";
 
 const stages: { status: LeadStatus; label: string; color: string }[] = [
   { status: "NEW", label: "New", color: "#3B82F6" },
-  { status: "QUALIFIED", label: "Qualified", color: "#8B5CF6" },
+  { status: "QUALIFIED", label: "Qualified", color: "#F59E0B" },
   { status: "PROPOSAL_SENT", label: "Proposal", color: "#F59E0B" },
   { status: "NEGOTIATION", label: "Negotiation", color: "#FF6B00" },
   { status: "WON", label: "Won", color: "#10B981" },
@@ -39,40 +24,39 @@ const stages: { status: LeadStatus; label: string; color: string }[] = [
 const defaultForm = {
   companyName: "", contactName: "", email: "", country: "", source: "Website",
   brand: "VCS", value: 0, salesRep: "", services: "",
+  probability: 50, expectedClose: "", nextAction: "", lastContactDate: "", nextContactDate: "",
 };
 
 export default function PipelineModule({ brandId }: { brandId: string }) {
-  const [leadList, setLeadList] = useState<Lead[]>(mockLeads as unknown as Lead[]);
-  const [loading, setLoading] = useState(false);
+  const { success, error: showError } = useToast();
+  const [leadList, setLeadList] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch real leads from database on mount
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
+    setLoading(true);
     fetch("/api/leads")
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (mounted && data && Array.isArray(data) && data.length > 0) {
-          // Map DB fields to component fields
-          const mapped = data.map((l: Record<string, unknown>) => ({
-            id: l.id as string,
-            companyName: (l.companyName as string) || "",
-            contactName: (l.contactName as string) || "",
-            email: (l.email as string) || "",
-            country: (l.country as string) || "",
-            countryFlag: "",
-            services: (l.services as string[]) || [],
-            brand: (l.brand as Record<string, string>)?.code || (l.brandId as string) || "",
-            source: (l.source as string) || "",
-            status: (l.status as string) || "NEW",
-            value: (l.value as number) || 0,
-            salesRep: (l.salesRepId as string) || "",
-            createdAt: (l.createdAt as string) || "",
-          })) as Lead[];
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        if (data && Array.isArray(data) && data.length > 0) {
+          const mapped: Lead[] = data.map((l: Record<string, unknown>) => ({
+            id: String(l.id), companyName: String(l.companyName || ""), contactName: String(l.contactName || ""),
+            email: String(l.email || ""), country: String(l.country || ""), countryFlag: "",
+            services: Array.isArray(l.services) ? (l.services as string[]) : [],
+            brand: (l.brand as Record<string, string>)?.code || String(l.brandId || ""),
+            source: String(l.source || ""), status: String(l.status || "NEW") as LeadStatus,
+            value: Number(l.value) || 0, salesRep: String(l.salesRepId || ""),
+            createdAt: String(l.createdAt || ""),
+          }));
           setLeadList(mapped);
+        } else {
+          setLeadList(mockLeads as Lead[]);
         }
       })
-      .catch(() => { /* Keep mock data */ });
-    return () => { mounted = false; };
+      .catch(() => { setLeadList(mockLeads as Lead[]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
 
   const [search, setSearch] = useState("");
@@ -86,59 +70,66 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
   const filtered = useMemo(() => {
     if (!search) return leadList;
     const q = search.toLowerCase();
-    return leadList.filter((l) =>
-      l.companyName.toLowerCase().includes(q) || l.contactName.toLowerCase().includes(q)
-    );
+    return leadList.filter((l) => l.companyName.toLowerCase().includes(q) || l.contactName.toLowerCase().includes(q));
   }, [leadList, search]);
 
   const stats = useMemo(() => ({
     total: leadList.length,
     totalValue: leadList.reduce((a, l) => a + l.value, 0),
+    weightedForecast: leadList.filter((l) => l.status !== "LOST" && l.status !== "WON").reduce((a, l) => a + Math.round(l.value * (l.probability || 50) / 100), 0),
     won: leadList.filter((l) => l.status === "WON").reduce((a, l) => a + l.value, 0),
-    convRate: leadList.length > 0 ? Math.round((leadList.filter(l => l.status === "WON").length / leadList.length) * 100) : 0,
+    convRate: leadList.length > 0 ? Math.round((leadList.filter((l) => l.status === "WON").length / leadList.length) * 100) : 0,
   }), [leadList]);
 
   const openAdd = () => { setEditingId(null); setForm(defaultForm); setShowModal(true); };
-
   const openEdit = (lead: Lead) => {
     setEditingId(lead.id);
     setForm({
-      companyName: lead.companyName, contactName: lead.contactName,
-      email: lead.email, country: lead.country || "", source: lead.source || "",
-      brand: lead.brand || "VCS", value: lead.value, salesRep: lead.salesRep || "",
-      services: (lead.services || []).join(", "),
+      companyName: lead.companyName, contactName: lead.contactName, email: lead.email,
+      country: lead.country || "", source: lead.source || "", brand: getBrand(lead),
+      value: lead.value, salesRep: lead.salesRep || "", services: (lead.services || []).join(", "),
+      probability: lead.probability || 50, expectedClose: lead.expectedClose || "",
+      nextAction: lead.nextAction || "", lastContactDate: lead.lastContactDate || "",
+      nextContactDate: lead.nextContactDate || "",
     });
     setShowModal(true);
   };
 
   const handleSave = async () => {
-    if (!form.companyName.trim()) { alert("Company name required"); return; }
-    if (!form.contactName.trim()) { alert("Contact name required"); return; }
-
+    if (!form.companyName.trim()) { showError("Company name required"); return; }
+    if (!form.contactName.trim()) { showError("Contact name required"); return; }
     setSaving(true);
+    const payload = {
+      companyName: form.companyName, contactName: form.contactName, email: form.email,
+      country: form.country, source: form.source, value: form.value,
+      services: form.services.split(",").map((s) => s.trim()).filter(Boolean),
+      probability: form.probability, expectedClose: form.expectedClose || null,
+      nextAction: form.nextAction || null, lastContactDate: form.lastContactDate || null,
+      nextContactDate: form.nextContactDate || null,
+    };
     if (editingId) {
-      await apiMutate(`/api/leads/${editingId}`, "PATCH", form);
-      setLeadList((prev) => prev.map((l) => l.id === editingId ? {
-        ...l, companyName: form.companyName, contactName: form.contactName,
-        email: form.email, country: form.country, source: form.source,
-        value: form.value, salesRep: form.salesRep,
-        services: form.services.split(",").map(s => s.trim()).filter(Boolean),
+      await apiMutate(`/api/leads/${editingId}`, "PATCH", payload);
+      setLeadList((prev) => prev.map((l): Lead => l.id === editingId ? {
+        ...l, companyName: form.companyName, contactName: form.contactName, email: form.email,
+        country: form.country, source: form.source, value: form.value, salesRep: form.salesRep,
+        services: payload.services, probability: form.probability,
+        expectedClose: form.expectedClose || undefined, nextAction: form.nextAction || undefined,
+        lastContactDate: form.lastContactDate || undefined, nextContactDate: form.nextContactDate || undefined,
       } : l));
-      // success("Lead updated");
+      success("Lead updated");
     } else {
-      await apiMutate("/api/leads", "POST", {
-        companyName: form.companyName, contactName: form.contactName,
-        email: form.email, country: form.country, source: form.source,
-        value: form.value, services: form.services.split(",").map(s => s.trim()).filter(Boolean),
-      });
-      setLeadList((prev) => [...prev, {
+      await apiMutate("/api/leads", "POST", payload);
+      const newLead: Lead = {
         id: String(Date.now()), companyName: form.companyName, contactName: form.contactName,
-        email: form.email, country: form.country, countryFlag: "",
-        services: form.services.split(",").map(s => s.trim()).filter(Boolean),
-        brand: form.brand, source: form.source, status: "NEW" as LeadStatus,
-        value: form.value, salesRep: form.salesRep, createdAt: new Date().toISOString().split("T")[0],
-      }]);
-      // Lead added
+        email: form.email, country: form.country, countryFlag: "", brand: form.brand,
+        source: form.source, status: "NEW" as LeadStatus, value: form.value,
+        salesRep: form.salesRep, createdAt: new Date().toISOString().split("T")[0],
+        services: payload.services, probability: form.probability,
+        expectedClose: form.expectedClose || undefined, nextAction: form.nextAction || undefined,
+        lastContactDate: form.lastContactDate || undefined, nextContactDate: form.nextContactDate || undefined,
+      };
+      setLeadList((prev) => [...prev, newLead]);
+      success("Lead added");
     }
     setSaving(false);
     setShowModal(false);
@@ -146,245 +137,216 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
 
   const moveStage = async (leadId: string, newStatus: LeadStatus) => {
     await apiMutate(`/api/leads/${leadId}`, "PATCH", { status: newStatus });
-    setLeadList((prev) => prev.map((l) => l.id === leadId ? { ...l, status: newStatus } : l));
-    const lead = leadList.find(l => l.id === leadId);
-    // Lead moved
+    setLeadList((prev) => prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)));
+    const st = stages.find((s) => s.status === newStatus);
+    success(`Moved to ${st?.label}`);
   };
 
   const handleDelete = async (id: string) => {
     await apiMutate(`/api/leads/${id}`, "DELETE");
     setLeadList((prev) => prev.filter((l) => l.id !== id));
     setShowDeleteConfirm(null);
-    // success("Lead removed");
+    success("Lead removed");
   };
 
-  const brandColor = (code?: string) => {
-    if (!code) return "#FF6B00";
-    return brands.find((b) => b.code === code)?.color || "#FF6B00";
-  };
-  // Extract brand from source field (e.g., "Website - BSL" → "BSL")
-  const getBrand = (lead: Lead) => {
-    if (lead.brand) return lead.brand;
-    if (lead.source) {
-      const match = lead.source.match(/- (VCS|BSL|DPL)/);
-      if (match) return match[1];
-    }
-    return "";
-  };
+  const brandColor = (code?: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
+  const getBrand = (lead: Lead) => lead.brand || extractBrandFromSource(lead.source);
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="flex items-center gap-2 mb-2"><Briefcase className="w-4 h-4 text-[#FF6B00]" /><span className="text-xs text-white/50">Total Leads</span></div>
-          <p className="text-2xl font-bold text-white">{stats.total}</p>
-        </div>
-        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="flex items-center gap-2 mb-2"><DollarSign className="w-4 h-4 text-[#F59E0B]" /><span className="text-xs text-white/50">Pipeline Value</span></div>
-          <p className="text-2xl font-bold text-white">${(stats.totalValue / 1000).toFixed(0)}K</p>
-        </div>
-        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-emerald-400" /><span className="text-xs text-white/50">Won Value</span></div>
-          <p className="text-2xl font-bold text-white">${(stats.won / 1000).toFixed(0)}K</p>
-        </div>
-        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-          <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-emerald-400" /><span className="text-xs text-white/50">Win Rate</span></div>
-          <p className="text-2xl font-bold text-white">{stats.convRate}%</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="kpi-card"><div className="flex items-center gap-2 mb-2"><Briefcase className="w-3.5 h-3.5 text-[var(--primary)]" /><span className="text-[11px] text-[var(--foreground-dim)]">Leads</span></div><p className="text-xl font-semibold text-[var(--foreground)] tabular-nums">{stats.total}</p></div>
+        <div className="kpi-card"><div className="flex items-center gap-2 mb-2"><DollarSign className="w-3.5 h-3.5 text-amber-400" /><span className="text-[11px] text-[var(--foreground-dim)]">Pipeline</span></div><p className="text-xl font-semibold text-[var(--foreground)] tabular-nums">{formatCurrency(stats.totalValue, true)}</p></div>
+        <div className="kpi-card"><div className="flex items-center gap-2 mb-2"><Target className="w-3.5 h-3.5 text-cyan-400" /><span className="text-[11px] text-[var(--foreground-dim)]">Forecast</span></div><p className="text-xl font-semibold text-[var(--foreground)] tabular-nums">{formatCurrency(stats.weightedForecast, true)}</p></div>
+        <div className="kpi-card"><div className="flex items-center gap-2 mb-2"><TrendingUp className="w-3.5 h-3.5 text-emerald-400" /><span className="text-[11px] text-[var(--foreground-dim)]">Won</span></div><p className="text-xl font-semibold text-[var(--foreground)] tabular-nums">{formatCurrency(stats.won, true)}</p></div>
+        <div className="kpi-card"><div className="flex items-center gap-2 mb-2"><Target className="w-3.5 h-3.5 text-emerald-400" /><span className="text-[11px] text-[var(--foreground-dim)]">Win Rate</span></div><p className="text-xl font-semibold text-[var(--foreground)] tabular-nums">{stats.convRate}%</p></div>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-          <input type="text" placeholder="Search leads..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="search-box flex-1"><Search className="w-3.5 h-3.5" /><input type="text" placeholder="Search leads..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-8" /></div>
+        <div className="tab-list !p-0.5">
+          <button onClick={() => setViewMode("kanban")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "kanban" ? "active" : ""}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setViewMode("list")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "list" ? "active" : ""}`}><List className="w-3.5 h-3.5" /></button>
         </div>
-        <div className="flex gap-2 bg-white/[0.04] border border-white/[0.08] rounded-xl p-1">
-          <button onClick={() => setViewMode("kanban")} className={clsx("px-3 py-1.5 rounded-lg text-xs font-medium transition-all", viewMode === "kanban" ? "bg-white/10 text-white" : "text-white/40")}>Kanban</button>
-          <button onClick={() => setViewMode("list")} className={clsx("px-3 py-1.5 rounded-lg text-xs font-medium transition-all", viewMode === "list" ? "bg-white/10 text-white" : "text-white/40")}>List</button>
-        </div>
-        <button onClick={openAdd} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-bold text-sm">
-          <Plus className="w-4 h-4" /> Add Lead
-        </button>
+        <button onClick={openAdd} className="btn-primary whitespace-nowrap"><Plus className="w-4 h-4" /> Add Lead</button>
       </div>
 
-      {/* Kanban View */}
+      {/* Content */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-48 skeleton rounded-xl" />)}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, col) => (
+            <div key={col} className="kanban-column p-4 space-y-3">
+              <div className="flex items-center justify-between mb-2"><div className="h-3 w-20 skeleton rounded" /><div className="h-5 w-5 skeleton rounded" /></div>
+              {Array.from({ length: 2 + (col % 2) }).map((_, card) => (
+                <div key={card} className="kanban-card space-y-2.5">
+                  <div className="h-4 w-3/4 skeleton rounded" />
+                  <div className="h-3 w-1/2 skeleton rounded" />
+                  <div className="flex items-center gap-2"><div className="w-5 h-5 skeleton rounded-full" /><div className="h-2.5 w-16 skeleton rounded" /></div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       ) : viewMode === "kanban" ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4 overflow-x-auto">
-          {stages.filter(s => s.status !== "LOST").map((stage) => {
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 overflow-x-auto">
+          {stages.filter((s) => s.status !== "LOST").map((stage) => {
             const stageLeads = filtered.filter((l) => l.status === stage.status);
             const stageValue = stageLeads.reduce((a, l) => a + l.value, 0);
             return (
-              <div key={stage.status} className="min-w-[220px]">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stage.color }} />
-                    <span className="text-sm font-medium text-white">{stage.label}</span>
-                    <span className="text-xs text-white/30">{stageLeads.length}</span>
+              <div key={stage.status} className="kanban-column p-3 min-w-[180px]">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stage.color }} />
+                    <span className="text-[12px] font-medium text-[var(--foreground)]">{stage.label}</span>
+                    <span className="text-[11px] text-[var(--foreground-dim)] tabular-nums">{stageLeads.length}</span>
                   </div>
-                  <span className="text-xs text-white/30">${(stageValue / 1000).toFixed(0)}K</span>
+                  <span className="text-[10px] text-[var(--foreground-dim)] tabular-nums">{formatCurrency(stageValue, true)}</span>
                 </div>
                 <div className="space-y-2">
                   {stageLeads.map((lead) => (
-                    <div key={lead.id} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.12] transition-all group">
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-sm font-medium text-white truncate flex-1">{lead.companyName}</p>
-                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => openEdit(lead)} className="p-1 rounded hover:bg-white/10 text-white/30"><Edit className="w-3 h-3" /></button>
-                          <button onClick={() => setShowDeleteConfirm(lead.id)} className="p-1 rounded hover:bg-red-500/10 text-white/30 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+                    <div key={lead.id} className="kanban-card group">
+                      <div className="flex items-start justify-between mb-1">
+                        <p className="text-[12px] font-medium text-[var(--foreground)] truncate flex-1 pr-1">{lead.companyName}</p>
+                        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                          <button onClick={() => openEdit(lead)} className="btn-ghost p-0.5"><Edit className="w-2.5 h-2.5" /></button>
+                          <button onClick={() => setShowDeleteConfirm(lead.id)} className="btn-ghost p-0.5 hover:!text-red-400"><Trash2 className="w-2.5 h-2.5" /></button>
                         </div>
                       </div>
-                      <p className="text-xs text-white/40 mb-2">{lead.contactName}</p>
+                      <p className="text-[11px] text-[var(--foreground-dim)] mb-2">{lead.contactName}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-white">${lead.value.toLocaleString()}</span>
-                        {getBrand(lead) && <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(getBrand(lead)), backgroundColor: brandColor(getBrand(lead)) + "10" }}>{getBrand(lead)}</span>}
+                        <span className="text-[12px] font-medium text-[var(--foreground)] tabular-nums">{formatCurrency(lead.value)}</span>
+                        {getBrand(lead) && <span className="badge text-[9px]" style={{ color: brandColor(getBrand(lead)), backgroundColor: `${brandColor(getBrand(lead))}10` }}>{getBrand(lead)}</span>}
                       </div>
-                      {/* Move buttons */}
                       {stage.status !== "WON" && (
-                        <div className="flex gap-1 mt-2 pt-2 border-t border-white/[0.04]">
-                          {stage.status === "NEW" && <button onClick={() => moveStage(lead.id, "QUALIFIED")} className="flex-1 text-[10px] py-1 rounded bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all">Qualify</button>}
-                          {stage.status === "QUALIFIED" && <button onClick={() => moveStage(lead.id, "PROPOSAL_SENT")} className="flex-1 text-[10px] py-1 rounded bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all">Send Proposal</button>}
-                          {stage.status === "PROPOSAL_SENT" && <button onClick={() => moveStage(lead.id, "NEGOTIATION")} className="flex-1 text-[10px] py-1 rounded bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all">Negotiate</button>}
+                        <div className="flex gap-1 mt-2 pt-2 border-t border-[var(--border-subtle)]">
+                          {stage.status === "NEW" && <button onClick={() => moveStage(lead.id, "QUALIFIED")} className="flex-1 text-[10px] py-1 rounded-md bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors">Qualify</button>}
+                          {stage.status === "QUALIFIED" && <button onClick={() => moveStage(lead.id, "PROPOSAL_SENT")} className="flex-1 text-[10px] py-1 rounded-md bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors">Proposal</button>}
+                          {stage.status === "PROPOSAL_SENT" && <button onClick={() => moveStage(lead.id, "NEGOTIATION")} className="flex-1 text-[10px] py-1 rounded-md bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors">Negotiate</button>}
                           {stage.status === "NEGOTIATION" && (
                             <>
-                              <button onClick={() => moveStage(lead.id, "WON")} className="flex-1 text-[10px] py-1 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all">Won</button>
-                              <button onClick={() => moveStage(lead.id, "LOST")} className="flex-1 text-[10px] py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all">Lost</button>
+                              <button onClick={() => moveStage(lead.id, "WON")} className="flex-1 text-[10px] py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">Won</button>
+                              <button onClick={() => moveStage(lead.id, "LOST")} className="flex-1 text-[10px] py-1 rounded-md bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors">Lost</button>
                             </>
                           )}
                         </div>
                       )}
                     </div>
                   ))}
-                  {stageLeads.length === 0 && (
-                    <div className="p-6 rounded-xl border border-dashed border-white/[0.06] text-center">
-                      <p className="text-xs text-white/20">No leads</p>
-                    </div>
-                  )}
+                  {stageLeads.length === 0 && <div className="p-4 rounded-lg border border-dashed border-[var(--border)] text-center"><p className="text-[11px] text-[var(--foreground-dim)]">No leads</p></div>}
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        /* List View */
-        <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Lead</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Stage</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Value</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider hidden md:table-cell">Source</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((lead) => {
-                const stage = stages.find(s => s.status === lead.status);
-                return (
-                  <tr key={lead.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-medium text-white">{lead.companyName}</p>
-                      <p className="text-xs text-white/40">{lead.contactName}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold" style={{ color: stage?.color, backgroundColor: stage?.color + "15" }}>{stage?.label}</span>
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-white">${lead.value.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm text-white/50 hidden md:table-cell">{lead.source}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => openEdit(lead)} className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => setShowDeleteConfirm(lead.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="data-table min-w-[900px]">
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Contact</th>
+                  <th>Stage</th>
+                  <th className="text-right">Deal Size</th>
+                  <th className="text-center">Probability</th>
+                  <th className="text-right">Forecast</th>
+                  <th>Close Date</th>
+                  <th>Last Contact</th>
+                  <th>Next Contact</th>
+                  <th>Next Action</th>
+                  <th className="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((lead) => {
+                  const stage = stages.find((s) => s.status === lead.status);
+                  const prob = lead.probability || 50;
+                  const forecast = Math.round(lead.value * prob / 100);
+                  return (
+                    <tr key={lead.id} onClick={() => openEdit(lead)} className="cursor-pointer">
+                      <td>
+                        <div className="flex items-center gap-2">
+                          {getBrand(lead) && <span className="badge text-[9px]" style={{ color: brandColor(getBrand(lead)), backgroundColor: `${brandColor(getBrand(lead))}10` }}>{getBrand(lead)}</span>}
+                          <span className="text-[13px] font-medium text-[var(--foreground)]">{lead.companyName}</span>
+                        </div>
+                      </td>
+                      <td className="text-[var(--foreground-muted)]">{lead.contactName}</td>
+                      <td><span className="badge" style={{ color: stage?.color, backgroundColor: `${stage?.color}15` }}>{stage?.label}</span></td>
+                      <td className="text-right tabular-nums font-medium text-[var(--foreground)]">{formatCurrency(lead.value)}</td>
+                      <td className="text-center">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <div className="w-10 h-1.5 rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${prob}%`, backgroundColor: prob >= 70 ? "#10B981" : prob >= 40 ? "#F59E0B" : "#EF4444" }} />
+                          </div>
+                          <span className="text-[11px] tabular-nums" style={{ color: prob >= 70 ? "#10B981" : prob >= 40 ? "#F59E0B" : "#EF4444" }}>{prob}%</span>
+                        </div>
+                      </td>
+                      <td className="text-right tabular-nums text-emerald-400 font-medium">{formatCurrency(forecast)}</td>
+                      <td className="text-[var(--foreground-dim)] text-[12px]">{lead.expectedClose || "—"}</td>
+                      <td className="text-[var(--foreground-dim)] text-[12px]">{lead.lastContactDate || "—"}</td>
+                      <td className="text-[var(--foreground-dim)] text-[12px]">{lead.nextContactDate || "—"}</td>
+                      <td className="text-[var(--foreground-muted)] text-[12px] max-w-[120px] truncate">{lead.nextAction || "—"}</td>
+                      <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-0.5">
+                          <button onClick={() => openEdit(lead)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => setShowDeleteConfirm(lead.id)} className="btn-ghost p-1.5 hover:!text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowModal(false)} />
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#111114] border border-white/10 rounded-2xl shadow-2xl">
-            <div className="sticky top-0 bg-[#111114] border-b border-white/[0.06] px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-semibold text-white">{editingId ? "Edit Lead" : "Add New Lead"}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/40"><X className="w-5 h-5" /></button>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[var(--surface)] border-b border-[var(--border)] px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="text-[15px] font-semibold text-[var(--foreground)]">{editingId ? "Edit Lead" : "New Lead"}</h2>
+              <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-5 space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Company Name *</label>
-                  <input type="text" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-                    placeholder="Lead company" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
-                </div>
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Contact Person *</label>
-                  <input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })}
-                    placeholder="Decision maker" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
-                </div>
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Email</label>
-                  <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="contact@lead.com" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
-                </div>
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Deal Value ($)</label>
-                  <input type="number" value={form.value || ""} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })}
-                    placeholder="10000" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
-                </div>
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Source</label>
-                  <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
-                    {["Website", "LinkedIn", "Referral", "Cold Outreach", "Conference", "Other"].map(s => <option key={s} value={s} className="bg-[#111114]">{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-white/40 mb-1.5">Sales Rep</label>
-                  <select value={form.salesRep} onChange={(e) => setForm({ ...form, salesRep: e.target.value })}
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white cursor-pointer">
-                    <option value="" className="bg-[#111114]">Unassigned</option>
-                    {employees.filter(e => ["SUPER_ADMIN", "PROJECT_MANAGER", "TEAM_LEAD"].includes(e.role)).map(e => <option key={e.id} value={e.name} className="bg-[#111114]">{e.name}</option>)}
-                  </select>
-                </div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Company *</label><input type="text" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Contact *</label><input type="text" value={form.contactName} onChange={(e) => setForm({ ...form, contactName: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Value ($)</label><input type="number" value={form.value || ""} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Source</label><select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} className="input-field">{["Website", "LinkedIn", "Referral", "Cold Outreach", "Conference"].map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Sales Rep</label><select value={form.salesRep} onChange={(e) => setForm({ ...form, salesRep: e.target.value })} className="input-field"><option value="">Unassigned</option>{employees.filter((e) => ["SUPER_ADMIN", "PROJECT_MANAGER", "TEAM_LEAD"].includes(e.role)).map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}</select></div>
               </div>
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5">Services (comma-separated)</label>
-                <input type="text" value={form.services} onChange={(e) => setForm({ ...form, services: e.target.value })}
-                  placeholder="Web Dev, SEO, Marketing" className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-[#FF6B00]/30" />
+              <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Services (comma-separated)</label><input type="text" value={form.services} onChange={(e) => setForm({ ...form, services: e.target.value })} placeholder="Web Dev, SEO" className="input-field" /></div>
+              {/* Smartsheet Pipeline Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-[var(--border)]">
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Probability %</label><input type="number" min={0} max={100} value={form.probability} onChange={(e) => setForm({ ...form, probability: Number(e.target.value) })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Projected Close Date</label><input type="date" value={form.expectedClose} onChange={(e) => setForm({ ...form, expectedClose: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Last Contact Date</label><input type="date" value={form.lastContactDate} onChange={(e) => setForm({ ...form, lastContactDate: e.target.value })} className="input-field" /></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Next Contact Date</label><input type="date" value={form.nextContactDate} onChange={(e) => setForm({ ...form, nextContactDate: e.target.value })} className="input-field" /></div>
+                <div className="sm:col-span-2"><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Next Action</label><input type="text" value={form.nextAction} onChange={(e) => setForm({ ...form, nextAction: e.target.value })} placeholder="Send proposal, Schedule demo..." className="input-field" /></div>
               </div>
             </div>
-            <div className="sticky bottom-0 bg-[#111114] border-t border-white/[0.06] px-6 py-4 flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black font-semibold text-sm disabled:opacity-50 flex items-center gap-2">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {editingId ? "Save" : "Add Lead"}
-              </button>
+            <div className="sticky bottom-0 bg-[var(--surface)] border-t border-[var(--border)] px-5 py-3 flex justify-end gap-2">
+              <button onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} {editingId ? "Save" : "Add Lead"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirm */}
+      {/* Delete */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)} />
-          <div className="relative w-full max-w-md bg-[#111114] border border-white/10 rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4"><div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div><div><h3 className="text-white font-semibold">Remove Lead</h3></div></div>
-            <p className="text-sm text-white/60 mb-6">Remove <strong className="text-white">{leadList.find(l => l.id === showDeleteConfirm)?.companyName}</strong> from pipeline?</p>
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowDeleteConfirm(null)} className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm">Cancel</button>
-              <button onClick={() => handleDelete(showDeleteConfirm)} className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium">Remove</button>
+        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(null)}>
+          <div className="modal-content w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-[15px] font-semibold text-[var(--foreground)] mb-2">Remove Lead</h3>
+            <p className="text-[13px] text-[var(--foreground-muted)] mb-5">Remove <strong className="text-[var(--foreground)]">{leadList.find((l) => l.id === showDeleteConfirm)?.companyName}</strong>?</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowDeleteConfirm(null)} className="btn-secondary">Cancel</button>
+              <button onClick={() => handleDelete(showDeleteConfirm)} className="btn-primary !bg-red-500 hover:!bg-red-600">Remove</button>
             </div>
           </div>
         </div>

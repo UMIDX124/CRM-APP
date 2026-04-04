@@ -258,6 +258,11 @@ src/
 - ✅ Check browser console for errors after each change
 - ✅ Commit frequently with descriptive messages
 
+### DEPLOYMENT RULE:
+- **NEVER** trigger a production deploy unless actual source files have changed since the last deployment.
+- Check `git diff HEAD~1 --stat` before deploying. If only config/lock files changed, skip the deploy.
+- Avoid repeated force-redeploys from the same commit SHA — this wastes Vercel build minutes and pollutes deployment history.
+
 ### PREVIOUS BLUNDERS TO AVOID:
 1. **useData hook infinite loop** — mockData in useCallback dependency caused infinite re-renders on ALL pages. Pages crashed with "This page couldn't load". Fix: use useRef for fallback data.
 2. **Pipeline brand field** — mock leads don't have brand field, it's embedded in source string. Component crashed trying to access lead.brand.

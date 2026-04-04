@@ -41,7 +41,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="p-1 rounded-md hover:bg-white/10 text-white/30 hover:text-white/60 transition-all"
+      className="p-1 rounded-md hover:bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-all"
       title="Copy message"
     >
       {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -55,19 +55,19 @@ function MarkdownContent({ content }: { content: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
-        strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-        em: ({ children }) => <em className="italic text-white/80">{children}</em>,
-        h1: ({ children }) => <h1 className="text-lg font-bold text-white mb-2 mt-3 first:mt-0">{children}</h1>,
-        h2: ({ children }) => <h2 className="text-base font-bold text-white mb-2 mt-3 first:mt-0">{children}</h2>,
-        h3: ({ children }) => <h3 className="text-sm font-bold text-white mb-1.5 mt-2 first:mt-0">{children}</h3>,
-        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2 text-white/80">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2 text-white/80">{children}</ol>,
+        strong: ({ children }) => <strong className="font-semibold text-[var(--foreground)]">{children}</strong>,
+        em: ({ children }) => <em className="italic text-[var(--foreground-muted)]">{children}</em>,
+        h1: ({ children }) => <h1 className="text-lg font-bold text-[var(--foreground)] mb-2 mt-3 first:mt-0">{children}</h1>,
+        h2: ({ children }) => <h2 className="text-base font-bold text-[var(--foreground)] mb-2 mt-3 first:mt-0">{children}</h2>,
+        h3: ({ children }) => <h3 className="text-sm font-bold text-[var(--foreground)] mb-1.5 mt-2 first:mt-0">{children}</h3>,
+        ul: ({ children }) => <ul className="list-disc list-inside space-y-1 mb-2 text-[var(--foreground-muted)]">{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 mb-2 text-[var(--foreground-muted)]">{children}</ol>,
         li: ({ children }) => <li className="leading-relaxed">{children}</li>,
         code: ({ className, children, ...props }) => {
           const isInline = !className;
           if (isInline) {
             return (
-              <code className="px-1.5 py-0.5 rounded-md bg-white/10 text-#FF8A33 text-xs font-mono" {...props}>
+              <code className="px-1.5 py-0.5 rounded-md bg-[var(--surface-hover)] text-[var(--primary-light)] text-xs font-mono" {...props}>
                 {children}
               </code>
             );
@@ -80,19 +80,19 @@ function MarkdownContent({ content }: { content: string }) {
         },
         pre: ({ children }) => <pre className="mb-2">{children}</pre>,
         blockquote: ({ children }) => (
-          <blockquote className="border-l-2 border-#FF6B00/50 pl-3 italic text-white/60 mb-2">{children}</blockquote>
+          <blockquote className="border-l-2 border-[var(--primary)]/50 pl-3 italic text-[var(--foreground-muted)] mb-2">{children}</blockquote>
         ),
         table: ({ children }) => (
-          <div className="overflow-x-auto mb-2 rounded-lg border border-white/10">
+          <div className="overflow-x-auto mb-2 rounded-lg border border-[var(--border)]">
             <table className="w-full text-xs">{children}</table>
           </div>
         ),
-        thead: ({ children }) => <thead className="bg-white/5">{children}</thead>,
-        th: ({ children }) => <th className="px-3 py-2 text-left font-semibold text-white/80 border-b border-white/10">{children}</th>,
-        td: ({ children }) => <td className="px-3 py-2 text-white/60 border-b border-white/5">{children}</td>,
-        hr: () => <hr className="border-white/10 my-3" />,
+        thead: ({ children }) => <thead className="bg-[var(--surface)]">{children}</thead>,
+        th: ({ children }) => <th className="px-3 py-2 text-left font-semibold text-[var(--foreground-muted)] border-b border-[var(--border)]">{children}</th>,
+        td: ({ children }) => <td className="px-3 py-2 text-[var(--foreground-muted)] border-b border-white/5">{children}</td>,
+        hr: () => <hr className="border-[var(--border)] my-3" />,
         a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-#FF6B00 hover:text-#FF8A33 underline underline-offset-2">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] hover:text-[var(--primary-light)] underline underline-offset-2">
             {children}
           </a>
         ),
@@ -161,16 +161,16 @@ export default function AIChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-5 right-5 sm:bottom-8 sm:right-8 z-50 group cursor-pointer"
+        className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 group cursor-pointer"
       >
-        <div className="absolute inset-[-16px] rounded-full bg-[#FF6B00]/15 blur-2xl group-hover:bg-[#FF6B00]/25 transition-all duration-500 animate-pulse" />
+        <div className="absolute inset-[-12px] rounded-full bg-[var(--primary)]/10 blur-xl group-hover:bg-[var(--primary)]/20 transition-all duration-500" />
         <div className="relative hover:scale-110 active:scale-95 transition-transform duration-200">
-          <FUMascot emotion="excited" size={90} />
-          <span className="absolute top-0 right-0 w-5 h-5 bg-green-400 rounded-full border-[3px] border-[#09090B] shadow-lg shadow-green-400/30">
+          <FUMascot emotion="excited" size={64} />
+          <span className="absolute top-0 right-0 w-5 h-5 bg-green-400 rounded-full border-[3px] border-[var(--background)] shadow-lg shadow-green-400/30">
             <span className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-60" />
           </span>
         </div>
-        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[10px] text-[#FF6B00] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 font-semibold backdrop-blur-sm">
+        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[10px] text-[var(--primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 font-semibold backdrop-blur-sm">
           Ask FU AI
         </span>
       </button>
@@ -182,18 +182,18 @@ export default function AIChat() {
       className={clsx(
         "fixed z-50 transition-all duration-300",
         isMinimized
-          ? "bottom-4 right-4 sm:bottom-6 sm:right-6 w-16 h-16"
-          : "bottom-3 right-3 sm:bottom-6 sm:right-6 w-[calc(100vw-24px)] sm:w-[440px] h-[640px]",
-        isMinimized ? "" : "max-h-[calc(100vh-48px)] sm:max-h-[calc(100vh-100px)]"
+          ? "bottom-[88px] right-4 lg:bottom-6 lg:right-6 w-16 h-16"
+          : "bottom-[88px] right-3 lg:bottom-6 lg:right-6 w-[calc(100vw-24px)] sm:w-[420px] h-[500px] lg:h-[600px]",
+        isMinimized ? "" : "max-h-[calc(100vh-100px)]"
       )}
     >
-      <div className="w-full h-full rounded-2xl bg-gradient-to-b from-[#1a1a2e] to-[#0f0f1a] border border-white/10 shadow-2xl shadow-black/50 flex flex-col overflow-hidden">
+      <div className="w-full h-full rounded-2xl bg-gradient-to-b from-[var(--surface-elevated)] to-[var(--surface)] border border-[var(--border)] shadow-2xl shadow-black/50 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-#FF6B00/10 to-#E05500/10">
+        <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--primary)]/10 to-[var(--primary-dark)]/10">
           <div className="flex items-center gap-3">
             <FUMascot emotion={mascotEmotion} size={44} />
             <div>
-              <h3 className="text-white font-semibold">FU AI</h3>
+              <h3 className="text-[var(--foreground)] font-semibold">FU AI</h3>
               <p className="text-xs text-green-400 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 {isLoading ? "Thinking..." : "Online"} • Groq Powered
@@ -203,20 +203,20 @@ export default function AIChat() {
           <div className="flex items-center gap-1">
             <button
               onClick={handleClearChat}
-              className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/60 transition-all"
+              className="p-2 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-all"
               title="Clear chat"
             >
               <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setIsMinimized(!isMinimized)}
-              className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              className="p-2 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"
             >
               <Minimize2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all"
+              className="p-2 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -230,10 +230,10 @@ export default function AIChat() {
               {/* Welcome message */}
               {welcomeShown && messages.length === 0 && (
                 <div className="flex justify-start">
-                  <div className="max-w-[88%] rounded-2xl px-4 py-3 bg-white/5 border border-white/10 text-white/90 rounded-bl-md">
+                  <div className="max-w-[88%] rounded-2xl px-4 py-3 bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] rounded-bl-md">
                     <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-3 h-3 text-#FF6B00" />
-                      <span className="text-xs text-#FF6B00 font-medium">FU AI</span>
+                      <Sparkles className="w-3 h-3 text-[var(--primary)]" />
+                      <span className="text-xs text-[var(--primary)] font-medium">FU AI</span>
                     </div>
                     <div className="text-sm">
                       <MarkdownContent content={"Hey there! I'm **FU AI** \u{1F916}\n\nYour intelligent CRM assistant powered by Groq. I can help you with:\n\n- **Dashboard insights** & analytics\n- **Client management** & health scores\n- **Team performance** & workloads\n- **Task tracking** & priorities\n- **Revenue reports** & trends\n\nWhat can I help you with today?"} />
@@ -256,15 +256,15 @@ export default function AIChat() {
                       className={clsx(
                         "max-w-[88%] rounded-2xl px-4 py-3 group relative",
                         message.role === "user"
-                          ? "bg-gradient-to-r from-#FF6B00 to-#E05500 text-white rounded-br-md"
-                          : "bg-white/5 border border-white/10 text-white/90 rounded-bl-md"
+                          ? "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark)] text-[var(--foreground)] rounded-br-md"
+                          : "bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] rounded-bl-md"
                       )}
                     >
                       {message.role === "assistant" && (
                         <div className="flex items-center justify-between gap-2 mb-2">
                           <div className="flex items-center gap-2">
-                            <Sparkles className="w-3 h-3 text-#FF6B00" />
-                            <span className="text-xs text-#FF6B00 font-medium">FU AI</span>
+                            <Sparkles className="w-3 h-3 text-[var(--primary)]" />
+                            <span className="text-xs text-[var(--primary)] font-medium">FU AI</span>
                           </div>
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <CopyButton text={text} />
@@ -289,14 +289,14 @@ export default function AIChat() {
               {/* Streaming indicator */}
               {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 border border-white/10 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Sparkles className="w-3 h-3 text-#FF6B00 animate-pulse" />
-                      <span className="text-xs text-#FF6B00">Thinking...</span>
+                      <Sparkles className="w-3 h-3 text-[var(--primary)] animate-pulse" />
+                      <span className="text-xs text-[var(--primary)]">Thinking...</span>
                       <div className="flex gap-1">
-                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-1.5 h-1.5 bg-#FF6B00/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[var(--primary)]/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[var(--primary)]/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 bg-[var(--primary)]/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
                       </div>
                     </div>
                   </div>
@@ -306,15 +306,15 @@ export default function AIChat() {
               {/* Quick Actions - show only with welcome message */}
               {messages.length === 0 && !isLoading && (
                 <div className="space-y-2 pt-2">
-                  <p className="text-xs text-white/40 text-center">Quick Actions</p>
+                  <p className="text-xs text-[var(--foreground-dim)] text-center">Quick Actions</p>
                   <div className="grid grid-cols-2 gap-2">
                     {quickActions.map((action, i) => (
                       <button
                         key={i}
                         onClick={() => handleQuickAction(action.prompt)}
-                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/15 text-xs text-white/70 hover:text-white transition-all group"
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-white/5 hover:border-white/15 text-xs text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all group"
                       >
-                        <action.icon className="w-4 h-4 text-#FF6B00 group-hover:scale-110 transition-transform" />
+                        <action.icon className="w-4 h-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
                         {action.label}
                       </button>
                     ))}
@@ -326,7 +326,7 @@ export default function AIChat() {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-white/10">
+            <div className="p-4 border-t border-[var(--border)]">
               <form onSubmit={handleSubmit} className="flex items-center gap-2">
                 <input
                   ref={inputRef}
@@ -335,7 +335,7 @@ export default function AIChat() {
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isLoading ? "FU AI is thinking..." : "Ask me anything..."}
                   disabled={isLoading}
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-#FF6B00/50 disabled:opacity-50 transition-all"
+                  className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-dim)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/50 disabled:opacity-50 transition-all"
                 />
                 <button
                   type="submit"
@@ -343,8 +343,8 @@ export default function AIChat() {
                   className={clsx(
                     "w-11 h-11 rounded-xl flex items-center justify-center transition-all shrink-0",
                     inputValue.trim() && !isLoading
-                      ? "bg-gradient-to-r from-#FF6B00 to-#E05500 text-white hover:opacity-90 hover:scale-105"
-                      : "bg-white/5 text-white/30 cursor-not-allowed"
+                      ? "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark)] text-[var(--foreground)] hover:opacity-90 hover:scale-105"
+                      : "bg-[var(--surface)] text-[var(--foreground-dim)] cursor-not-allowed"
                   )}
                 >
                   {isLoading ? (
@@ -354,7 +354,7 @@ export default function AIChat() {
                   )}
                 </button>
               </form>
-              <p className="text-[10px] text-white/30 text-center mt-2">
+              <p className="text-[10px] text-[var(--foreground-dim)] text-center mt-2">
                 Powered by Groq AI • FU Corp Command Center
               </p>
             </div>
