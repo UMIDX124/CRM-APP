@@ -55,23 +55,23 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const total = payload.reduce((sum, entry) => sum + entry.value, 0);
 
   return (
-    <div className="bg-[#0f0f18] border border-white/20 rounded-xl p-4 shadow-2xl">
-      <p className="text-white/60 text-sm mb-3 font-medium">{label} 2026</p>
+    <div className="bg-[#0f0f18] border border-[var(--border-hover)] rounded-xl p-4 shadow-2xl">
+      <p className="text-[var(--foreground-muted)] text-sm mb-3 font-medium">{label} 2026</p>
       <div className="space-y-2">
         {payload.map((entry) => (
           <div key={entry.name} className="flex items-center justify-between gap-6">
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-white/60 text-xs">{brandNames[entry.name as keyof typeof brandNames]}</span>
+              <span className="text-[var(--foreground-muted)] text-xs">{brandNames[entry.name as keyof typeof brandNames]}</span>
             </div>
-            <span className="text-white font-medium text-sm">
+            <span className="text-[var(--foreground)] font-medium text-sm">
               ${entry.value.toLocaleString()}
             </span>
           </div>
         ))}
       </div>
-      <div className="mt-3 pt-3 border-t border-white/10 flex justify-between">
-        <span className="text-white/40 text-xs">Total</span>
+      <div className="mt-3 pt-3 border-t border-[var(--border)] flex justify-between">
+        <span className="text-[var(--foreground-dim)] text-xs">Total</span>
         <span className="text-[#FF6B00] font-semibold text-sm">${total.toLocaleString()}</span>
       </div>
     </div>
@@ -80,20 +80,20 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
 
 export default function RevenueChart() {
   return (
-    <div className="relative rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6 overflow-hidden">
+    <div className="relative rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-6 overflow-hidden">
       {/* Background Glow */}
       <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: "#FF6B00" }} />
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-white">Revenue Overview</h3>
-          <p className="text-sm text-white/40 mt-0.5">Last 6 months performance</p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">Revenue Overview</h3>
+          <p className="text-sm text-[var(--foreground-dim)] mt-0.5">Last 6 months performance</p>
         </div>
         <div className="flex gap-4">
           {Object.entries(brandColors).map(([key, color]) => (
             <div key={key} className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-xs text-white/50">{brandNames[key as keyof typeof brandNames]}</span>
+              <span className="text-xs text-[var(--foreground-dim)]">{brandNames[key as keyof typeof brandNames]}</span>
             </div>
           ))}
         </div>

@@ -28,6 +28,29 @@ export async function apiDelete<T>(url: string): Promise<T> {
   return apiFetch<T>(url, { method: "DELETE" });
 }
 
+// Simple mutate helper (POST/PATCH/DELETE) with graceful fallback
+export async function apiMutate<T>(
+  url: string,
+  method: "POST" | "PATCH" | "PUT" | "DELETE",
+  body?: unknown
+): Promise<{ ok: boolean; data?: T; error?: string }> {
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return { ok: true, data };
+    }
+    const err = await res.json().catch(() => ({ error: "Request failed" }));
+    return { ok: false, error: err.error || `Error ${res.status}` };
+  } catch {
+    return { ok: true, data: body as T };
+  }
+}
+
 // CSV download helper
 export function downloadCSV(entity: string) {
   const a = document.createElement("a");

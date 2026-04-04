@@ -672,7 +672,7 @@ export const serviceTypes = [
   { name: "Performance Marketing", revenue: 185000, percentage: 32, color: "#22C55E" },
   { name: "Web Architecture", revenue: 142000, percentage: 24, color: "#3B82F6" },
   { name: "Remote Workforce", revenue: 98000, percentage: 17, color: "#FF6B00" },
-  { name: "AI & Analytics", revenue: 85000, percentage: 15, color: "#8B5CF6" },
+  { name: "AI & Analytics", revenue: 85000, percentage: 15, color: "#F59E0B" },
   { name: "Cloud & Security", revenue: 72000, percentage: 12, color: "#F59E0B" },
 ];
 

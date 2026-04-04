@@ -26,7 +26,7 @@ const actionColors: Record<string, { bg: string; color: string; icon: typeof Shi
   DELETE: { bg: "bg-red-500/10", color: "text-red-400", icon: AlertTriangle },
   LOGIN: { bg: "bg-[#FF6B00]/10", color: "text-[#FF6B00]", icon: LogIn },
   LOGOUT: { bg: "bg-white/5", color: "text-white/50", icon: LogOut },
-  EXPORT: { bg: "bg-purple-500/10", color: "text-purple-400", icon: Download },
+  EXPORT: { bg: "bg-amber-500/10", color: "text-amber-400", icon: Download },
 };
 
 const entityIcons: Record<string, typeof User> = {

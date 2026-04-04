@@ -98,12 +98,12 @@ export default function AttendanceCheckin() {
     <div className="space-y-8">
       {/* Live Clock */}
       <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-[#FF6B00]/5 to-transparent border border-[#FF6B00]/10">
-        <p className="text-5xl font-bold text-white font-mono tracking-wider">{timeStr}</p>
-        <p className="text-white/40 text-sm mt-2">{dateStr}</p>
+        <p className="text-5xl font-bold text-[var(--foreground)] font-mono tracking-wider">{timeStr}</p>
+        <p className="text-[var(--foreground-dim)] text-sm mt-2">{dateStr}</p>
       </div>
 
       {/* Mode Selector */}
-      <div className="flex gap-2 p-1.5 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+      <div className="flex gap-2 p-1.5 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
         {([
           ["self", "Self Check-in", LogIn],
           ["admin", "Admin Panel", Shield],
@@ -111,7 +111,7 @@ export default function AttendanceCheckin() {
         ] as const).map(([m, label, Icon]) => (
           <button key={m} onClick={() => setMode(m)}
             className={clsx("flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all",
-              mode === m ? "bg-[#FF6B00]/10 text-[#FF6B00] border border-[#FF6B00]/20" : "text-white/40 hover:text-white/60")}>
+              mode === m ? "bg-[#FF6B00]/10 text-[#FF6B00] border border-[#FF6B00]/20" : "text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)]")}>
             <Icon className="w-4 h-4" />{label}
           </button>
         ))}
@@ -119,16 +119,16 @@ export default function AttendanceCheckin() {
 
       {/* ═══ SELF CHECK-IN ═══ */}
       {mode === "self" && (
-        <div className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-center space-y-6">
+        <div className="p-8 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-center space-y-6">
           <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#FF6B00]/20 to-[#FF6B00]/5 flex items-center justify-center">
             {checkedIn ? <CheckCircle2 className="w-10 h-10 text-emerald-400" /> : <Clock className="w-10 h-10 text-[#FF6B00]" />}
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold text-white">
+            <h3 className="text-xl font-semibold text-[var(--foreground)]">
               {checkedIn ? "You're Checked In" : "Ready to Check In?"}
             </h3>
-            <p className="text-white/40 text-sm mt-1">
+            <p className="text-[var(--foreground-dim)] text-sm mt-1">
               {checkedIn
                 ? `Since ${checkInTime?.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} — ${hoursWorked}h worked`
                 : "Tap the button to start your day"}
@@ -148,9 +148,9 @@ export default function AttendanceCheckin() {
                   <span className="text-red-400">{checkOutTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
               )}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                <Timer className="w-3.5 h-3.5 text-white/50" />
-                <span className="text-white/50">{hoursWorked}h</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+                <Timer className="w-3.5 h-3.5 text-[var(--foreground-dim)]" />
+                <span className="text-[var(--foreground-dim)]">{hoursWorked}h</span>
               </div>
             </div>
           )}
@@ -175,43 +175,43 @@ export default function AttendanceCheckin() {
 
       {/* ═══ ADMIN PANEL ═══ */}
       {mode === "admin" && (
-        <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-5">
+        <div className="p-6 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-5">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-[#FF6B00]" />
-            <h3 className="text-lg font-semibold text-white">Admin Attendance Marking</h3>
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">Admin Attendance Marking</h3>
           </div>
-          <p className="text-white/40 text-sm">Mark attendance for any employee — peons, office boys, tech staff, everyone.</p>
+          <p className="text-[var(--foreground-dim)] text-sm">Mark attendance for any employee — peons, office boys, tech staff, everyone.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-white/40 mb-2 uppercase tracking-wider font-medium">Select Employee</label>
+              <label className="block text-xs text-[var(--foreground-dim)] mb-2 uppercase tracking-wider font-medium">Select Employee</label>
               <select value={selectedEmployee} onChange={(e) => setSelectedEmployee(e.target.value)}
-                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white cursor-pointer">
-                <option value="" className="bg-[#111114]">Choose employee...</option>
+                className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--foreground)] cursor-pointer">
+                <option value="" className="bg-[var(--surface)]">Choose employee...</option>
                 {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id} className="bg-[#111114]">{emp.name} — {emp.title} ({emp.brand})</option>
+                  <option key={emp.id} value={emp.id} className="bg-[var(--surface)]">{emp.name} — {emp.title} ({emp.brand})</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-2 uppercase tracking-wider font-medium">Action</label>
+              <label className="block text-xs text-[var(--foreground-dim)] mb-2 uppercase tracking-wider font-medium">Action</label>
               <div className="grid grid-cols-2 gap-2">
                 {([
                   ["checkin", "Check In", "emerald"],
                   ["checkout", "Check Out", "red"],
-                  ["leave", "Leave", "purple"],
+                  ["leave", "Leave", "amber"],
                   ["absent", "Absent", "amber"],
                 ] as const).map(([action, label, color]) => (
                   <button key={action} onClick={() => setAdminAction(action)}
                     className={clsx("px-3 py-2.5 rounded-xl text-xs font-medium border transition-all",
                       adminAction === action
                         ? `bg-${color}-500/10 border-${color}-500/20 text-${color}-400`
-                        : "bg-white/[0.03] border-white/[0.06] text-white/40 hover:text-white/60"
+                        : "bg-[var(--surface)] border-[var(--border)] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)]"
                     )}
                     style={adminAction === action ? {
-                      backgroundColor: color === "emerald" ? "rgba(16,185,129,0.1)" : color === "red" ? "rgba(239,68,68,0.1)" : color === "purple" ? "rgba(139,92,246,0.1)" : "rgba(245,158,11,0.1)",
-                      borderColor: color === "emerald" ? "rgba(16,185,129,0.2)" : color === "red" ? "rgba(239,68,68,0.2)" : color === "purple" ? "rgba(139,92,246,0.2)" : "rgba(245,158,11,0.2)",
-                      color: color === "emerald" ? "#10B981" : color === "red" ? "#EF4444" : color === "purple" ? "#8B5CF6" : "#F59E0B",
+                      backgroundColor: color === "emerald" ? "rgba(16,185,129,0.1)" : color === "red" ? "rgba(239,68,68,0.1)" : color === "amber" ? "rgba(245,158,11,0.1)" : "rgba(245,158,11,0.1)",
+                      borderColor: color === "emerald" ? "rgba(16,185,129,0.2)" : color === "red" ? "rgba(239,68,68,0.2)" : color === "amber" ? "rgba(245,158,11,0.2)" : "rgba(245,158,11,0.2)",
+                      color: color === "emerald" ? "#10B981" : color === "red" ? "#EF4444" : color === "amber" ? "#F59E0B" : "#F59E0B",
                     } : undefined}
                   >
                     {label}
@@ -230,11 +230,11 @@ export default function AttendanceCheckin() {
 
       {/* ═══ PIN KIOSK ═══ */}
       {mode === "pin" && (
-        <div className="max-w-sm mx-auto p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] text-center space-y-6">
+        <div className="max-w-sm mx-auto p-8 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-center space-y-6">
           <div>
             <Hash className="w-10 h-10 text-[#FF6B00] mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-white">PIN Check-In</h3>
-            <p className="text-white/40 text-xs mt-1">Enter your 4-digit employee PIN</p>
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">PIN Check-In</h3>
+            <p className="text-[var(--foreground-dim)] text-xs mt-1">Enter your 4-digit employee PIN</p>
           </div>
 
           {/* PIN display */}
@@ -244,7 +244,7 @@ export default function AttendanceCheckin() {
                 "w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-bold transition-all",
                 pinCode[i]
                   ? "border-[#FF6B00]/50 bg-[#FF6B00]/10 text-[#FF6B00]"
-                  : "border-white/10 bg-white/[0.03] text-white/20"
+                  : "border-[var(--border)] bg-[var(--surface)] text-[var(--foreground-dim)]"
               )}>
                 {pinCode[i] ? "*" : ""}
               </div>
@@ -278,7 +278,7 @@ export default function AttendanceCheckin() {
                       ? "bg-[#FF6B00]/10 border border-[#FF6B00]/20 text-[#FF6B00]"
                       : key === "clear"
                       ? "bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
-                      : "bg-white/[0.04] border border-white/[0.08] text-white hover:bg-white/[0.08]"
+                      : "bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] hover:bg-[var(--surface)]"
                   )}>
                   {key === "clear" ? "CLR" : key === "enter" ? "GO" : key}
                 </button>
@@ -286,7 +286,7 @@ export default function AttendanceCheckin() {
             </div>
           )}
 
-          <p className="text-white/20 text-[10px]">
+          <p className="text-[var(--foreground-dim)] text-[10px]">
             PIN codes: 1000-{999 + employees.length} (employee #{"{1-" + employees.length + "}"})
           </p>
         </div>
@@ -294,23 +294,23 @@ export default function AttendanceCheckin() {
 
       {/* Recent Activity */}
       {recentCheckins.length > 0 && (
-        <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-          <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+        <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
+          <h4 className="text-sm font-semibold text-[var(--foreground)] mb-3 flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#FF6B00]" />
             Recent Check-ins
           </h4>
           <div className="space-y-2">
             {recentCheckins.map((item, i) => (
-              <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-white/[0.02]">
+              <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--surface)]">
                 <div className="flex items-center gap-3">
                   <div className={clsx("w-2 h-2 rounded-full",
                     item.type.includes("In") ? "bg-emerald-400" : item.type.includes("Out") ? "bg-red-400" : "bg-amber-400"
                   )} />
-                  <span className="text-sm text-white">{item.name}</span>
+                  <span className="text-sm text-[var(--foreground)]">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-white/40">{item.type}</span>
-                  <span className="text-xs text-white/30 font-mono">{item.time}</span>
+                  <span className="text-xs text-[var(--foreground-dim)]">{item.type}</span>
+                  <span className="text-xs text-[var(--foreground-dim)] font-mono">{item.time}</span>
                 </div>
               </div>
             ))}

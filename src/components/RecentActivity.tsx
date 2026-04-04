@@ -28,7 +28,7 @@ const iconColors: Record<string, string> = {
   trophy: "#FF6B00",
   dollar: "#22C55E",
   "user-plus": "#3B82F6",
-  message: "#8B5CF6",
+  message: "#F59E0B",
   star: "#FF6B00",
   alert: "#EF4444",
   clock: "#6B7280",
@@ -103,14 +103,14 @@ const activities: Activity[] = [
 
 export default function RecentActivity() {
   return (
-    <div className="relative rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6 overflow-hidden">
+    <div className="relative rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-6 overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute -left-20 -bottom-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: "#8B5CF6" }} />
+      <div className="absolute -left-20 -bottom-20 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{ backgroundColor: "#F59E0B" }} />
 
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
-          <p className="text-sm text-white/40 mt-0.5">Latest updates across all modules</p>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">Recent Activity</h3>
+          <p className="text-sm text-[var(--foreground-dim)] mt-0.5">Latest updates across all modules</p>
         </div>
         <button className="text-xs text-[#FF6B00] hover:text-[#FF8A33] transition-colors font-medium">
           View All
@@ -127,7 +127,7 @@ export default function RecentActivity() {
               key={activity.id}
               className={clsx(
                 "flex items-start gap-4 p-3 rounded-xl transition-all duration-200",
-                "hover:bg-white/[0.03] cursor-pointer group"
+                "hover:bg-[var(--surface)] cursor-pointer group"
               )}
               style={{
                 animation: `fadeIn 0.3s ease-out ${index * 0.05}s both`,
@@ -141,12 +141,12 @@ export default function RecentActivity() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-white group-hover:text-[#FF6B00] transition-colors">
+                  <p className="text-sm font-medium text-[var(--foreground)] group-hover:text-[#FF6B00] transition-colors">
                     {activity.title}
                   </p>
-                  <span className="text-xs text-white/30 shrink-0">{activity.time}</span>
+                  <span className="text-xs text-[var(--foreground-dim)] shrink-0">{activity.time}</span>
                 </div>
-                <p className="text-xs text-white/50 mt-0.5 line-clamp-2">{activity.message}</p>
+                <p className="text-xs text-[var(--foreground-dim)] mt-0.5 line-clamp-2">{activity.message}</p>
               </div>
             </div>
           );

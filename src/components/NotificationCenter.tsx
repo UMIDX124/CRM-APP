@@ -22,7 +22,7 @@ const iconMap = {
   info: { icon: Zap, color: "text-cyan-400", bg: "bg-cyan-500/10" },
   revenue: { icon: DollarSign, color: "text-[#FF6B00]", bg: "bg-[#FF6B00]/10" },
   task: { icon: Check, color: "text-blue-400", bg: "bg-blue-500/10" },
-  hire: { icon: UserPlus, color: "text-purple-400", bg: "bg-purple-500/10" },
+  hire: { icon: UserPlus, color: "text-amber-400", bg: "bg-amber-500/10" },
 };
 
 const initialNotifications: Notification[] = [
@@ -58,9 +58,9 @@ export default function NotificationCenter() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all"
+        className="relative p-2 rounded-lg text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)] transition-all"
       >
-        <Bell className="w-5 h-5" />
+        <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B00] text-black text-[10px] font-bold flex items-center justify-center">
             {unreadCount}
@@ -71,11 +71,11 @@ export default function NotificationCenter() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[380px] max-h-[520px] bg-[#0c0c18] border border-white/[0.08] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-scale-in">
+          <div className="absolute right-0 top-full mt-2 z-50 w-[380px] max-h-[520px] bg-[#0c0c18] border border-[var(--border)] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-scale-in">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">Notifications</h3>
                 {unreadCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-[#FF6B00]/10 text-[#FF6B00] text-[10px] font-bold">
                     {unreadCount} new
@@ -83,7 +83,7 @@ export default function NotificationCenter() {
                 )}
               </div>
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-xs text-white/40 hover:text-white/70 transition-colors flex items-center gap-1">
+                <button onClick={markAllRead} className="text-xs text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors flex items-center gap-1">
                   <CheckCheck className="w-3.5 h-3.5" />
                   Mark all read
                 </button>
@@ -95,7 +95,7 @@ export default function NotificationCenter() {
               {notifications.length === 0 ? (
                 <div className="py-12 text-center">
                   <Bell className="w-8 h-8 text-white/10 mx-auto mb-2" />
-                  <p className="text-sm text-white/30">All caught up!</p>
+                  <p className="text-sm text-[var(--foreground-dim)]">All caught up!</p>
                 </div>
               ) : (
                 notifications.map((notif) => {
@@ -106,8 +106,8 @@ export default function NotificationCenter() {
                       key={notif.id}
                       onClick={() => markRead(notif.id)}
                       className={clsx(
-                        "flex gap-3 px-5 py-3.5 border-b border-white/[0.04] cursor-pointer transition-colors group",
-                        notif.read ? "hover:bg-white/[0.02]" : "bg-white/[0.03] hover:bg-white/[0.05]"
+                        "flex gap-3 px-5 py-3.5 border-b border-[var(--border-subtle)] cursor-pointer transition-colors group",
+                        notif.read ? "hover:bg-[var(--surface-hover)]" : "bg-[var(--surface)] hover:bg-[var(--surface-elevated)]"
                       )}
                     >
                       <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", cfg.bg)}>
@@ -115,20 +115,20 @@ export default function NotificationCenter() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
-                          <p className={clsx("text-sm font-medium truncate", notif.read ? "text-white/60" : "text-white")}>
+                          <p className={clsx("text-sm font-medium truncate", notif.read ? "text-[var(--foreground-muted)]" : "text-[var(--foreground)]")}>
                             {notif.title}
                           </p>
                           <button
                             onClick={(e) => { e.stopPropagation(); removeNotification(notif.id); }}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-white/20 hover:text-white/50 transition-all shrink-0"
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-dim)] transition-all shrink-0"
                           >
                             <X className="w-3 h-3" />
                           </button>
                         </div>
-                        <p className="text-xs text-white/40 mt-0.5 line-clamp-2">{notif.message}</p>
+                        <p className="text-xs text-[var(--foreground-dim)] mt-0.5 line-clamp-2">{notif.message}</p>
                         <div className="flex items-center gap-1.5 mt-1.5">
-                          <Clock className="w-3 h-3 text-white/20" />
-                          <span className="text-[10px] text-white/20">{notif.time}</span>
+                          <Clock className="w-3 h-3 text-[var(--foreground-dim)]" />
+                          <span className="text-[10px] text-[var(--foreground-dim)]">{notif.time}</span>
                           {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] ml-1" />}
                         </div>
                       </div>

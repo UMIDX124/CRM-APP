@@ -159,17 +159,22 @@ model Client {
   website      String?
   source       String?
   status       ClientStatus @default(ACTIVE)
-  healthScore  Int          @default(80)
-  mrr          Float        @default(0)
-  brandId      String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  healthScore     Int          @default(80)
+  mrr             Float        @default(0)
+  brandId         String
+  services        String[]     @default([])
+  lastContactDate DateTime?
+  nextFollowUp    DateTime?
+  accountManagerId String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
-  brand        Brand        @relation(fields: [brandId], references: [id])
-  invoices     Invoice[]
-  notes        Note[]
-  tasks        Task[]       @relation("ClientTasks")
-  attachments  Attachment[] @relation("ClientAttachments")
+  brand           Brand        @relation(fields: [brandId], references: [id])
+  invoices        Invoice[]
+  notes           Note[]
+  tasks           Task[]       @relation("ClientTasks")
+  attachments     Attachment[] @relation("ClientAttachments")
+  feedback        CustomerFeedback[]
 
   @@map("clients")
 }
@@ -217,7 +222,11 @@ model Lead {
   probability  Int        @default(50)
   salesRepId   String?
   brandId      String?
-  expectedClose DateTime?
+  expectedClose   DateTime?
+  lastContactDate DateTime?
+  nextContactDate DateTime?
+  nextAction      String?
+  notes           String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -357,4 +366,20 @@ model Session {
   createdAt    DateTime @default(now())
 
   @@map("sessions")
+}
+
+model CustomerFeedback {
+  id         String    @id @default(cuid())
+  clientId   String
+  type       String    // COMPLAINT, PRAISE, SUGGESTION
+  status     String    @default("OPEN") // OPEN, RESOLVED, UNRESOLVED
+  message    String
+  response   String?
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("customer_feedback")
 }

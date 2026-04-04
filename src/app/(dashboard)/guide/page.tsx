@@ -73,7 +73,7 @@ const sections: Section[] = [
     id: "attendance", title: "Attendance System", icon: ClipboardCheck,
     content: [
       { heading: "Daily Attendance View", text: "The attendance page shows daily check-in/check-out records for all employees. Navigate between days using the arrow buttons." },
-      { heading: "Monthly View", text: "Switch to Monthly view to see a heatmap grid showing each employee's attendance for the entire month. Colored dots indicate status: green=present, cyan=remote, amber=late, red=absent, purple=leave." },
+      { heading: "Monthly View", text: "Switch to Monthly view to see a heatmap grid showing each employee's attendance for the entire month. Colored dots indicate status: green=present, cyan=remote, amber=late, red=absent, amber=leave." },
       { heading: "Date Range Report", text: "The Date Range view lets you select any start and end date to get aggregate attendance statistics per employee — total present, remote, late, absent, leave days, and average hours." },
       { heading: "Self Check-In", text: "Go to Attendance > Check In. Click the 'Check In Now' button when you arrive. Click 'Check Out' when you leave. The system tracks your hours automatically.",
         steps: ["Navigate to Attendance > Check In", "Click 'Check In Now' — your time is recorded", "When leaving, click 'Check Out'", "Your hours are calculated automatically"] },

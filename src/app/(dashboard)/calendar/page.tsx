@@ -36,7 +36,7 @@ export default function CalendarPage() {
     leads.forEach((l) => {
       const day = l.createdAt;
       if (!map[day]) map[day] = [];
-      map[day].push({ type: "lead", title: l.companyName, color: "#8B5CF6" });
+      map[day].push({ type: "lead", title: l.companyName, color: "#F59E0B" });
     });
     return map;
   }, []);
@@ -49,29 +49,29 @@ export default function CalendarPage() {
     <div className="space-y-6">
       {/* Month Navigation */}
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all">
+        <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h2 className="text-xl font-bold text-white">{monthName}</h2>
-        <button onClick={() => navigate(1)} className="p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-all">
+        <h2 className="text-xl font-bold text-[var(--foreground)]">{monthName}</h2>
+        <button onClick={() => navigate(1)} className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-all">
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-white/50">
+      <div className="flex items-center gap-4 text-xs text-[var(--foreground-dim)]">
         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" /> Critical Task</div>
         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> High Priority</div>
         <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#0EA5E9]" /> Normal Task</div>
-        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#8B5CF6]" /> Lead/Deal</div>
+        <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> Lead/Deal</div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+      <div className="rounded-2xl border border-[var(--border)] overflow-hidden">
         {/* Weekday headers */}
-        <div className="grid grid-cols-7 border-b border-white/[0.06] bg-white/[0.02]">
+        <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface)]">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="py-3 text-center text-xs font-medium text-white/40 uppercase tracking-wider">
+            <div key={d} className="py-3 text-center text-xs font-medium text-[var(--foreground-dim)] uppercase tracking-wider">
               {d}
             </div>
           ))}
@@ -88,16 +88,16 @@ export default function CalendarPage() {
               <div
                 key={i}
                 className={clsx(
-                  "min-h-[100px] p-2 border-b border-r border-white/[0.04] transition-colors",
-                  day ? "hover:bg-white/[0.02]" : "bg-white/[0.01]",
-                  isWeekend && day ? "bg-white/[0.01]" : ""
+                  "min-h-[100px] p-2 border-b border-r border-[var(--border-subtle)] transition-colors",
+                  day ? "hover:bg-[var(--surface-hover)]" : "bg-[var(--background-secondary)]",
+                  isWeekend && day ? "bg-[var(--background-secondary)]" : ""
                 )}
               >
                 {day && (
                   <>
                     <div className={clsx(
                       "w-7 h-7 rounded-lg flex items-center justify-center text-sm mb-1",
-                      isToday ? "bg-[#FF6B00] text-black font-bold" : "text-white/60"
+                      isToday ? "bg-[#FF6B00] text-black font-bold" : "text-[var(--foreground-muted)]"
                     )}>
                       {day}
                     </div>
@@ -113,7 +113,7 @@ export default function CalendarPage() {
                         </div>
                       ))}
                       {dayEvents.length > 3 && (
-                        <p className="text-[10px] text-white/30 pl-1">+{dayEvents.length - 3} more</p>
+                        <p className="text-[10px] text-[var(--foreground-dim)] pl-1">+{dayEvents.length - 3} more</p>
                       )}
                     </div>
                   </>
@@ -125,19 +125,19 @@ export default function CalendarPage() {
       </div>
 
       {/* Upcoming */}
-      <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-        <h3 className="text-sm font-semibold text-white mb-3">Upcoming Deadlines</h3>
+      <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
+        <h3 className="text-sm font-semibold text-[var(--foreground)] mb-3">Upcoming Deadlines</h3>
         <div className="space-y-2">
           {tasks.filter((t) => t.status !== "COMPLETED" && t.status !== "REVIEW").sort((a, b) => a.dueDate.localeCompare(b.dueDate)).slice(0, 5).map((task) => (
-            <div key={task.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] transition-colors">
+            <div key={task.id} className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-elevated)] transition-colors">
               <div className="flex items-center gap-3">
                 <div className={clsx("w-2 h-2 rounded-full", task.priority === "CRITICAL" ? "bg-red-400" : task.priority === "HIGH" ? "bg-amber-400" : "bg-cyan-400")} />
                 <div>
-                  <p className="text-sm text-white">{task.title}</p>
-                  <p className="text-xs text-white/40">{task.assignee} &bull; {task.brand}</p>
+                  <p className="text-sm text-[var(--foreground)]">{task.title}</p>
+                  <p className="text-xs text-[var(--foreground-dim)]">{task.assignee} &bull; {task.brand}</p>
                 </div>
               </div>
-              <span className="text-xs text-white/50 font-mono">{task.dueDate}</span>
+              <span className="text-xs text-[var(--foreground-dim)] font-mono">{task.dueDate}</span>
             </div>
           ))}
         </div>

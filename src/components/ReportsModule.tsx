@@ -68,7 +68,7 @@ const reportData: ReportData = {
     { name: "Performance Marketing", revenue: 185000, color: "#22C55E" },
     { name: "Web Architecture", revenue: 142000, color: "#3B82F6" },
     { name: "Remote Workforce", revenue: 98000, color: "#FF6B00" },
-    { name: "AI & Analytics", revenue: 85000, color: "#8B5CF6" },
+    { name: "AI & Analytics", revenue: 85000, color: "#F59E0B" },
     { name: "Cloud & Security", revenue: 72000, color: "#F59E0B" },
   ],
 };
@@ -234,17 +234,17 @@ export default function ReportsModule() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="page-container">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-2xl font-display font-bold text-white">Reports & Analytics</h2>
-          <p className="text-white/50 mt-1">Comprehensive business insights and performance metrics</p>
+          <h2 className="text-2xl font-display font-bold text-[var(--foreground)]">Reports & Analytics</h2>
+          <p className="text-[var(--foreground-dim)] mt-1">Comprehensive business insights and performance metrics</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={printReport}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:text-white hover:bg-white/20 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--border-hover)] text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-hover)] transition-all"
           >
             <Printer className="w-4 h-4" />
             Print
@@ -260,7 +260,7 @@ export default function ReportsModule() {
       </div>
 
       {/* Period Selector */}
-      <div className="flex items-center gap-2 bg-white/5 rounded-xl p-1 w-fit">
+      <div className="flex items-center gap-2 bg-[var(--surface)] rounded-xl p-1 w-fit">
         {["last7days", "last30days", "last90days", "lastYear"].map((period) => (
           <button
             key={period}
@@ -269,7 +269,7 @@ export default function ReportsModule() {
               "px-4 py-2 rounded-lg text-sm transition-all",
               selectedPeriod === period
                 ? "bg-[#FF6B00] text-black font-medium"
-                : "text-white/60 hover:text-white"
+                : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
             )}
           >
             {period === "last7days" ? "7 Days" : 
@@ -286,51 +286,51 @@ export default function ReportsModule() {
             <div className="p-2 rounded-lg bg-[#FF6B00]/20">
               <DollarSign className="w-5 h-5 text-[#FF6B00]" />
             </div>
-            <span className="text-xs text-white/50">Total Revenue</span>
+            <span className="text-xs text-[var(--foreground-dim)]">Total Revenue</span>
           </div>
-          <p className="text-2xl font-bold text-white mb-1">{formatCurrency(totalRevenue)}</p>
+          <p className="text-2xl font-bold text-[var(--foreground)] mb-1">{formatCurrency(totalRevenue)}</p>
           <div className="flex items-center gap-1 text-[#22C55E] text-xs">
             <ArrowUpRight className="w-3 h-3" />
             <span>+{revenueGrowth}% vs last month</span>
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-5">
+        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-[#3B82F6]/20">
               <Building2 className="w-5 h-5 text-[#3B82F6]" />
             </div>
-            <span className="text-xs text-white/50">Total Clients</span>
+            <span className="text-xs text-[var(--foreground-dim)]">Total Clients</span>
           </div>
-          <p className="text-2xl font-bold text-white mb-1">{reportData.clients.length}</p>
+          <p className="text-2xl font-bold text-[var(--foreground)] mb-1">{reportData.clients.length}</p>
           <div className="flex items-center gap-1 text-[#22C55E] text-xs">
             <ArrowUpRight className="w-3 h-3" />
             <span>+2 this month</span>
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-5">
+        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="p-2 rounded-lg bg-[#22C55E]/20">
               <Users className="w-5 h-5 text-[#22C55E]" />
             </div>
-            <span className="text-xs text-white/50">Employees</span>
+            <span className="text-xs text-[var(--foreground-dim)]">Employees</span>
           </div>
-          <p className="text-2xl font-bold text-white mb-1">{reportData.employees.length}</p>
-          <div className="flex items-center gap-1 text-white/50 text-xs">
+          <p className="text-2xl font-bold text-[var(--foreground)] mb-1">{reportData.employees.length}</p>
+          <div className="flex items-center gap-1 text-[var(--foreground-dim)] text-xs">
             <span>Avg performance: 93%</span>
           </div>
         </div>
 
-        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-5">
+        <div className="rounded-xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
-              <CheckCircle className="w-5 h-5 text-[#8B5CF6]" />
+            <div className="p-2 rounded-lg bg-[#F59E0B]/20">
+              <CheckCircle className="w-5 h-5 text-[#F59E0B]" />
             </div>
-            <span className="text-xs text-white/50">Tasks Completed</span>
+            <span className="text-xs text-[var(--foreground-dim)]">Tasks Completed</span>
           </div>
-          <p className="text-2xl font-bold text-white mb-1">{reportData.tasks.find(t => t.status === "Done")?.count || 0}</p>
-          <div className="flex items-center gap-1 text-white/50 text-xs">
+          <p className="text-2xl font-bold text-[var(--foreground)] mb-1">{reportData.tasks.find(t => t.status === "Done")?.count || 0}</p>
+          <div className="flex items-center gap-1 text-[var(--foreground-dim)] text-xs">
             <span>of {reportData.tasks.reduce((acc, t) => acc + t.count, 0)} total</span>
           </div>
         </div>
@@ -339,21 +339,21 @@ export default function ReportsModule() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
-        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
+        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white">Revenue Trend</h3>
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">Revenue Trend</h3>
             <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#FF6B00]" />
-                <span className="text-white/60">VCS</span>
+                <span className="text-[var(--foreground-muted)]">VCS</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />
-                <span className="text-white/60">BSL</span>
+                <span className="text-[var(--foreground-muted)]">BSL</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[#22C55E]" />
-                <span className="text-white/60">DPL</span>
+                <span className="text-[var(--foreground-muted)]">DPL</span>
               </div>
             </div>
           </div>
@@ -368,7 +368,7 @@ export default function ReportsModule() {
                     <div className="flex-1 rounded-t bg-[#3B82F6]" style={{ height: `${(month.bsl / maxValue) * 100}%` }} />
                     <div className="flex-1 rounded-t bg-[#22C55E]" style={{ height: `${(month.dpl / maxValue) * 100}%` }} />
                   </div>
-                  <span className="text-xs text-white/50">{month.month}</span>
+                  <span className="text-xs text-[var(--foreground-dim)]">{month.month}</span>
                 </div>
               );
             })}
@@ -376,8 +376,8 @@ export default function ReportsModule() {
         </div>
 
         {/* Service Breakdown */}
-        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
-          <h3 className="text-lg font-semibold text-white mb-6">Revenue by Service</h3>
+        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-6">
+          <h3 className="text-lg font-semibold text-[var(--foreground)] mb-6">Revenue by Service</h3>
           <div className="space-y-4">
             {reportData.brands.map((brand, i) => {
               const maxRevenue = Math.max(...reportData.brands.map(b => b.revenue));
@@ -387,11 +387,11 @@ export default function ReportsModule() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: brand.color }} />
-                      <span className="text-sm text-white">{brand.name}</span>
+                      <span className="text-sm text-[var(--foreground)]">{brand.name}</span>
                     </div>
-                    <span className="text-sm font-medium text-white">{formatCurrency(brand.revenue)}</span>
+                    <span className="text-sm font-medium text-[var(--foreground)]">{formatCurrency(brand.revenue)}</span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-2 bg-[var(--surface)] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${percentage}%`, backgroundColor: brand.color }}
@@ -407,18 +407,18 @@ export default function ReportsModule() {
       {/* Tables Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Clients */}
-        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <h3 className="text-lg font-semibold text-white">Top Clients by MRR</h3>
+        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] overflow-hidden">
+          <div className="p-6 border-b border-[var(--border)]">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">Top Clients by MRR</h3>
           </div>
           <div className="divide-y divide-white/5">
             {reportData.clients.slice(0, 5).map((client, i) => (
-              <div key={client.name} className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+              <div key={client.name} className="flex items-center justify-between p-4 hover:bg-[var(--surface-hover)] transition-colors">
                 <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs text-white/60">{i + 1}</span>
+                  <span className="w-6 h-6 rounded-full bg-[var(--surface-hover)] flex items-center justify-center text-xs text-[var(--foreground-muted)]">{i + 1}</span>
                   <div>
-                    <p className="text-sm font-medium text-white">{client.name}</p>
-                    <p className="text-xs text-white/50">{client.status}</p>
+                    <p className="text-sm font-medium text-[var(--foreground)]">{client.name}</p>
+                    <p className="text-xs text-[var(--foreground-dim)]">{client.status}</p>
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-[#FF6B00]">{formatCurrency(client.mrr)}</span>
@@ -428,24 +428,24 @@ export default function ReportsModule() {
         </div>
 
         {/* Employee Performance */}
-        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <h3 className="text-lg font-semibold text-white">Employee Performance</h3>
+        <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] overflow-hidden">
+          <div className="p-6 border-b border-[var(--border)]">
+            <h3 className="text-lg font-semibold text-[var(--foreground)]">Employee Performance</h3>
           </div>
           <div className="divide-y divide-white/5">
             {reportData.employees.slice(0, 5).map((emp, i) => (
-              <div key={emp.name} className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
+              <div key={emp.name} className="flex items-center justify-between p-4 hover:bg-[var(--surface-hover)] transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B00] to-[#E05500] flex items-center justify-center text-black text-xs font-bold">
                     {emp.name.split(" ").map(n => n[0]).join("")}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">{emp.name}</p>
-                    <p className="text-xs text-white/50">{emp.department}</p>
+                    <p className="text-sm font-medium text-[var(--foreground)]">{emp.name}</p>
+                    <p className="text-xs text-[var(--foreground-dim)]">{emp.department}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-[var(--surface-hover)] rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-[#22C55E]" style={{ width: `${emp.performance}%` }} />
                   </div>
                   <span className="text-sm font-medium text-[#22C55E] w-10">{emp.performance}%</span>
@@ -457,66 +457,66 @@ export default function ReportsModule() {
       </div>
 
       {/* Company Details */}
-      <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/10 p-6">
-        <h3 className="text-lg font-semibold text-white mb-6">Company Portfolio</h3>
+      <div className="rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-[var(--border)] p-6">
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-6">Company Portfolio</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* VCS */}
           <div className="p-5 rounded-xl bg-gradient-to-br from-[#FF6B00]/10 to-transparent border border-[#FF6B00]/20">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-xl bg-[#FF6B00] flex items-center justify-center text-black font-bold">VC</div>
               <div>
-                <h4 className="text-white font-medium">VCS</h4>
-                <p className="text-xs text-white/50">Virtual Customer Solution</p>
+                <h4 className="text-[var(--foreground)] font-medium">VCS</h4>
+                <p className="text-xs text-[var(--foreground-dim)]">Virtual Customer Solution</p>
               </div>
             </div>
             <div className="space-y-2 text-sm">
-              <p className="text-white/70"><span className="text-white/40">Website:</span> virtualcustomersolution.com</p>
-              <p className="text-white/70"><span className="text-white/40">Founded:</span> 2016</p>
-              <p className="text-white/70"><span className="text-white/40">Clients:</span> 200+</p>
-              <p className="text-white/70"><span className="text-white/40">Countries:</span> 15+</p>
-              <p className="text-white/70"><span className="text-white/40">Email:</span> adminatvcs@gmail.com</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Website:</span> virtualcustomersolution.com</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Founded:</span> 2016</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Clients:</span> 200+</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Countries:</span> 15+</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Email:</span> adminatvcs@gmail.com</p>
             </div>
           </div>
 
           {/* BSL */}
           <div className="p-5 rounded-xl bg-gradient-to-br from-[#3B82F6]/10 to-transparent border border-[#3B82F6]/20">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-[#3B82F6] flex items-center justify-center text-white font-bold">BS</div>
+              <div className="w-12 h-12 rounded-xl bg-[#3B82F6] flex items-center justify-center text-[var(--foreground)] font-bold">BS</div>
               <div>
-                <h4 className="text-white font-medium">BSL</h4>
-                <p className="text-xs text-white/50">Backup Solutions LLC</p>
+                <h4 className="text-[var(--foreground)] font-medium">BSL</h4>
+                <p className="text-xs text-[var(--foreground-dim)]">Backup Solutions LLC</p>
               </div>
             </div>
             <div className="space-y-2 text-sm">
-              <p className="text-white/70"><span className="text-white/40">Website:</span> backup-solutions.vercel.app</p>
-              <p className="text-white/70"><span className="text-white/40">Founded:</span> 2018</p>
-              <p className="text-white/70"><span className="text-white/40">Focus:</span> Enterprise Technology</p>
-              <p className="text-white/70"><span className="text-white/40">Email:</span> backupsolutions1122@gmail.com</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Website:</span> backup-solutions.vercel.app</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Founded:</span> 2018</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Focus:</span> Enterprise Technology</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Email:</span> backupsolutions1122@gmail.com</p>
             </div>
           </div>
 
           {/* DPL */}
           <div className="p-5 rounded-xl bg-gradient-to-br from-[#22C55E]/10 to-transparent border border-[#22C55E]/20">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-[#22C55E] flex items-center justify-center text-white font-bold">DP</div>
+              <div className="w-12 h-12 rounded-xl bg-[#22C55E] flex items-center justify-center text-[var(--foreground)] font-bold">DP</div>
               <div>
-                <h4 className="text-white font-medium">DPL</h4>
-                <p className="text-xs text-white/50">Digital Point LLC</p>
+                <h4 className="text-[var(--foreground)] font-medium">DPL</h4>
+                <p className="text-xs text-[var(--foreground-dim)]">Digital Point LLC</p>
               </div>
             </div>
             <div className="space-y-2 text-sm">
-              <p className="text-white/70"><span className="text-white/40">Website:</span> digitalpointllc.com</p>
-              <p className="text-white/70"><span className="text-white/40">Founded:</span> 2018</p>
-              <p className="text-white/70"><span className="text-white/40">Ad Spend:</span> $50M+ Managed</p>
-              <p className="text-white/70"><span className="text-white/40">Avg ROAS:</span> 4.2x</p>
-              <p className="text-white/70"><span className="text-white/40">Email:</span> info@digitalpointllc.com</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Website:</span> digitalpointllc.com</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Founded:</span> 2018</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Ad Spend:</span> $50M+ Managed</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Avg ROAS:</span> 4.2x</p>
+              <p className="text-[var(--foreground-muted)]"><span className="text-[var(--foreground-dim)]">Email:</span> info@digitalpointllc.com</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="text-center text-white/40 text-sm">
+      <div className="text-center text-[var(--foreground-dim)] text-sm">
         <p>Report generated on {new Date().toLocaleString()}</p>
         <p className="mt-1">FU Corp Command Center v1.0 - All Rights Reserved</p>
       </div>
