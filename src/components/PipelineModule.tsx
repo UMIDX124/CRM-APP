@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, Briefcase, DollarSign, User, ChevronRight, X, Save,
   Trash2, Edit, Loader2, AlertTriangle, TrendingUp, Target, ArrowRight,
@@ -43,7 +43,37 @@ const defaultForm = {
 
 export default function PipelineModule({ brandId }: { brandId: string }) {
   const [leadList, setLeadList] = useState<Lead[]>(mockLeads as unknown as Lead[]);
-  const loading = false;
+  const [loading, setLoading] = useState(false);
+
+  // Fetch real leads from database on mount
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/leads")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (mounted && data && Array.isArray(data) && data.length > 0) {
+          // Map DB fields to component fields
+          const mapped = data.map((l: Record<string, unknown>) => ({
+            id: l.id as string,
+            companyName: (l.companyName as string) || "",
+            contactName: (l.contactName as string) || "",
+            email: (l.email as string) || "",
+            country: (l.country as string) || "",
+            countryFlag: "",
+            services: (l.services as string[]) || [],
+            brand: (l.brand as Record<string, string>)?.code || (l.brandId as string) || "",
+            source: (l.source as string) || "",
+            status: (l.status as string) || "NEW",
+            value: (l.value as number) || 0,
+            salesRep: (l.salesRepId as string) || "",
+            createdAt: (l.createdAt as string) || "",
+          })) as Lead[];
+          setLeadList(mapped);
+        }
+      })
+      .catch(() => { /* Keep mock data */ });
+    return () => { mounted = false; };
+  }, []);
 
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
