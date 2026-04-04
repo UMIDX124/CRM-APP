@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Plus, Search, Download, FileText, DollarSign, Clock, CheckCircle2,
   AlertCircle, XCircle, Eye, Trash2, Send, X, Save, Loader2, AlertTriangle,
@@ -42,7 +42,28 @@ const defaultForm = { clientName: "", brand: "VCS", items: [{ description: "", q
 export default function InvoiceModule() {
   const { success, error: showError } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>(sampleInvoices);
-  const loading = false;
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let m = true;
+    fetch("/api/invoices").then(r => r.ok ? r.json() : null).then(data => {
+      if (m && data && Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((inv: Record<string, unknown>) => ({
+          id: inv.id, number: inv.number, clientId: (inv.clientId as string) || "",
+          clientName: (inv.client as Record<string,string>)?.companyName || "",
+          brand: (inv.brand as Record<string,string>)?.code || "",
+          items: (inv.items as InvoiceItem[]) || [], subtotal: (inv.subtotal as number) || 0,
+          tax: (inv.tax as number) || 0, total: (inv.total as number) || 0,
+          status: (inv.status as InvoiceStatus) || "PENDING",
+          issueDate: inv.issueDate ? String(inv.issueDate).split("T")[0] : "",
+          dueDate: inv.dueDate ? String(inv.dueDate).split("T")[0] : "",
+          paidDate: inv.paidDate ? String(inv.paidDate).split("T")[0] : undefined,
+        })) as Invoice[];
+        setInvoices(mapped);
+      }
+    }).catch(() => {});
+    return () => { m = false; };
+  }, []);
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<InvoiceStatus | "ALL">("ALL");

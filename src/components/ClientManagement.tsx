@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, Building2, Phone, Mail, Globe, Edit, Trash2, Eye, X, Save,
   Download, AlertTriangle, Loader2, TrendingUp, Heart,
@@ -40,7 +40,25 @@ const countries = ["United States", "United Kingdom", "Canada", "Australia", "Ge
 export default function ClientManagement({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
   const [clientList, setClientList] = useState<Client[]>(mockClients);
-  const loading = false;
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let m = true;
+    fetch("/api/clients").then(r => r.ok ? r.json() : null).then(data => {
+      if (m && data && Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((c: Record<string, unknown>) => ({
+          id: c.id, companyName: c.companyName, contactName: c.contactName,
+          email: c.email, phone: c.phone || "", country: c.country || "",
+          countryFlag: c.countryFlag || "", brand: (c.brand as Record<string,string>)?.code || "",
+          accountManager: "", mrr: (c.mrr as number) || 0, healthScore: (c.healthScore as number) || 80,
+          healthStatus: (c.healthScore as number) >= 80 ? "HEALTHY" : "AT_RISK",
+          services: [], activeTasks: 0, lastActivity: "",
+        })) as unknown as Client[];
+        setClientList(mapped);
+      }
+    }).catch(() => {});
+    return () => { m = false; };
+  }, []);
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

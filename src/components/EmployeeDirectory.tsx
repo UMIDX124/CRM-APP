@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Search, Users, Mail, Phone, Edit, Trash2, X, Save,
   UserPlus, Building2, Shield, LayoutGrid, List, BadgeCheck, AlertTriangle, Loader2,
@@ -35,7 +35,29 @@ const defaultForm = {
 export default function EmployeeDirectory({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
   const [employeeList, setEmployeeList] = useState<Employee[]>(mockEmployees);
-  const loading = false;
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let m = true;
+    fetch("/api/employees").then(r => r.ok ? r.json() : null).then(data => {
+      if (m && data && Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((e: Record<string, unknown>) => ({
+          id: e.id, name: `${e.firstName} ${e.lastName}`.trim(), email: e.email,
+          phone: (e.phone as string) || "", avatar: null, title: (e.title as string) || "",
+          department: (e.department as string) || "DEV",
+          brand: (e.brand as Record<string,string>)?.code || "",
+          hiredBy: "FU", role: (e.role as string) || "EMPLOYEE",
+          status: (e.status as string) || "ACTIVE", hireDate: (e.hireDate as string) || "",
+          salary: (e.salary as number) || 0, currency: "USD",
+          performanceScore: 85, availability: "AVAILABLE",
+          skills: (e.skills as string[]) || [], workload: 50,
+          tasksCompleted: 0, totalTasks: 0,
+        })) as Employee[];
+        setEmployeeList(mapped);
+      }
+    }).catch(() => {});
+    return () => { m = false; };
+  }, []);
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

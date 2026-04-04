@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, CheckSquare, Clock, AlertCircle, Calendar, Edit, Trash2,
   X, Save, Loader2, AlertTriangle, ArrowRight, Flag, User,
@@ -43,7 +43,26 @@ const defaultForm = {
 export default function TaskManagement({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
   const [taskList, setTaskList] = useState<Task[]>(mockTasks as unknown as Task[]);
-  const loading = false;
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let m = true;
+    fetch("/api/tasks").then(r => r.ok ? r.json() : null).then(data => {
+      if (m && data && Array.isArray(data) && data.length > 0) {
+        const mapped = data.map((t: Record<string, unknown>) => ({
+          id: t.id, title: t.title, description: (t.description as string) || "",
+          status: t.status, priority: t.priority,
+          assignee: t.assignee ? `${(t.assignee as Record<string,string>).firstName} ${(t.assignee as Record<string,string>).lastName}`.trim() : "",
+          client: (t.client as Record<string,string>)?.companyName || "",
+          brand: (t.brand as Record<string,string>)?.code || "",
+          dueDate: t.dueDate ? String(t.dueDate).split("T")[0] : "",
+          timeSpent: (t.timeSpent as number) || 0, subtasks: 0, subtasksCompleted: 0,
+        })) as Task[];
+        setTaskList(mapped);
+      }
+    }).catch(() => {});
+    return () => { m = false; };
+  }, []);
 
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("ALL");
