@@ -121,8 +121,8 @@ h1, h2, h3, h4 { letter-spacing: -0.03em; font-weight: 600; }
   z-index: 0;
   overflow: hidden;
   background: url('/cybercity-bg.png') center center / cover no-repeat fixed;
-  opacity: 0.5;
-  filter: saturate(1.4) brightness(0.8) hue-rotate(40deg);
+  opacity: 0.3;
+  filter: saturate(1.2) brightness(0.6) hue-rotate(40deg);
 }
 
 /* Dark gradient overlay — content readability */
@@ -132,10 +132,10 @@ h1, h2, h3, h4 { letter-spacing: -0.03em; font-weight: 600; }
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(4,4,8,0.4) 0%,
-    rgba(4,4,8,0.2) 30%,
-    rgba(4,4,8,0.3) 60%,
-    rgba(4,4,8,0.7) 100%
+    rgba(4,4,8,0.7) 0%,
+    rgba(4,4,8,0.5) 30%,
+    rgba(4,4,8,0.6) 60%,
+    rgba(4,4,8,0.85) 100%
   );
 }
 

@@ -84,6 +84,7 @@ export default function Sidebar({
                 value={selectedBrand}
                 onChange={(e) => onBrandChange(e.target.value)}
                 className="w-full bg-transparent text-[var(--foreground)] text-[14px] font-semibold appearance-none cursor-pointer focus:outline-none pr-6 tracking-tight"
+                title={currentBrand?.name}
               >
                 {brands.map((b) => (
                   <option key={b.id} value={b.id} className="bg-[var(--surface)]">
@@ -92,7 +93,7 @@ export default function Sidebar({
                 ))}
               </select>
               <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--foreground-dim)] pointer-events-none" />
-              <p className="text-[10px] text-[var(--foreground-dim)] mt-0.5">{currentBrand?.code} &middot; Enterprise</p>
+              <p className="text-[10px] text-[var(--foreground-dim)] mt-0.5 truncate">{currentBrand?.code} &middot; Enterprise</p>
             </div>
           )}
         </div>

@@ -18,10 +18,10 @@ export default function CompanySwitcher() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Resolve CSS variable to actual color for inline styles
   const accentMap: Record<string, string> = {
     "var(--primary)": "#FF6B00",
     "var(--neon-cyan)": "#06D6E0",
+    "var(--neon-blue)": "#3B82F6",
   };
   const resolvedAccent = accentMap[activeCompany.accent] || "#FF6B00";
 
@@ -37,9 +37,8 @@ export default function CompanySwitcher() {
           className="w-2 h-2 rounded-full shrink-0"
           style={{ backgroundColor: resolvedAccent, boxShadow: `0 0 6px ${resolvedAccent}50` }}
         />
-        <span className="text-[12px] text-[var(--foreground-muted)] font-medium max-w-[140px] truncate">
-          {activeCompany.name}
-        </span>
+        <span className="text-[12px] text-[var(--foreground-muted)] font-medium hidden sm:inline">{activeCompany.name}</span>
+        <span className="text-[12px] text-[var(--foreground-muted)] font-medium sm:hidden">{activeCompany.code}</span>
         <ChevronDown className={clsx(
           "w-3 h-3 text-[var(--foreground-dim)] transition-transform duration-200",
           open && "rotate-180"
