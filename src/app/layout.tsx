@@ -15,36 +15,36 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "DP Command Center",
+  title: "Alpha Command Center",
   description: "Enterprise CRM powered by Alpha AI",
   manifest: "/manifest.json",
   metadataBase: new URL("https://fu-corp-crm.vercel.app"),
   icons: {
     icon: [
-      { url: "/wolf-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/wolf-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/wolf-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/mascot-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/mascot-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/mascot-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/wolf-192.png",
+    apple: "/mascot-192.png",
   },
   openGraph: {
     type: "website",
-    title: "DP Command Center",
+    title: "Alpha Command Center",
     description: "Enterprise CRM powered by Alpha AI",
     url: "https://fu-corp-crm.vercel.app",
-    siteName: "DP Command Center",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "DP Command Center" }],
+    siteName: "Alpha Command Center",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Alpha Command Center" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "DP Command Center",
+    title: "Alpha Command Center",
     description: "Enterprise CRM powered by Alpha AI",
     images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "DP Command Center",
+    title: "Alpha Command Center",
   },
   alternates: {
     canonical: "https://fu-corp-crm.vercel.app",

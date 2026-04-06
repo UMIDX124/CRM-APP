@@ -446,7 +446,7 @@ export default function CommandPalette() {
               </span>
             )}
           </div>
-          <span className="text-[10px] text-[var(--foreground-dim)]">FU Corp Command Center</span>
+          <span className="text-[10px] text-[var(--foreground-dim)]">Alpha Command Center</span>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import {
   Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
-const parentCompany = { name: "FU Corp", code: "FU", tagline: "Enterprise Command Center", website: "fu-corp.com", founded: "2023", ceo: "Faizan & Umer" };
+const parentCompany = { name: "Alpha", code: "A", tagline: "Enterprise Command Center", website: "alpha-crm.com", founded: "2023", ceo: "Faizan & Umer" };
 const brands = [
   { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com" },
   { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app" },
@@ -30,7 +30,7 @@ export default function SettingsModule() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [profile, setProfile] = useState({
     name: "Umer Khan", email: "umi@digitalpointllc.com", phone: "+92 300-7654321",
-    title: "Co-Founder & CTO", bio: "Building the future of enterprise management at FU Corp.",
+    title: "Co-Founder & CTO", bio: "Building the future of enterprise management at Alpha.",
     timezone: "Asia/Karachi", language: "English",
   });
   const [notifSettings, setNotifSettings] = useState({
@@ -112,7 +112,7 @@ export default function SettingsModule() {
                 <div>
                   <p className="text-[var(--foreground)] font-medium">{profile.name}</p>
                   <p className="text-sm text-[var(--foreground-dim)]">{profile.title}</p>
-                  <p className="text-xs text-[#FF6B00] mt-1">FU Corp — Super Admin</p>
+                  <p className="text-xs text-[var(--primary)] mt-1">Alpha — Super Admin</p>
                 </div>
               </div>
 
@@ -169,7 +169,7 @@ export default function SettingsModule() {
             <div className="space-y-6 animate-fade-in">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--foreground)] mb-1">Company</h2>
-                <p className="text-sm text-[var(--foreground-dim)]">FU Corp & subsidiary information</p>
+                <p className="text-sm text-[var(--foreground-dim)]">Alpha & subsidiary information</p>
               </div>
 
               {/* Parent Company */}

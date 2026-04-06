@@ -1,4 +1,4 @@
-// Shared types for FU Corp CRM — single source of truth
+// Shared types for Alpha CRM — single source of truth
 // All components, API routes, and mock data conform to these types
 
 export type Role = "SUPER_ADMIN" | "PROJECT_MANAGER" | "DEPT_HEAD" | "TEAM_LEAD" | "EMPLOYEE";

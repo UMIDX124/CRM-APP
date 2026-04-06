@@ -48,7 +48,7 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Employee
     "employee.hire": "Hire Employee",
-    "employee.hiredBy": "Hired by FU Corp",
+    "employee.hiredBy": "Hired by Alpha",
     "employee.assignTo": "Assign to Company",
     "employee.remove": "Remove Employee",
 

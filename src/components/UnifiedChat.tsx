@@ -387,10 +387,10 @@ export default function UnifiedChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 w-12 h-12 rounded-full bg-[var(--primary)] flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+        className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 w-14 h-14 rounded-full bg-[var(--surface-elevated)] border-2 border-[var(--primary)] flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden"
         title="Alpha AI"
       >
-        <WolfIcon size={24} color="#fff" />
+        <WolfIcon size={48} />
       </button>
     );
   }

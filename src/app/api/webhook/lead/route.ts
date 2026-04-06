@@ -196,7 +196,7 @@ export async function POST(req: Request) {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
-          from: "FU Corp CRM <crm@fu-corp.com>",
+          from: "Alpha CRM <crm@fu-corp.com>",
           to: ["faizi@digitalpointllc.com", "umi@digitalpointllc.com"],
           subject: `New Lead: ${company || name} (${priority} - Score ${score})`,
           html: `
@@ -276,12 +276,12 @@ export async function POST(req: Request) {
 export async function GET() {
   return new Response(
     `<!DOCTYPE html>
-    <html><head><title>FU Corp CRM Webhook</title></head>
+    <html><head><title>Alpha CRM Webhook</title></head>
     <body style="font-family:system-ui;background:#0A0A0F;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
       <div style="text-align:center;max-width:500px;padding:40px;">
-        <div style="width:60px;height:60px;background:#6366F1;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#fff;">FU</div>
+        <div style="width:60px;height:60px;background:#6366F1;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#fff;">A</div>
         <h1 style="font-size:24px;margin:0 0 8px;">Webhook Active</h1>
-        <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions and creates leads in FU Corp CRM.</p>
+        <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions and creates leads in Alpha CRM.</p>
         <div style="background:#131318;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;text-align:left;font-size:13px;">
           <p style="color:#6366F1;margin:0 0 8px;font-weight:600;">Fields:</p>
           <code style="color:#71717A;">name, email, phone, company, service, budget, message, source, formType, qualityScore, utmSource, utmMedium, utmCampaign</code>

@@ -67,9 +67,9 @@ export default function KioskPage() {
       {/* Header */}
       <div className="text-center mb-10 relative z-10">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FF6B00] to-[#E05500] mb-4 shadow-2xl shadow-[#FF6B00]/20">
-          <span className="text-2xl font-black text-black">FU</span>
+          <span className="text-2xl font-black text-black">A</span>
         </div>
-        <h1 className="text-4xl font-bold text-white tracking-tight">FU Corp</h1>
+        <h1 className="text-4xl font-bold text-white tracking-tight">Alpha</h1>
         <p className="text-white/30 text-sm mt-1">Attendance Kiosk</p>
       </div>
 
@@ -143,7 +143,7 @@ export default function KioskPage() {
       </div>
 
       {/* Footer */}
-      <p className="text-white/15 text-xs mt-8 relative z-10">FU Corp Attendance Kiosk &bull; v1.0</p>
+      <p className="text-white/15 text-xs mt-8 relative z-10">Alpha Attendance Kiosk &bull; v1.0</p>
     </div>
   );
 }

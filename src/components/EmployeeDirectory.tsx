@@ -322,7 +322,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
               {!editingId && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-[var(--primary)]/5 border border-[var(--primary)]/10">
                   <BadgeCheck className="w-4 h-4 text-[var(--primary)]" />
-                  <span className="text-[12px] text-[var(--foreground-muted)]">Hired by <strong className="text-[var(--primary)]">FU Corp</strong></span>
+                  <span className="text-[12px] text-[var(--foreground-muted)]">Hired by <strong className="text-[var(--primary)]">Alpha</strong></span>
                 </div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -368,7 +368,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
           <div className="modal-content w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-[15px] font-semibold text-[var(--foreground)] mb-2">Remove Employee</h3>
             <p className="text-[13px] text-[var(--foreground-muted)] mb-5">
-              Remove <strong className="text-[var(--foreground)]">{employeeList.find((e) => e.id === showDeleteConfirm)?.name}</strong> from FU Corp?
+              Remove <strong className="text-[var(--foreground)]">{employeeList.find((e) => e.id === showDeleteConfirm)?.name}</strong> from Alpha?
             </p>
             <div className="flex justify-end gap-2">
               <button onClick={() => setShowDeleteConfirm(null)} className="btn-secondary">Cancel</button>

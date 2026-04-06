@@ -107,14 +107,14 @@ export default function ReportsModule() {
     const addFooter = (pageNum: number, totalPages: number) => {
       doc.setFontSize(9);
       doc.setTextColor(150);
-      doc.text("FU Corp Command Center", 14, pageHeight - 10);
+      doc.text("Alpha Command Center", 14, pageHeight - 10);
       doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - 14, pageHeight - 10, { align: "right" });
     };
 
     // --- Page 1: Title & Summary ---
     doc.setFontSize(28);
     doc.setTextColor(40);
-    doc.text("FU Corp Business Report", pageWidth / 2, 40, { align: "center" });
+    doc.text("Alpha Business Report", pageWidth / 2, 40, { align: "center" });
 
     doc.setFontSize(12);
     doc.setTextColor(120);
@@ -518,7 +518,7 @@ export default function ReportsModule() {
       {/* Footer */}
       <div className="text-center text-[var(--foreground-dim)] text-sm">
         <p>Report generated on {new Date().toLocaleString()}</p>
-        <p className="mt-1">FU Corp Command Center v1.0 - All Rights Reserved</p>
+        <p className="mt-1">Alpha Command Center v1.0 - All Rights Reserved</p>
       </div>
     </div>
   );

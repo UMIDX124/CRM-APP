@@ -16,18 +16,18 @@ export async function POST(req: Request) {
       const { Resend } = await import("resend");
       const resend = new Resend(process.env.RESEND_API_KEY);
       const result = await resend.emails.send({
-        from: "FU Corp CRM <crm@fu-corp.com>",
+        from: "Alpha CRM <crm@fu-corp.com>",
         to: [to],
         subject,
         html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #FF6B00; padding: 20px; text-align: center;">
-            <h1 style="color: #000; margin: 0; font-size: 24px;">FU Corp</h1>
+          <div style="background: #6366F1; padding: 20px; text-align: center;">
+            <h1 style="color: #fff; margin: 0; font-size: 24px;">Alpha</h1>
           </div>
           <div style="padding: 30px; background: #f9f9f9;">
             ${body.replace(/\n/g, "<br>")}
           </div>
           <div style="padding: 15px; text-align: center; color: #999; font-size: 12px;">
-            Sent from FU Corp Command Center
+            Sent from Alpha Command Center
           </div>
         </div>`,
       });

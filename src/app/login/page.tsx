@@ -66,7 +66,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center mb-5">
             <WolfLogo size="full" animated />
           </div>
-          <h1 className="text-[24px] font-semibold text-[var(--foreground)] tracking-tight">DP Command Center</h1>
+          <h1 className="text-[24px] font-semibold text-[var(--foreground)] tracking-tight">Alpha Command Center</h1>
           <p className="text-[13px] text-[var(--foreground-dim)] mt-1">Enterprise CRM</p>
         </div>
 
@@ -146,7 +146,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-[var(--foreground-dim)] mt-6 opacity-40">DP Command Center</p>
+        <p className="text-center text-[10px] text-[var(--foreground-dim)] mt-6 opacity-40">Alpha Command Center</p>
       </div>
     </div>
   );

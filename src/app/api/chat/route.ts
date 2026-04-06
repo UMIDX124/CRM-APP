@@ -59,7 +59,7 @@ async function buildSystemPrompt(): Promise<string> {
     dataContext = "\n\n**Note:** Database is currently unavailable. Respond based on general CRM knowledge.";
   }
 
-  return `You are FU AI, an elite AI assistant for FU Corp Command Center CRM. FU Corp operates 3 companies:
+  return `You are Alpha, an elite AI assistant for Alpha Command Center CRM. Alpha operates 3 companies:
 - VCS (Virtual Customer Solution) - Virtual services, digital marketing
 - BSL (Backup Solutions LLC) - Cloud backup, cybersecurity, tech services
 - DPL (Digital Point LLC) - Performance marketing, $50M+ ad spend managed

@@ -27,7 +27,7 @@ const sections: Section[] = [
   {
     id: "getting-started", title: "Getting Started", icon: Zap,
     content: [
-      { heading: "Welcome to FU Corp CRM", text: "FU Corp Command Center is your enterprise CRM for managing clients, employees, tasks, invoices, and business operations across all FU Corp subsidiary companies (VCS, BSL, DPL)." },
+      { heading: "Welcome to Alpha CRM", text: "Alpha Command Center is your enterprise CRM for managing clients, employees, tasks, invoices, and business operations across all Alpha subsidiary companies (VCS, BSL, DPL)." },
       { heading: "Logging In", text: "Navigate to the login page and enter your credentials. Your admin will provide your email and initial password when you're hired.",
         steps: ["Go to the CRM login page", "Enter your email address", "Enter your password", "Click 'Sign In'"],
         tip: "You can change your password anytime from Settings > Security." },
@@ -60,10 +60,10 @@ const sections: Section[] = [
   {
     id: "employees", title: "Team / Employee Management", icon: Users,
     content: [
-      { heading: "Employee Directory", text: "The Team page shows all employees hired by FU Corp, organized by subsidiary assignment. Switch between grid and list views using the toggle buttons." },
+      { heading: "Employee Directory", text: "The Team page shows all employees hired by Alpha, organized by subsidiary assignment. Switch between grid and list views using the toggle buttons." },
       { heading: "Hiring a New Employee", text: "Only admins and managers can hire new employees.",
         steps: ["Click 'Hire Employee'", "Enter the employee's name, email, and phone", "Set their job title, department, and role", "Assign them to a subsidiary (VCS/BSL/DPL)", "Set their salary and hire date", "Set their initial login password and 4-digit PIN", "Add their skills", "Click 'Hire Employee'"],
-        tip: "All employees are hired by FU Corp (parent company) and assigned to subsidiaries." },
+        tip: "All employees are hired by Alpha (parent company) and assigned to subsidiaries." },
       { heading: "Editing an Employee", text: "Hover over any employee card to see the edit and delete icons. Click the pencil icon to edit their details." },
       { heading: "Removing an Employee", text: "Click the trash icon on an employee card. A confirmation dialog will appear. This marks them as terminated.",
         tip: "Terminated employees can still be found by filtering by 'Terminated' status." },
@@ -199,7 +199,7 @@ const sections: Section[] = [
     id: "settings", title: "Settings", icon: Settings,
     content: [
       { heading: "Profile", text: "Update your name, email, phone, job title, bio, timezone, and language from the Profile tab." },
-      { heading: "Company", text: "View FU Corp parent company info and all subsidiary details." },
+      { heading: "Company", text: "View Alpha parent company info and all subsidiary details." },
       { heading: "Notifications", text: "Toggle which notifications you receive — task assignments, deal wins, invoice payments, security alerts, weekly/monthly reports." },
       { heading: "Security", text: "Enable two-factor authentication and change your password.",
         steps: ["Go to Settings > Security", "Click 'Change Password'", "Enter your current password", "Enter and confirm your new password", "Click 'Update Password'"],
@@ -218,7 +218,7 @@ const sections: Section[] = [
   {
     id: "roles", title: "Roles & Permissions", icon: Key,
     content: [
-      { heading: "Role Hierarchy", text: "FU Corp uses role-based access control (RBAC) with 5 levels:",
+      { heading: "Role Hierarchy", text: "Alpha uses role-based access control (RBAC) with 5 levels:",
         steps: ["SUPER_ADMIN — Full access to everything (Faizan, Umer)", "PROJECT_MANAGER — Can manage employees, clients, tasks within their scope", "DEPT_HEAD — Department-level management", "TEAM_LEAD — Team-level management", "EMPLOYEE — Can view and manage their own assigned tasks/data"] },
       { heading: "What Each Role Can Do", text: "Super Admins see all data across all brands. Employees only see data assigned to them. Managers see their brand's data. The Audit Log is admin-only." },
     ]
@@ -255,7 +255,7 @@ export default function GuidePage() {
     // Title page
     doc.setFontSize(28);
     doc.setTextColor(255, 107, 0);
-    doc.text("FU Corp CRM", pageWidth / 2, y, { align: "center" });
+    doc.text("Alpha CRM", pageWidth / 2, y, { align: "center" });
     y += 12;
     doc.setFontSize(16);
     doc.setTextColor(100, 100, 100);
@@ -345,7 +345,7 @@ export default function GuidePage() {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(180, 180, 180);
-      doc.text(`FU Corp CRM User Guide | Page ${i} of ${pageCount}`, pageWidth / 2, 290, { align: "center" });
+      doc.text(`Alpha CRM User Guide | Page ${i} of ${pageCount}`, pageWidth / 2, 290, { align: "center" });
     }
 
     doc.save("FU-Corp-CRM-User-Guide.pdf");
