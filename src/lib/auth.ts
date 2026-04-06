@@ -63,7 +63,8 @@ export async function getSession() {
     });
 
     return user;
-  } catch {
+  } catch (err) {
+    console.error("getSession error:", err);
     return null;
   }
 }
@@ -76,7 +77,9 @@ export async function destroySession() {
       await prisma.session.deleteMany({ where: { sessionToken: token } });
       cookieStore.delete(SESSION_COOKIE);
     }
-  } catch {}
+  } catch (err) {
+    console.error("destroySession error:", err);
+  }
 }
 
 export async function requireAuth() {
