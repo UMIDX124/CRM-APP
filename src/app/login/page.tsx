@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { LogIn, Eye, EyeOff, ArrowRight } from "lucide-react";
 import WolfLogo from "@/components/WolfLogo";
 
@@ -116,6 +117,15 @@ export default function LoginPage() {
                   <><LogIn className="w-4 h-4" />Sign In</>
                 )}
               </button>
+
+              <div className="flex justify-center pt-1">
+                <Link
+                  href="/forgot-password"
+                  className="text-[12px] text-[var(--foreground-dim)] hover:text-[var(--primary)] transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
             </div>
 
             {/* Quick Access — email-only, no passwords */}

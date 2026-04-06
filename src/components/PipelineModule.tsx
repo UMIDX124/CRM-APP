@@ -86,6 +86,8 @@ export default function PipelineModule({ brandId: _brandId }: { brandId: string 
 
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverStage, setDragOverStage] = useState<LeadStatus | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
@@ -237,8 +239,38 @@ export default function PipelineModule({ brandId: _brandId }: { brandId: string 
           {stages.filter((s) => s.status !== "LOST").map((stage) => {
             const stageLeads = filtered.filter((l) => l.status === stage.status);
             const stageValue = stageLeads.reduce((a, l) => a + l.value, 0);
+            const isDragOver = dragOverStage === stage.status;
             return (
-              <div key={stage.status} className="kanban-column p-3 min-w-[180px]">
+              <div
+                key={stage.status}
+                className={clsx(
+                  "kanban-column p-3 min-w-[180px] transition-colors",
+                  isDragOver && "border-[var(--primary)] bg-[var(--primary)]/5"
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOverStage !== stage.status) setDragOverStage(stage.status);
+                }}
+                onDragLeave={(e) => {
+                  // Only clear if leaving the column entirely, not entering a child
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOverStage(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const leadId = e.dataTransfer.getData("text/plain");
+                  setDragOverStage(null);
+                  setDraggingId(null);
+                  if (leadId) {
+                    const lead = leadList.find((l) => l.id === leadId);
+                    if (lead && lead.status !== stage.status) {
+                      moveStage(leadId, stage.status);
+                    }
+                  }
+                }}
+              >
                 <div className="flex items-center justify-between mb-3 px-1">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: stage.color }} />
@@ -249,7 +281,23 @@ export default function PipelineModule({ brandId: _brandId }: { brandId: string 
                 </div>
                 <div className="space-y-2">
                   {stageLeads.map((lead) => (
-                    <div key={lead.id} className="kanban-card group">
+                    <div
+                      key={lead.id}
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData("text/plain", lead.id);
+                        e.dataTransfer.effectAllowed = "move";
+                        setDraggingId(lead.id);
+                      }}
+                      onDragEnd={() => {
+                        setDraggingId(null);
+                        setDragOverStage(null);
+                      }}
+                      className={clsx(
+                        "kanban-card group cursor-grab active:cursor-grabbing",
+                        draggingId === lead.id && "opacity-40 scale-95"
+                      )}
+                    >
                       <div className="flex items-start justify-between mb-1">
                         <p className="text-[12px] font-medium text-[var(--foreground)] truncate flex-1 pr-1">{lead.companyName}</p>
                         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">

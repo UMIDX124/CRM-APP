@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
@@ -387,10 +388,17 @@ export default function UnifiedChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 w-14 h-14 rounded-full bg-[var(--surface-elevated)] border-2 border-[var(--primary)] flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden"
+        className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 w-[60px] h-[60px] rounded-full bg-[var(--surface-elevated)] border-2 border-[var(--primary)] flex items-center justify-center shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer overflow-hidden p-0"
         title="Alpha AI"
       >
-        <WolfIcon size={48} />
+        <Image
+          src="/mascot-192.png"
+          alt="Alpha"
+          width={56}
+          height={56}
+          className="w-full h-full object-cover rounded-full"
+          priority
+        />
       </button>
     );
   }

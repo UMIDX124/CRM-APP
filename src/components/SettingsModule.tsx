@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   User, Building2, Bell, Shield, Palette, Globe, Save, Camera,
-  Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight,
+  Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight, Loader2, AlertCircle,
 } from "lucide-react";
 import { clsx } from "clsx";
 const parentCompany = { name: "Alpha", code: "A", tagline: "Enterprise Command Center", website: "alpha-crm.com", founded: "2023", ceo: "Faizan & Umer" };
@@ -24,15 +24,39 @@ const tabs = [
 export default function SettingsModule() {
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: "", newPw: "", confirm: "" });
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [profile, setProfile] = useState({
-    name: "Umer Khan", email: "umi@digitalpointllc.com", phone: "+92 300-7654321",
-    title: "Co-Founder & CTO", bio: "Building the future of enterprise management at Alpha.",
+    name: "", email: "", phone: "",
+    title: "", bio: "Building the future of enterprise management at Alpha.",
     timezone: "Asia/Karachi", language: "English",
   });
+
+  // Load current user profile from server on mount
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data || data.error) return;
+        setUserId(String(data.id || ""));
+        setProfile((prev) => ({
+          ...prev,
+          name: `${data.firstName || ""} ${data.lastName || ""}`.trim() || prev.name,
+          email: String(data.email || prev.email),
+          title: String(data.title || prev.title),
+          phone: String(data.phone || prev.phone),
+          language: data.language === "en" ? "English" : data.language === "ur" ? "Urdu" : prev.language,
+        }));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const [notifSettings, setNotifSettings] = useState({
     email: true, push: true, taskAssigned: true, taskCompleted: true,
     dealWon: true, invoicePaid: true, newHire: true, securityAlert: true,
@@ -63,9 +87,42 @@ export default function SettingsModule() {
     }
   };
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    setSaveError(null);
+    setSaved(false);
+    if (!userId) {
+      setSaveError("Not signed in — cannot save profile");
+      return;
+    }
+    // Split "First Last" back into first + last
+    const parts = profile.name.trim().split(/\s+/);
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/employees/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: profile.email,
+          phone: profile.phone,
+          title: profile.title,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Save failed" }));
+        setSaveError(err.error || "Failed to save profile");
+        return;
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaveError("Network error — try again");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -362,18 +419,33 @@ export default function SettingsModule() {
             </div>
           )}
 
+          {/* Save Error */}
+          {saveError && (
+            <div className="mt-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+              <span className="text-[12px] text-red-400">{saveError}</span>
+            </div>
+          )}
+
           {/* Save Button */}
           <div className="mt-8 flex justify-end">
             <button
               onClick={handleSave}
+              disabled={saving}
               className={clsx(
-                "flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all",
+                "flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50",
                 saved
                   ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                  : "bg-gradient-to-r from-[#FF6B00] to-[#E05500] text-black hover:shadow-lg hover:shadow-[#FF6B00]/20"
+                  : "bg-[var(--primary)] text-white hover:bg-[var(--primary-light)]"
               )}
             >
-              {saved ? <><Check className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save Changes</>}
+              {saving ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+              ) : saved ? (
+                <><Check className="w-4 h-4" /> Saved</>
+              ) : (
+                <><Save className="w-4 h-4" /> Save Changes</>
+              )}
             </button>
           </div>
         </div>

@@ -105,6 +105,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
 
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("ALL");
+  const [filterDueDate, setFilterDueDate] = useState<"ALL" | "TODAY" | "WEEK" | "OVERDUE">("ALL");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -113,15 +114,35 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
   const [saving, setSaving] = useState(false);
 
   const filtered = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
     return taskList.filter((t) => {
       if (search) {
         const q = search.toLowerCase();
         if (!t.title.toLowerCase().includes(q) && !t.assignee.toLowerCase().includes(q) && !t.client.toLowerCase().includes(q)) return false;
       }
       if (filterPriority !== "ALL" && t.priority !== filterPriority) return false;
+
+      if (filterDueDate !== "ALL") {
+        if (!t.dueDate) return false;
+        const due = new Date(t.dueDate);
+        const isDone = t.status === "DONE" || t.status === "COMPLETED";
+        if (filterDueDate === "TODAY") {
+          if (due < today || due >= tomorrow) return false;
+        } else if (filterDueDate === "WEEK") {
+          if (due < today || due >= weekEnd) return false;
+        } else if (filterDueDate === "OVERDUE") {
+          if (due >= today || isDone) return false;
+        }
+      }
       return true;
     });
-  }, [taskList, search, filterPriority]);
+  }, [taskList, search, filterPriority, filterDueDate]);
 
   const stats = useMemo(() => ({
     total: taskList.length,
@@ -199,6 +220,16 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
         <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="input-field w-auto min-w-[110px]">
           <option value="ALL">All Priority</option>
           {priorityOptions.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+        </select>
+        <select
+          value={filterDueDate}
+          onChange={(e) => setFilterDueDate(e.target.value as "ALL" | "TODAY" | "WEEK" | "OVERDUE")}
+          className="input-field w-auto min-w-[110px]"
+        >
+          <option value="ALL">All Dates</option>
+          <option value="TODAY">Due Today</option>
+          <option value="WEEK">This Week</option>
+          <option value="OVERDUE">Overdue</option>
         </select>
         <div className="tab-list !p-0.5">
           <button onClick={() => setViewMode("kanban")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "kanban" ? "active" : ""}`}><LayoutGrid className="w-3.5 h-3.5" /></button>

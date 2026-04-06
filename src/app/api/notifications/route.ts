@@ -40,3 +40,21 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: msg }, { status: msg === "Unauthorized" ? 401 : 500 });
   }
 }
+
+// DELETE /api/notifications — clear all notifications for the current user
+export async function DELETE() {
+  try {
+    const user = await requireAuth();
+    const result = await prisma.notification.deleteMany({
+      where: { userId: user.id },
+    });
+    return NextResponse.json({ ok: true, deleted: result.count });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "Server error";
+    console.error("Notifications DELETE error:", e);
+    return NextResponse.json(
+      { error: msg },
+      { status: msg === "Unauthorized" ? 401 : 500 }
+    );
+  }
+}

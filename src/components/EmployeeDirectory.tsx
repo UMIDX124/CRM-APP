@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useMemo, useEffect } from "react";
 import {
   Search, Users, Mail, Edit, Trash2, X, Save,
@@ -48,7 +49,7 @@ export default function EmployeeDirectory({ brandId: _brandId }: { brandId: stri
         if (data && Array.isArray(data) && data.length > 0) {
           const mapped: Employee[] = data.map((e: Record<string, unknown>) => ({
             id: String(e.id), name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
-            email: String(e.email || ""), phone: String(e.phone || ""), avatar: null,
+            email: String(e.email || ""), phone: String(e.phone || ""), avatar: (e.avatar as string) || null,
             title: String(e.title || ""), department: String(e.department || "DEV"),
             brand: (e.brand as Record<string, string>)?.code || String(e.brand || ""),
             hiredBy: "FU", role: String(e.role || "EMPLOYEE") as Role,
@@ -239,12 +240,18 @@ export default function EmployeeDirectory({ brandId: _brandId }: { brandId: stri
           {filtered.map((emp) => (
             <div key={emp.id} className="card p-4 card-interactive group">
               <div className="flex items-start justify-between mb-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-[12px] font-semibold"
-                  style={{ backgroundColor: `${brandColor(emp.brand)}15`, color: brandColor(emp.brand) }}
-                >
-                  {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                </div>
+                {emp.avatar ? (
+                  <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-[var(--border)]">
+                    <Image src={emp.avatar} alt={emp.name} width={40} height={40} className="w-full h-full object-cover" unoptimized />
+                  </div>
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-[12px] font-semibold"
+                    style={{ backgroundColor: `${brandColor(emp.brand)}15`, color: brandColor(emp.brand) }}
+                  >
+                    {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  </div>
+                )}
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => openEdit(emp)} className="btn-ghost p-1"><Edit className="w-3 h-3" /></button>
                   <button onClick={() => setShowDeleteConfirm(emp.id)} className="btn-ghost p-1 hover:!text-red-400"><Trash2 className="w-3 h-3" /></button>
@@ -290,9 +297,15 @@ export default function EmployeeDirectory({ brandId: _brandId }: { brandId: stri
                 <tr key={emp.id}>
                   <td>
                     <div className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-semibold shrink-0" style={{ backgroundColor: `${brandColor(emp.brand)}12`, color: brandColor(emp.brand) }}>
-                        {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                      </div>
+                      {emp.avatar ? (
+                        <div className="w-7 h-7 rounded-md overflow-hidden shrink-0 border border-[var(--border)]">
+                          <Image src={emp.avatar} alt={emp.name} width={28} height={28} className="w-full h-full object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className="w-7 h-7 rounded-md flex items-center justify-center text-[10px] font-semibold shrink-0" style={{ backgroundColor: `${brandColor(emp.brand)}12`, color: brandColor(emp.brand) }}>
+                          {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        </div>
+                      )}
                       <div className="min-w-0"><p className="text-[13px] font-medium text-[var(--foreground)] truncate">{emp.name}</p><p className="text-[11px] text-[var(--foreground-dim)] truncate">{emp.email}</p></div>
                     </div>
                   </td>

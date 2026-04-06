@@ -301,13 +301,36 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
                     </td>
                     <td className="hidden md:table-cell">
                       <div className="flex items-center gap-2">
-                        <div className="w-12 h-1 rounded-full bg-[var(--border)] overflow-hidden">
+                        <div
+                          className={clsx(
+                            "w-2 h-2 rounded-full shrink-0",
+                            client.healthScore >= 80
+                              ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+                              : client.healthScore >= 50
+                              ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]"
+                              : "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]"
+                          )}
+                          title={
+                            client.healthScore >= 80 ? "Healthy" :
+                            client.healthScore >= 50 ? "At Risk" : "Critical"
+                          }
+                        />
+                        <div className="w-14 h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
                           <div
-                            className={clsx("h-full rounded-full", client.healthScore >= 80 ? "bg-emerald-400" : client.healthScore >= 50 ? "bg-amber-400" : "bg-red-400")}
+                            className={clsx(
+                              "h-full rounded-full transition-all",
+                              client.healthScore >= 80
+                                ? "bg-emerald-400"
+                                : client.healthScore >= 50
+                                ? "bg-amber-400"
+                                : "bg-red-400"
+                            )}
                             style={{ width: `${client.healthScore}%` }}
                           />
                         </div>
-                        <span className={clsx("text-[11px] font-medium tabular-nums", healthColor(client.healthScore))}>{client.healthScore}</span>
+                        <span className={clsx("text-[11px] font-semibold tabular-nums min-w-[24px]", healthColor(client.healthScore))}>
+                          {client.healthScore}
+                        </span>
                       </div>
                     </td>
                     <td className="text-right hidden sm:table-cell">

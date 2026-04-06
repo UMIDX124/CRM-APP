@@ -127,6 +127,17 @@ export default function NotificationCenter() {
     }
   };
 
+  const clearAll = async () => {
+    try {
+      const res = await fetch("/api/notifications", { method: "DELETE" });
+      if (res.ok) {
+        setNotifications([]);
+      }
+    } catch {
+      console.error("Failed to clear notifications");
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -213,6 +224,18 @@ export default function NotificationCenter() {
               })
             )}
           </div>
+
+          {/* Footer — Clear all */}
+          {notifications.length > 0 && (
+            <div className="border-t border-[var(--border)] px-4 py-2 flex items-center justify-end">
+              <button
+                onClick={clearAll}
+                className="text-[11px] text-[var(--foreground-dim)] hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-red-500/5"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
