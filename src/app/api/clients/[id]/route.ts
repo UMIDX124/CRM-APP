@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -36,24 +37,27 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
 
+    // Get client name before deleting for notification
+    const clientRecord = await prisma.client.findUnique({ where: { id }, select: { companyName: true } });
+    const clientName = clientRecord?.companyName || "Unknown";
+
     // Disconnect or delete all child records before deleting the client
-    // to avoid foreign key constraint violations
     await prisma.$transaction([
-      // Detach tasks from this client (don't delete — tasks may be valuable)
       prisma.task.updateMany({ where: { clientId: id }, data: { clientId: null } }),
-      // Delete notes tied to this client
       prisma.note.deleteMany({ where: { clientId: id } }),
-      // Delete attachments tied to this client
       prisma.attachment.deleteMany({ where: { clientId: id } }),
-      // Delete feedback tied to this client
       prisma.customerFeedback.deleteMany({ where: { clientId: id } }),
-      // Delete invoices tied to this client
       prisma.invoice.deleteMany({ where: { clientId: id } }),
-      // Now safe to delete the client
       prisma.client.delete({ where: { id } }),
     ]);
 
     await logAudit({ action: "DELETE", entity: "Client", entityId: id, userId: "system" }).catch(() => {});
+
+    // Notify team
+    const systemUser = await getSystemUserId();
+    createNotification({ type: "CLIENT_DELETED", title: "Client Removed", message: `${clientName} has been removed`, userId: "all" });
+    if (systemUser) autoPostToChannel("general", `🗑️ Client **${clientName}** removed`, systemUser, "SYSTEM");
+
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Delete failed";

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, isManager } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { createNotification, autoPostToChannel } from "@/lib/notifications";
 
 export async function GET(req: Request) {
   try {
@@ -48,6 +49,16 @@ export async function POST(req: Request) {
       action: "CREATE", entity: "Client", entityId: client.id, userId: user.id,
       changes: { client: { old: null, new: body } },
     });
+
+    // Notify team + auto-post to #general
+    createNotification({
+      type: "CLIENT_ADDED",
+      title: "New Client",
+      message: `${body.companyName || "New client"} added by ${user.firstName}`,
+      userId: "all",
+      data: { clientId: client.id },
+    });
+    autoPostToChannel("general", `📋 **New Client** — ${body.companyName || "Unknown"} added by ${user.firstName} ${user.lastName}`, user.id, "SYSTEM", { clientId: client.id });
 
     return NextResponse.json(client, { status: 201 });
   } catch (e: unknown) {

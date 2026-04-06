@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { createNotification, autoPostToChannel } from "@/lib/notifications";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -27,6 +28,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
     });
     await logAudit({ action: "UPDATE", entity: "Task", entityId: id, userId: "system", changes: body }).catch(() => {});
+
+    // Notify on status changes and assignments
+    if (body.status === "COMPLETED" && task.assignee) {
+      const assigneeName = `${task.assignee.firstName} ${task.assignee.lastName}`.trim();
+      createNotification({ type: "TASK_STATUS", title: "Task Completed", message: `${assigneeName} completed "${task.title}"`, userId: "all", data: { taskId: id } });
+      autoPostToChannel("tasks", `✅ **${assigneeName}** completed "${task.title}"${task.client ? ` for ${task.client.companyName}` : ""}`, task.assignee.id, "TASK_UPDATE", { taskId: id });
+    }
+    if (body.assigneeId && task.assignee) {
+      createNotification({ type: "TASK_ASSIGNED", title: "Task Assigned", message: `You've been assigned: "${task.title}"`, userId: body.assigneeId, data: { taskId: id } });
+    }
+
     return NextResponse.json(task);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Update failed";

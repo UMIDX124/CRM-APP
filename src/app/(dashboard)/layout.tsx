@@ -13,6 +13,7 @@ import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { CompanyProvider } from "@/components/CompanyContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
+import TeamChat from "@/components/TeamChat";
 
 const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
 
@@ -252,6 +253,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
         <AIChat />
+        <TeamChat />
         <MobileBottomNav />
         <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
         <CommandPalette />

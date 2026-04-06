@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-  Bell, X, Check, CheckCheck, Clock, DollarSign, UserPlus, AlertTriangle,
-  Trophy, Zap, Shield, BarChart3, Trash2,
+  Bell, X, CheckCheck, Clock, DollarSign, UserPlus, AlertTriangle,
+  Trophy, Zap, Briefcase, CheckSquare, Users, Building2, Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -11,134 +11,209 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: "success" | "warning" | "info" | "revenue" | "task" | "hire";
-  time: string;
-  read: boolean;
+  type: string;
+  isRead: boolean;
+  data: Record<string, unknown> | null;
+  createdAt: string;
 }
 
-const iconMap = {
-  success: { icon: Trophy, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-  warning: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/10" },
-  info: { icon: Zap, color: "text-cyan-400", bg: "bg-cyan-500/10" },
-  revenue: { icon: DollarSign, color: "text-[#FF6B00]", bg: "bg-[#FF6B00]/10" },
-  task: { icon: Check, color: "text-blue-400", bg: "bg-blue-500/10" },
-  hire: { icon: UserPlus, color: "text-amber-400", bg: "bg-amber-500/10" },
+const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
+  LEAD_NEW: { icon: Briefcase, color: "text-blue-400", bg: "bg-blue-500/10" },
+  LEAD_ASSIGNED: { icon: UserPlus, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  LEAD_STATUS: { icon: Briefcase, color: "text-amber-400", bg: "bg-amber-500/10" },
+  CLIENT_ADDED: { icon: Building2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  CLIENT_DELETED: { icon: Building2, color: "text-red-400", bg: "bg-red-500/10" },
+  CLIENT_HEALTH: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/10" },
+  INVOICE_PAID: { icon: DollarSign, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  INVOICE_OVERDUE: { icon: AlertTriangle, color: "text-red-400", bg: "bg-red-500/10" },
+  TASK_ASSIGNED: { icon: CheckSquare, color: "text-blue-400", bg: "bg-blue-500/10" },
+  TASK_STATUS: { icon: CheckSquare, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  TASK_DUE: { icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
+  TEAM_UPDATE: { icon: Users, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  MENTION: { icon: Zap, color: "text-purple-400", bg: "bg-purple-500/10" },
+  SYSTEM: { icon: Zap, color: "text-[var(--foreground-dim)]", bg: "bg-[var(--surface-hover)]" },
+  lead: { icon: Briefcase, color: "text-blue-400", bg: "bg-blue-500/10" },
 };
 
-const initialNotifications: Notification[] = [
-  { id: "1", title: "Deal Won", message: "Cape Town Logistics signed $5,600/mo contract", type: "revenue", time: "2 min ago", read: false },
-  { id: "2", title: "Task Completed", message: "Faizan completed Meta Ads Campaign Optimization", type: "task", time: "15 min ago", read: false },
-  { id: "3", title: "Invoice Paid", message: "SecureBank paid invoice #INV-045 — $25,000", type: "revenue", time: "1 hr ago", read: false },
-  { id: "4", title: "New Employee", message: "Bilal Rashid joined VCS as Video Editor", type: "hire", time: "3 hrs ago", read: true },
-  { id: "5", title: "Security Alert", message: "SecureBank passed all security protocols — zero breaches", type: "success", time: "5 hrs ago", read: true },
-  { id: "6", title: "Performance Alert", message: "DTC E-Commerce ROAS dropped below 4x target", type: "warning", time: "8 hrs ago", read: true },
-  { id: "7", title: "AI Deployed", message: "DataFlow Analytics dashboard live — 98% accuracy", type: "info", time: "1 day ago", read: true },
-  { id: "8", title: "Revenue Milestone", message: "DPL crossed $124,890 monthly revenue", type: "revenue", time: "1 day ago", read: true },
-];
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setNotifications(data);
+          setError(null);
+        }
+      } else if (res.status === 401) {
+        // Not logged in — ignore silently
+      } else {
+        setError("Failed to load");
+      }
+    } catch {
+      // Network error — don't show error for background polls
+    }
   };
 
-  const markRead = (id: string) => {
-    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  // Initial load + poll every 15 seconds
+  useEffect(() => {
+    fetchNotifications();
+    pollRef.current = setInterval(fetchNotifications, 15000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
+
+  // Refresh when dropdown opens
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      fetchNotifications().finally(() => setLoading(false));
+    }
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const markAllRead = async () => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markAll: true }),
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      console.error("Failed to mark all read");
+    }
   };
 
-  const removeNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  const markRead = async (id: string) => {
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [id] }),
+      });
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    } catch {
+      console.error("Failed to mark read");
+    }
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-lg text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)] transition-all"
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FF6B00] text-black text-[10px] font-bold flex items-center justify-center">
-            {unreadCount}
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-[var(--danger)] text-white text-[9px] font-bold flex items-center justify-center">
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-50 w-[380px] max-h-[520px] bg-[#0c0c18] border border-[var(--border)] rounded-2xl shadow-2xl shadow-black/50 overflow-hidden animate-scale-in">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-[var(--foreground)]">Notifications</h3>
-                {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-[#FF6B00]/10 text-[#FF6B00] text-[10px] font-bold">
-                    {unreadCount} new
-                  </span>
-                )}
-              </div>
+        <div className="absolute right-0 top-full mt-2 z-50 w-[360px] max-h-[480px] bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden animate-scale-in">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2">
+              <h3 className="text-[13px] font-semibold text-[var(--foreground)]">Notifications</h3>
               {unreadCount > 0 && (
-                <button onClick={markAllRead} className="text-xs text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors flex items-center gap-1">
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  Mark all read
+                <span className="px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-semibold">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              {unreadCount > 0 && (
+                <button onClick={markAllRead} className="text-[11px] text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] transition-colors flex items-center gap-1 px-2 py-1 rounded hover:bg-[var(--surface-hover)]">
+                  <CheckCheck className="w-3 h-3" /> Read all
                 </button>
               )}
-            </div>
-
-            {/* List */}
-            <div className="overflow-y-auto max-h-[400px] scrollbar-thin">
-              {notifications.length === 0 ? (
-                <div className="py-12 text-center">
-                  <Bell className="w-8 h-8 text-white/10 mx-auto mb-2" />
-                  <p className="text-sm text-[var(--foreground-dim)]">All caught up!</p>
-                </div>
-              ) : (
-                notifications.map((notif) => {
-                  const cfg = iconMap[notif.type] || iconMap.info;
-                  const Icon = cfg.icon;
-                  return (
-                    <div
-                      key={notif.id}
-                      onClick={() => markRead(notif.id)}
-                      className={clsx(
-                        "flex gap-3 px-5 py-3.5 border-b border-[var(--border-subtle)] cursor-pointer transition-colors group",
-                        notif.read ? "hover:bg-[var(--surface-hover)]" : "bg-[var(--surface)] hover:bg-[var(--surface-elevated)]"
-                      )}
-                    >
-                      <div className={clsx("w-9 h-9 rounded-lg flex items-center justify-center shrink-0", cfg.bg)}>
-                        <Icon className={clsx("w-4 h-4", cfg.color)} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={clsx("text-sm font-medium truncate", notif.read ? "text-[var(--foreground-muted)]" : "text-[var(--foreground)]")}>
-                            {notif.title}
-                          </p>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); removeNotification(notif.id); }}
-                            className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--foreground-dim)] transition-all shrink-0"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                        <p className="text-xs text-[var(--foreground-dim)] mt-0.5 line-clamp-2">{notif.message}</p>
-                        <div className="flex items-center gap-1.5 mt-1.5">
-                          <Clock className="w-3 h-3 text-[var(--foreground-dim)]" />
-                          <span className="text-[10px] text-[var(--foreground-dim)]">{notif.time}</span>
-                          {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] ml-1" />}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-[var(--surface-hover)] text-[var(--foreground-dim)]">
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-        </>
+
+          {/* List */}
+          <div className="overflow-y-auto max-h-[400px] scrollbar-thin">
+            {loading && notifications.length === 0 ? (
+              <div className="py-12 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-[var(--foreground-dim)] animate-spin" />
+              </div>
+            ) : error ? (
+              <div className="py-12 text-center">
+                <AlertTriangle className="w-6 h-6 text-amber-400 mx-auto mb-2" />
+                <p className="text-[12px] text-[var(--foreground-dim)]">{error}</p>
+                <button onClick={() => fetchNotifications()} className="text-[11px] text-[var(--primary)] mt-2 hover:underline">Retry</button>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="py-12 text-center">
+                <Bell className="w-6 h-6 text-[var(--foreground-dim)] mx-auto mb-2 opacity-30" />
+                <p className="text-[12px] text-[var(--foreground-dim)]">All caught up!</p>
+              </div>
+            ) : (
+              notifications.map((notif) => {
+                const cfg = typeConfig[notif.type] || typeConfig.SYSTEM;
+                const Icon = cfg.icon;
+                return (
+                  <div
+                    key={notif.id}
+                    onClick={() => !notif.isRead && markRead(notif.id)}
+                    className={clsx(
+                      "flex gap-3 px-4 py-3 border-b border-[var(--border-subtle)] cursor-pointer transition-colors",
+                      notif.isRead ? "hover:bg-[var(--surface-hover)]" : "bg-[var(--surface-elevated)] hover:bg-[var(--surface-hover)]"
+                    )}
+                  >
+                    <div className={clsx("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", cfg.bg)}>
+                      <Icon className={clsx("w-3.5 h-3.5", cfg.color)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className={clsx("text-[12px] font-medium truncate", notif.isRead ? "text-[var(--foreground-muted)]" : "text-[var(--foreground)]")}>
+                          {notif.title}
+                        </p>
+                        {!notif.isRead && <span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-[var(--foreground-dim)] mt-0.5 line-clamp-2">{notif.message}</p>
+                      <span className="text-[10px] text-[var(--foreground-dim)] mt-1 inline-block">{timeAgo(notif.createdAt)}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

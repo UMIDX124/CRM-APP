@@ -144,6 +144,9 @@ model User {
   auditLogs      AuditLog[]
   notes          Note[]         @relation("NoteAuthor")
   attachments    Attachment[]
+  channelsCreated Channel[]     @relation("ChannelCreator")
+  channelMemberships ChannelMember[]
+  messages       Message[]
 
   @@map("users")
 }
@@ -382,4 +385,53 @@ model CustomerFeedback {
   client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("customer_feedback")
+}
+
+// ─── Team Communication System ──────────────────────────
+
+model Channel {
+  id          String          @id @default(cuid())
+  name        String
+  description String?
+  type        String          @default("PUBLIC") // PUBLIC, PRIVATE, DIRECT
+  createdById String
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  createdBy   User            @relation("ChannelCreator", fields: [createdById], references: [id])
+  messages    Message[]
+  members     ChannelMember[]
+
+  @@map("channels")
+}
+
+model ChannelMember {
+  id        String   @id @default(cuid())
+  channelId String
+  userId    String
+  role      String   @default("MEMBER") // ADMIN, MEMBER
+  joinedAt  DateTime @default(now())
+
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@map("channel_members")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  channelId String
+  authorId  String
+  type      String   @default("TEXT") // TEXT, SYSTEM, LEAD_ALERT, TASK_UPDATE
+  metadata  Json?    // { leadId, clientId, taskId, invoiceId }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([channelId, createdAt])
+  @@map("messages")
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
+import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -29,6 +30,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       include: { brand: { select: { code: true, color: true } } },
     });
     await logAudit({ action: "UPDATE", entity: "Lead", entityId: id, userId: "system", changes: body }).catch(() => {});
+
+    // Notify on status changes
+    if (body.status) {
+      const statusLabels: Record<string, string> = { NEW: "New", QUALIFIED: "Qualified", PROPOSAL_SENT: "Proposal Sent", NEGOTIATION: "Negotiation", WON: "Won", LOST: "Lost" };
+      const label = statusLabels[body.status] || body.status;
+      const systemUser = await getSystemUserId();
+
+      createNotification({ type: "LEAD_STATUS", title: `Lead → ${label}`, message: `${lead.companyName} moved to ${label}`, userId: "all", data: { leadId: id } });
+      if (systemUser) {
+        autoPostToChannel("leads", `📊 **${lead.companyName}** moved to **${label}**${body.status === "WON" ? ` 🎉 ($${lead.value?.toLocaleString()})` : ""}`, systemUser, "LEAD_ALERT", { leadId: id });
+      }
+    }
+
     return NextResponse.json(lead);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Update failed";
