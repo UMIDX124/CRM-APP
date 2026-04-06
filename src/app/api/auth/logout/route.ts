@@ -10,7 +10,8 @@ export async function POST() {
     }
     await destroySession();
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("Logout error:", err);
     return NextResponse.json({ ok: true });
   }
 }

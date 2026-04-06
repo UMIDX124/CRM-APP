@@ -6,7 +6,7 @@ import {
   Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { employees } from "@/data/mock-data";
+// Employees fetched from API for sales rep dropdown
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency, extractBrandFromSource } from "@/lib/types";
@@ -37,6 +37,23 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
   const [leadList, setLeadList] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [employeeList, setEmployeeList] = useState<{ id: string; name: string; role: string }[]>([]);
+
+  // Fetch employees for sales rep dropdown
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEmployeeList(data.map((e: Record<string, unknown>) => ({
+            id: String(e.id),
+            name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
+            role: String(e.role || "EMPLOYEE"),
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -342,7 +359,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="input-field" /></div>
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Value ($)</label><input type="number" value={form.value || ""} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} className="input-field" /></div>
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Source</label><select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} className="input-field">{["Website", "LinkedIn", "Referral", "Cold Outreach", "Conference"].map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
-                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Sales Rep</label><select value={form.salesRep} onChange={(e) => setForm({ ...form, salesRep: e.target.value })} className="input-field"><option value="">Unassigned</option>{employees.filter((e) => ["SUPER_ADMIN", "PROJECT_MANAGER", "TEAM_LEAD"].includes(e.role)).map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}</select></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Sales Rep</label><select value={form.salesRep} onChange={(e) => setForm({ ...form, salesRep: e.target.value })} className="input-field"><option value="">Unassigned</option>{employeeList.filter((e) => ["SUPER_ADMIN", "PROJECT_MANAGER", "TEAM_LEAD"].includes(e.role)).map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}</select></div>
               </div>
               <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Services (comma-separated)</label><input type="text" value={form.services} onChange={(e) => setForm({ ...form, services: e.target.value })} placeholder="Web Dev, SEO" className="input-field" /></div>
               {/* Smartsheet Pipeline Fields */}

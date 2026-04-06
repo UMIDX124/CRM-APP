@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
 import { requireAuth, isManager, hashPassword } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
@@ -67,7 +68,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email already exists" }, { status: 409 });
     }
 
-    const passwordHash = await hashPassword("welcome123"); // Default password
+    // Generate a random temporary password — user must change on first login
+    const tempPassword = `FU-${crypto.randomUUID().slice(0, 8)}`;
+    const passwordHash = await hashPassword(tempPassword);
 
     const employee = await prisma.user.create({
       data: {

@@ -19,7 +19,8 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(feedback);
-  } catch {
+  } catch (err) {
+    console.error("Feedback GET error:", err);
     return NextResponse.json([]);
   }
 }

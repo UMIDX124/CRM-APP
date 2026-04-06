@@ -6,7 +6,7 @@ import {
   X, Save, Loader2, User, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { employees, clients } from "@/data/mock-data";
+// Employees and clients fetched from API for dropdowns
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { getPriorityColor } from "@/lib/types";
@@ -45,6 +45,34 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
   const [taskList, setTaskList] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [employeeList, setEmployeeList] = useState<{ id: string; name: string }[]>([]);
+  const [clientList, setClientList] = useState<{ id: string; companyName: string }[]>([]);
+
+  // Fetch employees + clients for dropdowns
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setEmployeeList(data.map((e: Record<string, unknown>) => ({
+            id: String(e.id),
+            name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
+          })));
+        }
+      })
+      .catch(() => {});
+    fetch("/api/clients")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClientList(data.map((c: Record<string, unknown>) => ({
+            id: String(c.id),
+            companyName: String(c.companyName || ""),
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -298,8 +326,8 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Priority</label><select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="input-field">{priorityOptions.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}</select></div>
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Due Date</label><input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="input-field" /></div>
-                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Assign To</label><select value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })} className="input-field"><option value="">Unassigned</option>{employees.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}</select></div>
-                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Client</label><select value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} className="input-field"><option value="">No client</option>{clients.map((c) => <option key={c.id} value={c.companyName}>{c.companyName}</option>)}</select></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Assign To</label><select value={form.assignee} onChange={(e) => setForm({ ...form, assignee: e.target.value })} className="input-field"><option value="">Unassigned</option>{employeeList.map((e) => <option key={e.id} value={e.name}>{e.name}</option>)}</select></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Client</label><select value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} className="input-field"><option value="">No client</option>{clientList.map((c) => <option key={c.id} value={c.companyName}>{c.companyName}</option>)}</select></div>
               </div>
             </div>
             <div className="sticky bottom-0 bg-[var(--surface)] border-t border-[var(--border)] px-5 py-3 flex justify-end gap-2">
