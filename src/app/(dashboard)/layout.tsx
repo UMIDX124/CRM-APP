@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
 import Sidebar, { MobileHeader } from "@/components/layout/Sidebar";
-import AIChat from "@/components/AIChat";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationCenter from "@/components/NotificationCenter";
 import { ToastProvider } from "@/components/ui/toast";
@@ -13,7 +12,7 @@ import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { CompanyProvider } from "@/components/CompanyContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
-import TeamChat from "@/components/TeamChat";
+import UnifiedChat from "@/components/UnifiedChat";
 
 const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
 
@@ -252,8 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
 
-        <AIChat />
-        <TeamChat />
+        <UnifiedChat />
         <MobileBottomNav />
         <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
         <CommandPalette />
