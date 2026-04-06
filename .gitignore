@@ -40,3 +40,6 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Credentials — never commit real employee logins/passwords
+EMPLOYEE_CREDENTIALS.md
