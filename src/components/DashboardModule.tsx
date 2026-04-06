@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/types";
+import { useCompany } from "@/components/CompanyContext";
 
 // P0-4 FIX: No more mock-data import. Dashboard fetches real data from /api/dashboard
 
@@ -44,21 +45,22 @@ const revenueData = [
   { month: "Apr", vcs: 58000, bsl: 40000, dpl: 38000 },
 ];
 
-export default function DashboardModule({ brandId, brandColor }: DashboardModuleProps) {
+export default function DashboardModule({ brandId: _brandId, brandColor: _brandColor }: DashboardModuleProps) {
   const [timeRange, setTimeRange] = useState("30d");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const { activeCompany } = useCompany();
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/dashboard")
+    fetch(`/api/dashboard?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!cancelled && d) setData(d); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [brandId]);
+  }, [activeCompany.code]);
 
   const clientCount = data?.clients || 0;
   const teamCount = data?.employees || 0;

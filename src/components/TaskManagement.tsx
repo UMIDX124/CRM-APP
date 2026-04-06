@@ -9,6 +9,7 @@ import { clsx } from "clsx";
 // Employees and clients fetched from API for dropdowns
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/components/CompanyContext";
 import { getPriorityColor } from "@/lib/types";
 
 const brands = [
@@ -41,8 +42,9 @@ const priorityOptions = [
 
 const defaultForm = { title: "", description: "", priority: "MEDIUM", assignee: "", client: "", brand: "VCS", dueDate: "" };
 
-export default function TaskManagement({ brandId }: { brandId: string }) {
+export default function TaskManagement({ brandId: _brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
+  const { activeCompany } = useCompany();
   const [taskList, setTaskList] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [employeeList, setEmployeeList] = useState<{ id: string; name: string }[]>([]);
@@ -77,7 +79,7 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/tasks")
+    fetch(`/api/tasks?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -99,7 +101,7 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
       .catch(() => { setTaskList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [activeCompany.code]);
 
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("ALL");

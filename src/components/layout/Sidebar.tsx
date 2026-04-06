@@ -5,17 +5,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
   Settings, ChevronLeft, Moon, Sun, LogOut, Menu, Bell,
-  ClipboardCheck, FileText, DollarSign, CalendarOff, ChevronDown, Zap, Filter,
+  ClipboardCheck, FileText, DollarSign, CalendarOff, Filter,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { WolfIcon } from "@/components/WolfLogo";
-
-// Static brand data
-const brands = [
-  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
-  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
-  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
-];
+import { useCompany } from "@/components/CompanyContext";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" as const },
@@ -38,8 +32,6 @@ const sectionLabels: Record<string, string> = {
 
 interface SidebarProps {
   currentUser: { name: string; role: string; email: string } | null;
-  selectedBrand: string;
-  onBrandChange: (brandId: string) => void;
   theme: "dark" | "light";
   onToggleTheme: () => void;
   onLogout: () => void;
@@ -50,11 +42,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({
-  currentUser, selectedBrand, onBrandChange, theme, onToggleTheme,
+  currentUser, theme, onToggleTheme,
   onLogout, isMobileOpen, onMobileClose, collapsed, onCollapsedChange,
 }: SidebarProps) {
   const pathname = usePathname();
-  const currentBrand = brands.find((b) => b.id === selectedBrand);
+  const { activeCompany } = useCompany();
+  const brandColor = activeCompany.accent || "#6366F1";
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -72,33 +65,23 @@ export default function Sidebar({
           !isMobileOpen && "-translate-x-full lg:translate-x-0"
         )}
       >
-        {/* Brand Header */}
+        {/* Brand Header — read-only display of active company from context */}
         <div className={clsx(
           "flex items-center gap-3 border-b border-[var(--border)]",
           collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
         )}>
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
-            style={{ borderColor: `${currentBrand?.color || "#6366F1"}40`, background: "var(--surface-elevated)" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border-2 overflow-hidden"
+            style={{ borderColor: `${brandColor}50`, background: "var(--surface-elevated)" }}
           >
-            <WolfIcon size={18} />
+            <WolfIcon size={24} />
           </div>
           {!collapsed && (
-            <div className="flex-1 min-w-0 relative">
-              <select
-                value={selectedBrand}
-                onChange={(e) => onBrandChange(e.target.value)}
-                className="w-full bg-transparent text-[var(--foreground)] text-[13px] font-semibold appearance-none cursor-pointer focus:outline-none pr-6 tracking-tight"
-                title={currentBrand?.name}
-              >
-                {brands.map((b) => (
-                  <option key={b.id} value={b.id} className="bg-[var(--surface)]">
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--foreground-dim)] pointer-events-none" />
-              <p className="text-[10px] text-[var(--foreground-dim)] mt-0.5 truncate">{currentBrand?.code} &middot; Enterprise</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-[var(--foreground)] truncate tracking-tight" title={activeCompany.name}>
+                {activeCompany.name}
+              </p>
+              <p className="text-[10px] text-[var(--foreground-dim)] mt-0.5 truncate">{activeCompany.code} &middot; Enterprise</p>
             </div>
           )}
         </div>
@@ -195,8 +178,8 @@ export default function Sidebar({
 }
 
 export function MobileHeader({
-  onMenuOpen, brandColor, title,
-}: { onMenuOpen: () => void; brandColor: string; title: string }) {
+  onMenuOpen, title,
+}: { onMenuOpen: () => void; brandColor?: string; title: string }) {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[var(--surface)] border-b border-[var(--border)]">
       <div className="flex items-center justify-between px-4 h-14">
@@ -204,8 +187,8 @@ export function MobileHeader({
           <button onClick={onMenuOpen} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
             <Menu className="w-5 h-5 text-[var(--foreground-muted)]" />
           </button>
-          <div className="w-7 h-7 rounded-md bg-[var(--surface-elevated)] border border-[var(--border)] flex items-center justify-center">
-            <WolfIcon size={16} />
+          <div className="w-7 h-7 rounded-md bg-[var(--surface-elevated)] border border-[var(--border)] flex items-center justify-center overflow-hidden">
+            <WolfIcon size={22} />
           </div>
           <span className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{title}</span>
         </div>

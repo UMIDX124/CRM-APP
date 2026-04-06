@@ -13,6 +13,7 @@ const brands = [
 ];
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/components/CompanyContext";
 import type { Client } from "@/lib/types";
 import { formatCurrency, getStatusColor } from "@/lib/types";
 
@@ -28,15 +29,16 @@ const countries = ["United States", "United Kingdom", "Canada", "Australia", "Ge
 type SortKey = "companyName" | "mrr" | "healthScore" | "brand";
 type SortDir = "asc" | "desc";
 
-export default function ClientManagement({ brandId }: { brandId: string }) {
+export default function ClientManagement({ brandId: _brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
+  const { activeCompany } = useCompany();
   const [clientList, setClientList] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/clients")
+    fetch(`/api/clients?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -66,7 +68,7 @@ export default function ClientManagement({ brandId }: { brandId: string }) {
       .catch(() => { setClientList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [activeCompany.code]);
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

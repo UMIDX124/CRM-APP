@@ -14,14 +14,6 @@ import { CompanyProvider } from "@/components/CompanyContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
 import UnifiedChat from "@/components/UnifiedChat";
 
-const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
-
-const brands = [
-  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
-  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
-  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
-];
-
 const pageTitles: Record<string, string> = {
   "/": "Dashboard", "/clients": "Clients", "/employees": "Team", "/tasks": "Tasks",
   "/pipeline": "Pipeline", "/funnel": "Lead Funnel", "/reports": "Reports", "/attendance": "Attendance",
@@ -50,7 +42,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; role: string; email: string } | null>(null);
-  const [selectedBrand, setSelectedBrand] = useState("1");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showEmailCompose, setShowEmailCompose] = useState(false);
@@ -114,8 +105,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push("/login");
   };
 
-  const currentBrandData = brands.find((b) => b.id === selectedBrand);
-  const brandColor = brandColors[currentBrandData?.code || "VCS"] || "#FF6B00";
   const pageTitle = pageTitles[pathname] || "Dashboard";
   const pageDesc = pageDescriptions[pathname] || "";
 
@@ -193,10 +182,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <CompanyProvider>
     <ToastProvider>
       <div className="min-h-screen bg-[var(--background)]">
-        <MobileHeader onMenuOpen={() => setSidebarOpen(true)} brandColor={brandColor} title={pageTitle} />
+        <MobileHeader onMenuOpen={() => setSidebarOpen(true)} title={pageTitle} />
 
         <Sidebar
-          currentUser={currentUser} selectedBrand={selectedBrand} onBrandChange={setSelectedBrand}
+          currentUser={currentUser}
           theme={theme} onToggleTheme={toggleTheme} onLogout={handleLogout}
           isMobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)}
           collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed}

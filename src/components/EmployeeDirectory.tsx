@@ -9,6 +9,7 @@ import { clsx } from "clsx";
 import type { Employee, EmployeeStatus, Role } from "@/lib/types";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/components/CompanyContext";
 import { getStatusColor } from "@/lib/types";
 
 const brands = [
@@ -31,15 +32,16 @@ const defaultForm = {
   skills: [] as string[],
 };
 
-export default function EmployeeDirectory({ brandId }: { brandId: string }) {
+export default function EmployeeDirectory({ brandId: _brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
+  const { activeCompany } = useCompany();
   const [employeeList, setEmployeeList] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/employees")
+    fetch(`/api/employees?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -64,7 +66,7 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
       .catch(() => { setEmployeeList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [activeCompany.code]);
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");

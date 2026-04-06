@@ -8,6 +8,7 @@ import {
 import { clsx } from "clsx";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/components/CompanyContext";
 import { formatCurrency } from "@/lib/types";
 
 type InvoiceStatus = "PAID" | "PENDING" | "OVERDUE" | "DRAFT" | "CANCELLED";
@@ -45,13 +46,14 @@ const defaultForm = { clientName: "", brand: "VCS", items: [{ description: "", q
 
 export default function InvoiceModule() {
   const { success, error: showError } = useToast();
+  const { activeCompany } = useCompany();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/invoices")
+    fetch(`/api/invoices?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -77,7 +79,7 @@ export default function InvoiceModule() {
       .catch(() => { setInvoices(sampleInvoices); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [activeCompany.code]);
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<InvoiceStatus | "ALL">("ALL");

@@ -9,6 +9,7 @@ import { clsx } from "clsx";
 // Employees fetched from API for sales rep dropdown
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
+import { useCompany } from "@/components/CompanyContext";
 import { formatCurrency, extractBrandFromSource } from "@/lib/types";
 import type { Lead, LeadStatus } from "@/lib/types";
 
@@ -33,8 +34,9 @@ const defaultForm = {
   probability: 50, expectedClose: "", nextAction: "", lastContactDate: "", nextContactDate: "",
 };
 
-export default function PipelineModule({ brandId }: { brandId: string }) {
+export default function PipelineModule({ brandId: _brandId }: { brandId: string }) {
   const { success, error: showError } = useToast();
+  const { activeCompany } = useCompany();
   const [leadList, setLeadList] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [employeeList, setEmployeeList] = useState<{ id: string; name: string; role: string }[]>([]);
@@ -58,7 +60,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch("/api/leads")
+    fetch(`/api/leads?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
@@ -80,7 +82,7 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
       .catch(() => { setLeadList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [activeCompany.code]);
 
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");

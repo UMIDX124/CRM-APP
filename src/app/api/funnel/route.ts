@@ -5,6 +5,7 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const source = url.searchParams.get("source"); // DPL, VCS, BSL, or null for all
+    const brand = url.searchParams.get("brand"); // alias for source, used by global company switcher
     const days = parseInt(url.searchParams.get("days") || "30");
 
     const since = new Date();
@@ -13,8 +14,11 @@ export async function GET(req: Request) {
     const where: Record<string, unknown> = {
       createdAt: { gte: since },
     };
-    if (source) {
-      where.source = { contains: source, mode: "insensitive" };
+
+    // Accept either source or brand param — both filter by brand code
+    const brandCode = source || brand;
+    if (brandCode) {
+      where.brand = { code: brandCode };
     }
 
     // Get all leads matching filters

@@ -8,9 +8,11 @@ export async function GET(req: Request) {
     await requireAuth();
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
+    const brand = url.searchParams.get("brand");
 
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
+    if (brand) where.brand = { code: brand };
 
     const leads = await prisma.lead.findMany({
       where,

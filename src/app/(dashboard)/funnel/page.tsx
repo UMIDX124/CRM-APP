@@ -6,6 +6,7 @@ import {
   Filter, Building2, Mail, Phone, Calendar, Zap,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/types";
+import { useCompany } from "@/components/CompanyContext";
 
 interface FunnelStage {
   stage: string;
@@ -45,6 +46,7 @@ interface FunnelData {
 const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
 
 export default function FunnelPage() {
+  const { activeCompany } = useCompany();
   const [data, setData] = useState<FunnelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [sourceFilter, setSourceFilter] = useState("ALL");
@@ -54,7 +56,9 @@ export default function FunnelPage() {
     let cancelled = false;
     setLoading(true);
     const params = new URLSearchParams();
+    // Local filter takes precedence; otherwise scope to global active company
     if (sourceFilter !== "ALL") params.set("source", sourceFilter);
+    else params.set("brand", activeCompany.code);
     params.set("days", String(daysFilter));
 
     fetch(`/api/funnel?${params}`)
@@ -63,7 +67,7 @@ export default function FunnelPage() {
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [sourceFilter, daysFilter]);
+  }, [sourceFilter, daysFilter, activeCompany.code]);
 
   const funnel = data?.funnel || [];
   const leads = data?.leads || [];

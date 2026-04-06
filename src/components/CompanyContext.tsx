@@ -1,6 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useTransition,
+  type ReactNode,
+} from "react";
 
 export interface Company {
   id: string;
@@ -18,6 +27,7 @@ export const companies: Company[] = [
 interface CompanyContextValue {
   activeCompany: Company;
   setActiveCompany: (company: Company) => void;
+  isPending: boolean;
 }
 
 const CompanyContext = createContext<CompanyContextValue | null>(null);
@@ -26,8 +36,10 @@ const STORAGE_KEY = "dp_active_company";
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
   const [activeCompany, setActiveCompanyState] = useState<Company>(companies[0]);
+  const [isPending, startTransition] = useTransition();
   const initialized = useRef(false);
 
+  // Load persisted company on mount
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -37,18 +49,29 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const found = companies.find((c) => c.id === stored);
         if (found) setActiveCompanyState(found);
       }
-    } catch {}
+    } catch {
+      // localStorage unavailable — use default
+    }
   }, []);
 
   const setActiveCompany = useCallback((company: Company) => {
-    setActiveCompanyState(company);
+    // Persist immediately (synchronous)
     try {
       localStorage.setItem(STORAGE_KEY, company.id);
-    } catch {}
+    } catch {
+      // localStorage unavailable — skip persist
+    }
+
+    // Wrap the state update in startTransition so downstream re-renders
+    // (data refetches across the whole app) don't block the UI thread.
+    // This fixes the INP issue where switching company froze the UI for 3s+.
+    startTransition(() => {
+      setActiveCompanyState(company);
+    });
   }, []);
 
   return (
-    <CompanyContext.Provider value={{ activeCompany, setActiveCompany }}>
+    <CompanyContext.Provider value={{ activeCompany, setActiveCompany, isPending }}>
       {children}
     </CompanyContext.Provider>
   );
