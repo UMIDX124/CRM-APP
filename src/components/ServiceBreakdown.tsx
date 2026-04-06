@@ -31,7 +31,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
   const data = payload[0].payload;
 
   return (
-    <div className="bg-[#0f0f18] border border-[var(--border-hover)] rounded-xl p-3 shadow-2xl">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-3 shadow-xl">
       <p className="text-[var(--foreground)] font-medium text-sm">{payload[0].name}</p>
       <p className="text-[var(--foreground-muted)] text-xs mt-1">${data.revenue.toLocaleString()}</p>
       <p className="text-[var(--foreground-dim)] text-xs">{data.percentage}% of total</p>

@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={clsx("p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-3", className)}>
+    <div className={clsx("p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] space-y-3", className)}>
       <div className="skeleton h-4 w-24 rounded" />
       <div className="skeleton h-8 w-32 rounded" />
       <div className="skeleton h-3 w-full rounded" />
@@ -14,8 +14,8 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
-    <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
-      <div className="p-4 border-b border-white/[0.06] bg-white/[0.02]">
+    <div className="rounded-2xl border border-[var(--border)] overflow-hidden">
+      <div className="p-4 border-b border-[var(--border)] bg-[var(--surface)]">
         <div className="flex gap-4">
           {Array.from({ length: cols }).map((_, i) => (
             <div key={i} className="skeleton h-4 flex-1 rounded" />
@@ -23,7 +23,7 @@ export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
         </div>
       </div>
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-4 border-b border-white/[0.04]">
+        <div key={i} className="flex items-center gap-4 p-4 border-b border-[var(--border-subtle)]">
           <div className="skeleton w-9 h-9 rounded-lg shrink-0" />
           <div className="flex-1 space-y-2">
             <div className="skeleton h-4 w-40 rounded" />

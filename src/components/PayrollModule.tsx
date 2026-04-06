@@ -75,7 +75,14 @@ export default function PayrollModule() {
   const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   return (
-    <div className="page-container">
+    <div className="page-container relative">
+      {/* Coming Soon Overlay */}
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm rounded-xl">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-[var(--foreground)]">Coming Soon</p>
+          <p className="text-sm text-[var(--foreground-dim)] mt-1">Payroll module is under development</p>
+        </div>
+      </div>
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[

@@ -6,7 +6,12 @@ import {
   Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { parentCompany, brands } from "@/data/mock-data";
+const parentCompany = { name: "FU Corp", code: "FU", tagline: "Enterprise Command Center", website: "fu-corp.com", founded: "2023", ceo: "Faizan & Umer" };
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com" },
+];
 
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
@@ -142,18 +147,18 @@ export default function SettingsModule() {
                   <label className="block text-xs text-[var(--foreground-dim)] mb-1.5 uppercase tracking-wider font-medium">Timezone</label>
                   <select value={profile.timezone} onChange={(e) => setProfile({ ...profile, timezone: e.target.value })}
                     className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground)] cursor-pointer">
-                    <option className="bg-[#0f0f1e]">Asia/Karachi</option>
-                    <option className="bg-[#0f0f1e]">America/New_York</option>
-                    <option className="bg-[#0f0f1e]">Europe/London</option>
-                    <option className="bg-[#0f0f1e]">Asia/Dubai</option>
+                    <option className="bg-[var(--surface)]">Asia/Karachi</option>
+                    <option className="bg-[var(--surface)]">America/New_York</option>
+                    <option className="bg-[var(--surface)]">Europe/London</option>
+                    <option className="bg-[var(--surface)]">Asia/Dubai</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-[var(--foreground-dim)] mb-1.5 uppercase tracking-wider font-medium">Language</label>
                   <select value={profile.language} onChange={(e) => setProfile({ ...profile, language: e.target.value })}
                     className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground)] cursor-pointer">
-                    <option className="bg-[#0f0f1e]">English</option>
-                    <option className="bg-[#0f0f1e]">Urdu</option>
+                    <option className="bg-[var(--surface)]">English</option>
+                    <option className="bg-[var(--surface)]">Urdu</option>
                   </select>
                 </div>
               </div>
@@ -327,10 +332,10 @@ export default function SettingsModule() {
                 <p className="text-sm text-[var(--foreground-dim)]">Customize the look and feel</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <button className="p-5 rounded-2xl bg-[#060610] border-2 border-[#FF6B00]/30 text-center">
-                  <div className="w-full h-20 rounded-xl bg-[#0a0a14] border border-[var(--border)] mb-3" />
+                <button className="p-5 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)]/30 text-center">
+                  <div className="w-full h-20 rounded-xl bg-[var(--surface)] border border-[var(--border)] mb-3" />
                   <p className="text-sm text-[var(--foreground)] font-medium">Dark Mode</p>
-                  <p className="text-xs text-[#FF6B00] mt-0.5">Active</p>
+                  <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>
                 </button>
                 <button className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-center hover:border-[var(--border-hover)] transition-all">
                   <div className="w-full h-20 rounded-xl bg-gray-100 border border-gray-200 mb-3" />

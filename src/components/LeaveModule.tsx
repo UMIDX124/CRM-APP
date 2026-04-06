@@ -92,7 +92,13 @@ export default function LeaveModule() {
   };
 
   return (
-    <div className="page-container">
+    <div className="page-container relative">
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--background)]/80 backdrop-blur-sm rounded-xl">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-[var(--foreground)]">Coming Soon</p>
+          <p className="text-sm text-[var(--foreground-dim)] mt-1">Leave management is under development</p>
+        </div>
+      </div>
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[

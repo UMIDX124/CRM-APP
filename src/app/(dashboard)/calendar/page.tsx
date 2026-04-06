@@ -1,12 +1,41 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, CheckSquare, Briefcase, Clock, AlertCircle } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronLeft, ChevronRight, CheckSquare, Briefcase, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
-import { tasks, leads } from "@/data/mock-data";
+
+interface CalTask { id: string; title: string; dueDate: string; priority: string; status: string; assignee: string; brand: string }
+interface CalLead { id: string; companyName: string; createdAt: string; status: string }
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1)); // April 2026
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1));
+  const [tasks, setTasks] = useState<CalTask[]>([]);
+  const [leads, setLeads] = useState<CalLead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      fetch("/api/tasks").then(r => r.ok ? r.json() : []),
+      fetch("/api/leads").then(r => r.ok ? r.json() : []),
+    ]).then(([t, l]) => {
+      if (cancelled) return;
+      if (Array.isArray(t)) setTasks(t.map((x: Record<string, unknown>) => ({
+        id: String(x.id), title: String(x.title || ""),
+        dueDate: x.dueDate ? String(x.dueDate).split("T")[0] : "",
+        priority: String(x.priority || "MEDIUM"), status: String(x.status || "TODO"),
+        assignee: x.assignee ? `${(x.assignee as Record<string, string>).firstName || ""} ${(x.assignee as Record<string, string>).lastName || ""}`.trim() : "",
+        brand: (x.brand as Record<string, string>)?.code || "",
+      })));
+      if (Array.isArray(l)) setLeads(l.map((x: Record<string, unknown>) => ({
+        id: String(x.id), companyName: String(x.companyName || ""),
+        createdAt: x.createdAt ? String(x.createdAt).split("T")[0] : "",
+        status: String(x.status || "NEW"),
+      })));
+    }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();

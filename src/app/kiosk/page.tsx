@@ -3,14 +3,31 @@
 import { useState, useEffect } from "react";
 import { CheckCircle2, AlertTriangle, Hash, Fingerprint } from "lucide-react";
 import { clsx } from "clsx";
-import { employees } from "@/data/mock-data";
-import type { Employee } from "@/data/mock-data";
+interface KioskEmployee { id: string; name: string; title: string; brand: string; email: string }
 
 export default function KioskPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [pinCode, setPinCode] = useState("");
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [employee, setEmployee] = useState<KioskEmployee | null>(null);
+  const [employees, setEmployees] = useState<KioskEmployee[]>([]);
+
+  useEffect(() => {
+    fetch("/api/employees")
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          setEmployees(data.map((e: Record<string, unknown>) => ({
+            id: String(e.id),
+            name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
+            title: String(e.title || ""),
+            brand: (e.brand as Record<string, string>)?.code || "",
+            email: String(e.email || ""),
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);

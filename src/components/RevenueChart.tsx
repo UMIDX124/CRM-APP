@@ -55,7 +55,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   const total = payload.reduce((sum, entry) => sum + entry.value, 0);
 
   return (
-    <div className="bg-[#0f0f18] border border-[var(--border-hover)] rounded-xl p-4 shadow-2xl">
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 shadow-xl">
       <p className="text-[var(--foreground-muted)] text-sm mb-3 font-medium">{label} 2026</p>
       <div className="space-y-2">
         {payload.map((entry) => (

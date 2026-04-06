@@ -230,14 +230,14 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
         {viewMode === "daily" && (
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as AttendanceStatus | "ALL")}
             className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground-muted)] cursor-pointer">
-            <option value="ALL" className="bg-[#0f0f1e]">All Status</option>
-            {Object.entries(statusConfig).map(([k, v]) => <option key={k} value={k} className="bg-[#0f0f1e]">{v.label}</option>)}
+            <option value="ALL" className="bg-[var(--surface)]">All Status</option>
+            {Object.entries(statusConfig).map(([k, v]) => <option key={k} value={k} className="bg-[var(--surface)]">{v.label}</option>)}
           </select>
         )}
         <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}
           className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground-muted)] cursor-pointer">
-          <option value="ALL" className="bg-[#0f0f1e]">All Companies</option>
-          {brands.map((b) => <option key={b.code} value={b.code} className="bg-[#0f0f1e]">{b.code}</option>)}
+          <option value="ALL" className="bg-[var(--surface)]">All Companies</option>
+          {brands.map((b) => <option key={b.code} value={b.code} className="bg-[var(--surface)]">{b.code}</option>)}
         </select>
       </div>
 
@@ -312,7 +312,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
             <tbody>
               {monthlyData.map((row) => (
                 <tr key={row.employee.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-hover)] transition-colors">
-                  <td className="px-4 py-2 sticky left-0 bg-[#060610] z-10">
+                  <td className="px-4 py-2 sticky left-0 bg-[var(--background)] z-10">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-[var(--foreground)] font-medium truncate">{row.employee.name}</span>
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ color: brandColor(row.employee.brand), backgroundColor: brandColor(row.employee.brand) + "10" }}>{row.employee.brand}</span>
