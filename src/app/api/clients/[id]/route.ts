@@ -35,11 +35,29 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.client.delete({ where: { id } });
+
+    // Disconnect or delete all child records before deleting the client
+    // to avoid foreign key constraint violations
+    await prisma.$transaction([
+      // Detach tasks from this client (don't delete — tasks may be valuable)
+      prisma.task.updateMany({ where: { clientId: id }, data: { clientId: null } }),
+      // Delete notes tied to this client
+      prisma.note.deleteMany({ where: { clientId: id } }),
+      // Delete attachments tied to this client
+      prisma.attachment.deleteMany({ where: { clientId: id } }),
+      // Delete feedback tied to this client
+      prisma.customerFeedback.deleteMany({ where: { clientId: id } }),
+      // Delete invoices tied to this client
+      prisma.invoice.deleteMany({ where: { clientId: id } }),
+      // Now safe to delete the client
+      prisma.client.delete({ where: { id } }),
+    ]);
+
     await logAudit({ action: "DELETE", entity: "Client", entityId: id, userId: "system" }).catch(() => {});
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Delete failed";
+    console.error("Client delete error:", e);
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

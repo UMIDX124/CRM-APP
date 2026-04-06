@@ -37,11 +37,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    await prisma.task.delete({ where: { id } });
+
+    // Delete child records first to avoid FK constraint violations
+    await prisma.$transaction([
+      prisma.comment.deleteMany({ where: { taskId: id } }),
+      prisma.attachment.deleteMany({ where: { taskId: id } }),
+      prisma.task.delete({ where: { id } }),
+    ]);
+
     await logAudit({ action: "DELETE", entity: "Task", entityId: id, userId: "system" }).catch(() => {});
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Delete failed";
+    console.error("Task delete error:", e);
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 }
