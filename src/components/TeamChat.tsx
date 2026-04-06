@@ -156,16 +156,16 @@ export default function TeamChat() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-30 w-12 h-12 rounded-xl bg-[var(--primary)] text-white flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-105 cursor-pointer"
+        className="fixed bottom-[88px] right-[76px] lg:bottom-6 lg:right-[76px] z-30 w-11 h-11 rounded-xl bg-[var(--surface-elevated)] border border-[var(--border)] text-[var(--foreground-muted)] flex items-center justify-center shadow-md hover:shadow-lg hover:border-[var(--border-hover)] transition-all hover:scale-105 cursor-pointer"
         title="Team Chat"
       >
-        <MessageSquare className="w-5 h-5" />
+        <MessageSquare className="w-4 h-4" />
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 w-[380px] h-[520px] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col overflow-hidden animate-scale-in">
+    <div className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-[76px] z-40 w-[380px] h-[520px] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl flex flex-col overflow-hidden animate-scale-in">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-elevated)]">
         <div className="flex items-center gap-2">
