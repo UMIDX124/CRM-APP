@@ -8,8 +8,9 @@ import {
   ClipboardCheck, FileText, DollarSign, CalendarOff, ChevronDown, Zap, Filter,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { WolfIcon } from "@/components/WolfLogo";
 
-// Static brand data — no mock-data import needed
+// Static brand data
 const brands = [
   { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
   { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
@@ -77,10 +78,10 @@ export default function Sidebar({
           collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
         )}>
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[11px] shrink-0"
-            style={{ background: currentBrand?.color || "#6366F1", color: "#fff" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+            style={{ background: currentBrand?.color || "#6366F1" }}
           >
-            {currentBrand?.code?.[0] || "F"}
+            <WolfIcon size={18} color="#fff" />
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0 relative">
@@ -203,8 +204,8 @@ export function MobileHeader({
           <button onClick={onMenuOpen} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
             <Menu className="w-5 h-5 text-[var(--foreground-muted)]" />
           </button>
-          <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center font-bold text-[10px] text-white">
-            FU
+          <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center">
+            <WolfIcon size={16} color="#fff" />
           </div>
           <span className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{title}</span>
         </div>

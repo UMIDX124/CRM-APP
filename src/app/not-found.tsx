@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WolfLogo from "@/components/WolfLogo";
 
 export default function NotFound() {
   return (
@@ -9,15 +10,15 @@ export default function NotFound() {
       </div>
 
       <div className="relative text-center max-w-md animate-fade-in-up">
-        <div className="text-[120px] font-black leading-none mb-4 select-none text-gradient-primary">
+        <div className="flex justify-center mb-6 opacity-20">
+          <WolfLogo size="full" color="var(--foreground-dim)" />
+        </div>
+        <div className="text-[100px] font-black leading-none mb-4 select-none text-gradient-primary">
           404
         </div>
-        <h1 className="text-xl font-semibold text-[var(--foreground)] mb-2 tracking-tight">Page not found</h1>
+        <h1 className="text-xl font-semibold text-[var(--foreground)] mb-2 tracking-tight">Lost in the wilderness</h1>
         <p className="text-sm text-[var(--foreground-dim)] mb-8">The page you&apos;re looking for doesn&apos;t exist or has been moved.</p>
-        <Link
-          href="/"
-          className="btn-primary inline-flex px-8 py-3 text-sm"
-        >
+        <Link href="/" className="btn-primary inline-flex px-8 py-3 text-sm">
           Back to Dashboard
         </Link>
       </div>

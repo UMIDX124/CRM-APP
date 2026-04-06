@@ -5,9 +5,10 @@ import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
-  Send, X, Sparkles, Loader2, MessageCircle, Zap, BarChart3,
+  Send, X, Sparkles, Loader2, Zap, BarChart3,
   Users, Briefcase, Trash2, Copy, Check, Hash, AlertCircle,
 } from "lucide-react";
+import { WolfIcon } from "./WolfLogo";
 import { clsx } from "clsx";
 
 // ─── Shared Types ───────────────────────────────────────
@@ -134,10 +135,10 @@ function AITab() {
               <div className="max-w-[88%] rounded-2xl px-4 py-3 bg-[var(--surface-elevated)] border border-[var(--border)] rounded-bl-md">
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-3 h-3 text-[var(--primary)]" />
-                  <span className="text-xs text-[var(--primary)] font-medium">AI Assistant</span>
+                  <span className="text-xs text-[var(--primary)] font-medium">Alpha AI</span>
                 </div>
                 <div className="text-sm text-[var(--foreground-muted)]">
-                  <MarkdownContent content={"Hey! I'm your **AI Assistant** powered by Groq.\n\nI can help with:\n- **Dashboard insights** & analytics\n- **Client management** & health scores\n- **Team performance** & workloads\n- **Revenue reports** & trends\n\nWhat do you need?"} />
+                  <MarkdownContent content={"Hey! I'm **Alpha** — your AI assistant.\n\nI can help with:\n- **Dashboard insights** & analytics\n- **Client management** & health scores\n- **Team performance** & workloads\n- **Revenue reports** & trends\n\nWhat do you need?"} />
                 </div>
               </div>
             </div>
@@ -168,7 +169,7 @@ function AITab() {
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-3 h-3 text-[var(--primary)]" />
-                      <span className="text-[10px] text-[var(--primary)] font-medium">AI</span>
+                      <span className="text-[10px] text-[var(--primary)] font-medium">Alpha</span>
                     </div>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity"><CopyButton text={text} /></div>
                   </div>
@@ -387,9 +388,9 @@ export default function UnifiedChat() {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-[88px] right-4 lg:bottom-6 lg:right-6 z-40 w-12 h-12 rounded-full bg-[var(--primary)] text-white flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer"
-        title="Chat"
+        title="Alpha AI"
       >
-        <MessageCircle className="w-5 h-5" />
+        <WolfIcon size={22} color="#fff" />
       </button>
     );
   }
@@ -407,7 +408,7 @@ export default function UnifiedChat() {
           )}
         >
           <span className="flex items-center justify-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> AI Assistant
+            <WolfIcon size={14} /> Alpha AI
           </span>
           {activeTab === "ai" && <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-[var(--primary)] rounded-full" />}
         </button>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { LogIn, Eye, EyeOff, ArrowRight } from "lucide-react";
+import WolfLogo from "@/components/WolfLogo";
 
 // P0-6 FIX: No passwords exposed in frontend — email-only quick-fill
 const quickAccessUsers = [
@@ -62,11 +63,11 @@ export default function LoginPage() {
       <div className="relative w-full max-w-[400px]">
         {/* Logo */}
         <div className="text-center mb-8 animate-fade-in-up">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-5 bg-[var(--primary)] shadow-lg">
-            <span className="text-[20px] font-black text-white tracking-tighter">FU</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5 bg-[var(--primary)] shadow-lg">
+            <WolfLogo size="icon" color="#fff" />
           </div>
-          <h1 className="text-[24px] font-semibold text-[var(--foreground)] tracking-tight">FU Corp</h1>
-          <p className="text-[13px] text-[var(--foreground-dim)] mt-1">Enterprise Command Center</p>
+          <h1 className="text-[24px] font-semibold text-[var(--foreground)] tracking-tight">DP Command Center</h1>
+          <p className="text-[13px] text-[var(--foreground-dim)] mt-1">Enterprise CRM</p>
         </div>
 
         {/* Login Card */}
@@ -145,7 +146,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-[var(--foreground-dim)] mt-6 opacity-40">FU Corp &middot; Enterprise Command Center</p>
+        <p className="text-center text-[10px] text-[var(--foreground-dim)] mt-6 opacity-40">DP Command Center</p>
       </div>
     </div>
   );
