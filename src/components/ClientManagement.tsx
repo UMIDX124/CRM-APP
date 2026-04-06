@@ -6,7 +6,11 @@ import {
   Loader2, TrendingUp, Heart, ArrowUpDown,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { clients as mockClients, brands } from "@/data/mock-data";
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import type { Client } from "@/lib/types";
@@ -56,10 +60,10 @@ export default function ClientManagement({ brandId }: { brandId: string }) {
           }));
           setClientList(mapped);
         } else {
-          setClientList(mockClients as Client[]);
+          setClientList([]);
         }
       })
-      .catch(() => { setClientList(mockClients as Client[]); })
+      .catch(() => { setClientList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -131,17 +135,19 @@ export default function ClientManagement({ brandId }: { brandId: string }) {
     setSaving(true);
 
     if (editingId) {
-      await apiMutate(`/api/clients/${editingId}`, "PATCH", { ...form, lastContactDate: form.lastContactDate || null, nextFollowUp: form.nextFollowUp || null });
+      const result = await apiMutate(`/api/clients/${editingId}`, "PATCH", { ...form, lastContactDate: form.lastContactDate || null, nextFollowUp: form.nextFollowUp || null });
+      if (!result.ok) { showError(result.error || "Failed to update client"); setSaving(false); return; }
       setClientList((prev) => prev.map((c) =>
         c.id === editingId ? { ...c, companyName: form.companyName, contactName: form.contactName, email: form.email, phone: form.phone, country: form.country, brand: form.brand, mrr: form.mrr, healthScore: form.healthScore, healthStatus: form.healthScore >= 80 ? "HEALTHY" as const : "AT_RISK" as const, services: form.services, source: form.source, lastContactDate: form.lastContactDate || undefined, nextFollowUp: form.nextFollowUp || undefined } : c
       ));
       success("Client updated");
     } else {
-      await apiMutate("/api/clients", "POST", {
+      const result = await apiMutate("/api/clients", "POST", {
         companyName: form.companyName, contactName: form.contactName, email: form.email,
         phone: form.phone, country: form.country, brandId: brands.find((b) => b.code === form.brand)?.id,
         mrr: form.mrr, healthScore: form.healthScore, source: form.source,
       });
+      if (!result.ok) { showError(result.error || "Failed to add client"); setSaving(false); return; }
       const newClient: Client = {
         id: String(Date.now()), companyName: form.companyName, contactName: form.contactName,
         email: form.email, phone: form.phone, country: form.country, countryFlag: "",
@@ -157,7 +163,8 @@ export default function ClientManagement({ brandId }: { brandId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await apiMutate(`/api/clients/${id}`, "DELETE");
+    const result = await apiMutate(`/api/clients/${id}`, "DELETE");
+    if (!result.ok) { showError(result.error || "Failed to delete client"); setShowDeleteConfirm(null); return; }
     setClientList((prev) => prev.filter((c) => c.id !== id));
     setShowDeleteConfirm(null);
     success("Client removed");

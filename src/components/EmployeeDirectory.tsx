@@ -6,11 +6,16 @@ import {
   UserPlus, Building2, Shield, LayoutGrid, List, BadgeCheck, Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { employees as mockEmployees, brands, parentCompany } from "@/data/mock-data";
 import type { Employee, EmployeeStatus, Role } from "@/lib/types";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { getStatusColor } from "@/lib/types";
+
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 
 const roleLabels: Record<string, string> = {
   SUPER_ADMIN: "Super Admin", PROJECT_MANAGER: "Project Manager",
@@ -53,10 +58,10 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
           }));
           setEmployeeList(mapped);
         } else {
-          setEmployeeList(mockEmployees as Employee[]);
+          setEmployeeList([]);
         }
       })
-      .catch(() => { setEmployeeList(mockEmployees as Employee[]); })
+      .catch(() => { setEmployeeList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -105,22 +110,24 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
     setSaving(true);
 
     if (editingId) {
-      await apiMutate(`/api/employees/${editingId}`, "PATCH", {
+      const result = await apiMutate(`/api/employees/${editingId}`, "PATCH", {
         firstName: form.name.split(" ")[0], lastName: form.name.split(" ").slice(1).join(" "),
         email: form.email, phone: form.phone, title: form.title,
         department: form.department, brandId: form.brand, role: form.role,
         status: form.status, salary: form.salary, skills: form.skills,
       });
+      if (!result.ok) { showError(result.error || "Failed to update employee"); setSaving(false); return; }
       setEmployeeList((prev) => prev.map((e) => e.id === editingId ? { ...e, name: form.name, email: form.email, phone: form.phone, title: form.title, department: form.department, brand: form.brand, role: form.role, status: form.status, salary: form.salary, skills: form.skills } : e));
       success("Employee updated");
     } else {
-      await apiMutate("/api/employees", "POST", {
+      const result = await apiMutate("/api/employees", "POST", {
         firstName: form.name.split(" ")[0], lastName: form.name.split(" ").slice(1).join(" "),
         email: form.email, phone: form.phone, title: form.title,
         department: form.department, brandId: form.brand, role: form.role,
         salary: form.salary, skills: form.skills, hireDate: form.hireDate,
         password: form.password,
       });
+      if (!result.ok) { showError(result.error || "Failed to hire employee"); setSaving(false); return; }
       const newEmp: Employee = {
         id: String(Date.now()), name: form.name, email: form.email, phone: form.phone,
         avatar: null, title: form.title, department: form.department, brand: form.brand,
@@ -136,7 +143,8 @@ export default function EmployeeDirectory({ brandId }: { brandId: string }) {
   };
 
   const handleDelete = async (id: string) => {
-    await apiMutate(`/api/employees/${id}`, "DELETE");
+    const result = await apiMutate(`/api/employees/${id}`, "DELETE");
+    if (!result.ok) { showError(result.error || "Failed to remove employee"); return; }
     setEmployeeList((prev) => prev.filter((e) => e.id !== id));
     setShowDeleteConfirm(null);
     success("Employee removed");

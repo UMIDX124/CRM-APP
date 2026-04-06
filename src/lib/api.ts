@@ -46,8 +46,9 @@ export async function apiMutate<T>(
     }
     const err = await res.json().catch(() => ({ error: "Request failed" }));
     return { ok: false, error: err.error || `Error ${res.status}` };
-  } catch {
-    return { ok: true, data: body as T };
+  } catch (err) {
+    console.error(`API ${method} ${url} failed:`, err);
+    return { ok: false, error: "Network error — please try again" };
   }
 }
 

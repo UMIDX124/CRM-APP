@@ -11,15 +11,20 @@ import NotificationCenter from "@/components/NotificationCenter";
 import { ToastProvider } from "@/components/ui/toast";
 import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-import { CompanyProvider, useCompany } from "@/components/CompanyContext";
+import { CompanyProvider } from "@/components/CompanyContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
-import { brands } from "@/data/mock-data";
 
 const brandColors: Record<string, string> = { VCS: "#FF6B00", BSL: "#3B82F6", DPL: "#22C55E" };
 
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
+
 const pageTitles: Record<string, string> = {
   "/": "Dashboard", "/clients": "Clients", "/employees": "Team", "/tasks": "Tasks",
-  "/pipeline": "Pipeline", "/reports": "Reports", "/attendance": "Attendance",
+  "/pipeline": "Pipeline", "/funnel": "Lead Funnel", "/reports": "Reports", "/attendance": "Attendance",
   "/attendance/checkin": "Check In", "/invoices": "Invoices", "/calendar": "Calendar",
   "/leaves": "Leave Management", "/payroll": "Payroll", "/expenses": "Expenses",
   "/audit": "Audit Log", "/guide": "User Guide", "/shortcuts": "Keyboard Shortcuts",
@@ -32,6 +37,7 @@ const pageDescriptions: Record<string, string> = {
   "/employees": "Your team across all subsidiaries",
   "/tasks": "Track and manage all work items",
   "/pipeline": "Sales pipeline and lead management",
+  "/funnel": "Lead conversion funnel across all websites",
   "/invoices": "Billing, invoices, and payments",
   "/reports": "Business intelligence and insights",
   "/attendance": "Team attendance and tracking",
@@ -50,12 +56,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [showEmailCompose, setShowEmailCompose] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // P0-7 FIX: Validate auth via server call, not just localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("fu-crm-user");
-    if (stored) {
-      try { const user = JSON.parse(stored); setCurrentUser(user); setIsAuthenticated(true); } catch {}
+    let cancelled = false;
+
+    async function checkAuth() {
+      // First check localStorage for initial render
+      const stored = localStorage.getItem("fu-crm-user");
+      if (!stored) {
+        setCheckingAuth(false);
+        return;
+      }
+
+      try {
+        const user = JSON.parse(stored);
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+      } catch {
+        localStorage.removeItem("fu-crm-user");
+      }
+
+      // Then validate with server (non-blocking)
+      try {
+        const res = await fetch("/api/auth/me");
+        if (!cancelled && !res.ok) {
+          // Server says session invalid — clear and redirect
+          localStorage.removeItem("fu-crm-user");
+          setCurrentUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch {
+        // Server unreachable — keep localStorage auth as fallback
+      }
+
+      if (!cancelled) setCheckingAuth(false);
     }
-    setCheckingAuth(false);
+
+    checkAuth();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => { document.documentElement.className = theme; }, [theme]);
@@ -63,7 +101,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const toggleTheme = useCallback(() => setTheme((p) => (p === "dark" ? "light" : "dark")), []);
 
-  const handleLogout = () => {
+  // P0-8 FIX: Destroy server session on logout
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Logout API failed — still clear local state
+    }
     localStorage.removeItem("fu-crm-user");
     setCurrentUser(null);
     setIsAuthenticated(false);
@@ -79,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen bg-[var(--background)] flex">
         {/* Sidebar skeleton */}
-        <aside className="hidden lg:flex flex-col w-[256px] h-screen border-r border-[var(--border)] bg-[var(--surface)]/60 p-4 gap-4 shrink-0">
+        <aside className="hidden lg:flex flex-col w-[256px] h-screen border-r border-[var(--border)] bg-[var(--surface)] p-4 gap-4 shrink-0">
           <div className="flex items-center gap-3 px-2 mb-4">
             <div className="w-9 h-9 rounded-xl skeleton" />
             <div className="flex-1 space-y-2">
@@ -96,8 +140,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
         {/* Main content skeleton */}
         <div className="flex-1 min-h-screen">
-          {/* Top bar skeleton */}
-          <div className="h-[56px] border-b border-[var(--border)] bg-[var(--surface)]/60 flex items-center justify-between px-6">
+          <div className="h-[56px] border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between px-6">
             <div className="h-4 w-28 skeleton rounded" />
             <div className="flex items-center gap-3">
               <div className="h-8 w-40 skeleton rounded-lg" />
@@ -105,14 +148,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="w-8 h-8 skeleton rounded-lg" />
             </div>
           </div>
-          {/* KPI cards skeleton */}
           <div className="px-6 py-6 space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-[var(--border)] p-5 space-y-3" style={{ background: 'var(--surface)' }}>
+                <div key={i} className="rounded-xl border border-[var(--border)] p-5 space-y-3 bg-[var(--surface)]">
                   <div className="flex items-center justify-between">
                     <div className="w-9 h-9 skeleton rounded-xl" />
-                    <div className="h-5 w-16 skeleton rounded-full" />
+                    <div className="h-5 w-16 skeleton rounded" />
                   </div>
                   <div className="space-y-2">
                     <div className="h-7 w-24 skeleton rounded" />
@@ -121,13 +163,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               ))}
             </div>
-            {/* Chart area skeleton */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 rounded-2xl border border-[var(--border)] p-5" style={{ background: 'var(--surface)' }}>
+              <div className="lg:col-span-2 rounded-xl border border-[var(--border)] p-5 bg-[var(--surface)]">
                 <div className="h-4 w-32 skeleton rounded mb-4" />
                 <div className="h-[200px] skeleton rounded-xl" />
               </div>
-              <div className="rounded-2xl border border-[var(--border)] p-5 space-y-3" style={{ background: 'var(--surface)' }}>
+              <div className="rounded-xl border border-[var(--border)] p-5 space-y-3 bg-[var(--surface)]">
                 <div className="h-4 w-24 skeleton rounded" />
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="space-y-1.5">
@@ -151,12 +192,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <CompanyProvider>
     <ToastProvider>
-      <div className="min-h-screen bg-[var(--background)] noise-overlay">
-        {/* Cybercity atmosphere */}
-        <div className="cybercity-bg" />
-        <div className="cyber-grid" />
-        <div className="ambient-glow" />
-
+      <div className="min-h-screen bg-[var(--background)]">
         <MobileHeader onMenuOpen={() => setSidebarOpen(true)} brandColor={brandColor} title={pageTitle} />
 
         <Sidebar
@@ -172,7 +208,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           sidebarCollapsed ? "lg:ml-[68px]" : "lg:ml-[256px]"
         )}>
           {/* Desktop Header */}
-          <header className="hidden lg:flex items-center justify-between h-[56px] px-6 border-b border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-xl sticky top-0 z-20">
+          <header className="hidden lg:flex items-center justify-between h-[56px] px-6 border-b border-[var(--border)] bg-[var(--surface)] sticky top-0 z-20">
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{pageTitle}</h1>
@@ -180,14 +216,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* Search */}
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--background-secondary)] border border-[var(--border)] text-[var(--foreground-dim)] hover:border-[var(--border-hover)] transition-all cursor-pointer group"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[var(--foreground-dim)] hover:border-[var(--border-hover)] transition-all cursor-pointer group"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span className="text-[12px]">Search</span>
-                <kbd className="ml-4 px-1.5 py-0.5 rounded text-[9px] font-mono bg-[var(--surface)] text-[var(--foreground-dim)] border border-[var(--border-subtle)]">
+                <kbd className="ml-4 px-1.5 py-0.5 rounded text-[9px] font-mono bg-[var(--surface-elevated)] text-[var(--foreground-dim)] border border-[var(--border)]">
                   <span className="opacity-60">Ctrl</span> K
                 </kbd>
               </button>
@@ -208,7 +243,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </header>
 
-          {/* Page Content with transition */}
+          {/* Page Content */}
           <div className="px-4 sm:px-6 lg:px-6 py-5 lg:py-6 mobile-safe-bottom relative z-10">
             <div key={pathname} className="animate-fade-in-up">
               {children}

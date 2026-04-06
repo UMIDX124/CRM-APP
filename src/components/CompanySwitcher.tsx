@@ -18,12 +18,7 @@ export default function CompanySwitcher() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const accentMap: Record<string, string> = {
-    "var(--primary)": "#FF6B00",
-    "var(--neon-cyan)": "#06D6E0",
-    "var(--neon-blue)": "#3B82F6",
-  };
-  const resolvedAccent = accentMap[activeCompany.accent] || "#FF6B00";
+  const resolvedAccent = activeCompany.accent || "#6366F1";
 
   return (
     <div ref={ref} className="relative">
@@ -56,7 +51,7 @@ export default function CompanySwitcher() {
           </div>
           {companies.map((company) => {
             const isActive = company.id === activeCompany.id;
-            const color = accentMap[company.accent] || "#FF6B00";
+            const color = company.accent || "#6366F1";
             return (
               <button
                 key={company.id}

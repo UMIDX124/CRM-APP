@@ -6,11 +6,17 @@ import {
   Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { leads as mockLeads, brands, employees } from "@/data/mock-data";
+import { employees } from "@/data/mock-data";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency, extractBrandFromSource } from "@/lib/types";
 import type { Lead, LeadStatus } from "@/lib/types";
+
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 
 const stages: { status: LeadStatus; label: string; color: string }[] = [
   { status: "NEW", label: "New", color: "#3B82F6" },
@@ -51,10 +57,10 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
           }));
           setLeadList(mapped);
         } else {
-          setLeadList(mockLeads as Lead[]);
+          setLeadList([]);
         }
       })
-      .catch(() => { setLeadList(mockLeads as Lead[]); })
+      .catch(() => { setLeadList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -108,7 +114,12 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
       nextContactDate: form.nextContactDate || null,
     };
     if (editingId) {
-      await apiMutate(`/api/leads/${editingId}`, "PATCH", payload);
+      const result = await apiMutate(`/api/leads/${editingId}`, "PATCH", payload);
+      if (!result.ok) {
+        showError(result.error || "Failed to update lead");
+        setSaving(false);
+        return;
+      }
       setLeadList((prev) => prev.map((l): Lead => l.id === editingId ? {
         ...l, companyName: form.companyName, contactName: form.contactName, email: form.email,
         country: form.country, source: form.source, value: form.value, salesRep: form.salesRep,
@@ -118,7 +129,12 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
       } : l));
       success("Lead updated");
     } else {
-      await apiMutate("/api/leads", "POST", payload);
+      const result = await apiMutate("/api/leads", "POST", payload);
+      if (!result.ok) {
+        showError(result.error || "Failed to add lead");
+        setSaving(false);
+        return;
+      }
       const newLead: Lead = {
         id: String(Date.now()), companyName: form.companyName, contactName: form.contactName,
         email: form.email, country: form.country, countryFlag: "", brand: form.brand,
@@ -136,14 +152,22 @@ export default function PipelineModule({ brandId }: { brandId: string }) {
   };
 
   const moveStage = async (leadId: string, newStatus: LeadStatus) => {
-    await apiMutate(`/api/leads/${leadId}`, "PATCH", { status: newStatus });
+    const result = await apiMutate(`/api/leads/${leadId}`, "PATCH", { status: newStatus });
+    if (!result.ok) {
+      showError(result.error || "Failed to move lead");
+      return;
+    }
     setLeadList((prev) => prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l)));
     const st = stages.find((s) => s.status === newStatus);
     success(`Moved to ${st?.label}`);
   };
 
   const handleDelete = async (id: string) => {
-    await apiMutate(`/api/leads/${id}`, "DELETE");
+    const result = await apiMutate(`/api/leads/${id}`, "DELETE");
+    if (!result.ok) {
+      showError(result.error || "Failed to remove lead");
+      return;
+    }
     setLeadList((prev) => prev.filter((l) => l.id !== id));
     setShowDeleteConfirm(null);
     success("Lead removed");

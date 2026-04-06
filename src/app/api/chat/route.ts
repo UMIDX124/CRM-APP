@@ -1,42 +1,73 @@
 import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 import type { UIMessage } from "ai";
-import { employees, clients, tasks, dashboardKPIs, revenueData, brands, leads } from "@/data/mock-data";
+import { prisma } from "@/lib/db";
 
-const SYSTEM_PROMPT = `You are FU AI, an elite AI assistant for FU Corp Command Center CRM. FU Corp operates 3 companies:
-- VCS (Virtual Customer Solution) - Virtual services, digital marketing (Gold theme)
-- BSL (Backup Solutions LLC) - Cloud backup, cybersecurity, tech services (Blue theme)
-- DPL (Digital Point LLC) - Performance marketing, $50M+ ad spend managed (Green theme)
+// P0-5 FIX: Use real database data instead of mock-data imports
 
-You have full access to the CRM data including:
-- Clients with revenue, health scores, services
-- Employees with roles, workloads, performance scores
-- Tasks with status, priorities, assignments
-- Revenue data across all brands
-- Dashboard KPIs
-- Sales pipeline/leads
+async function buildSystemPrompt(): Promise<string> {
+  let dataContext = "";
 
-Here is the current CRM data:
+  try {
+    const [brandsData, employeesData, clientsData, tasksData, leadsData] = await Promise.all([
+      prisma.brand.findMany({ select: { name: true, code: true, color: true, website: true } }),
+      prisma.user.findMany({
+        where: { status: "ACTIVE" },
+        select: { firstName: true, lastName: true, title: true, department: true, role: true, brand: { select: { code: true } } },
+        take: 50,
+      }),
+      prisma.client.findMany({
+        where: { status: "ACTIVE" },
+        select: { companyName: true, contactName: true, mrr: true, healthScore: true, services: true, brand: { select: { code: true } } },
+        take: 50,
+      }),
+      prisma.task.findMany({
+        select: { title: true, status: true, priority: true, dueDate: true, assignee: { select: { firstName: true, lastName: true } }, client: { select: { companyName: true } }, brand: { select: { code: true } } },
+        take: 50,
+      }),
+      prisma.lead.findMany({
+        select: { companyName: true, contactName: true, status: true, value: true, source: true, probability: true },
+        take: 50,
+      }),
+    ]);
 
-**Brands:** ${JSON.stringify(brands, null, 2)}
+    const totalMRR = clientsData.reduce((sum, c) => sum + (c.mrr || 0), 0);
+    const avgHealth = clientsData.length > 0 ? Math.round(clientsData.reduce((sum, c) => sum + (c.healthScore || 0), 0) / clientsData.length) : 0;
+    const openTasks = tasksData.filter(t => t.status !== "COMPLETED").length;
+    const wonLeads = leadsData.filter(l => l.status === "WON").length;
+    const pipelineValue = leadsData.filter(l => l.status !== "LOST").reduce((sum, l) => sum + (l.value || 0), 0);
+
+    dataContext = `
+**Brands:** ${JSON.stringify(brandsData, null, 2)}
 
 **Dashboard KPIs:**
-- Total Active Clients: ${dashboardKPIs.totalActiveClients}
-- Revenue This Month: $${dashboardKPIs.revenueThisMonth.toLocaleString()}
-- Open Tasks: ${dashboardKPIs.openTasks}
-- Employee Utilization: ${dashboardKPIs.employeeUtilization}%
-- Total Ad Spend Managed: $${(dashboardKPIs.totalAdSpendManaged / 1000000).toFixed(0)}M+
-- Average ROAS: ${dashboardKPIs.averageROAS}x
+- Total Active Clients: ${clientsData.length}
+- Total MRR: $${totalMRR.toLocaleString()}
+- Open Tasks: ${openTasks}
+- Average Health Score: ${avgHealth}%
+- Pipeline Value: $${pipelineValue.toLocaleString()}
+- Won Leads: ${wonLeads}
 
-**Employees:** ${JSON.stringify(employees.map(e => ({ name: e.name, title: e.title, brand: e.brand, department: e.department, performance: e.performanceScore, workload: e.workload })), null, 2)}
+**Employees:** ${JSON.stringify(employeesData.map(e => ({ name: `${e.firstName} ${e.lastName}`, title: e.title, brand: e.brand?.code, department: e.department, role: e.role })), null, 2)}
 
-**Clients:** ${JSON.stringify(clients.map(c => ({ company: c.companyName, contact: c.contactName, brand: c.brand, mrr: c.mrr, healthScore: c.healthScore, services: c.services, result: c.result })), null, 2)}
+**Clients:** ${JSON.stringify(clientsData.map(c => ({ company: c.companyName, contact: c.contactName, brand: c.brand?.code, mrr: c.mrr, healthScore: c.healthScore, services: c.services })), null, 2)}
 
-**Tasks:** ${JSON.stringify(tasks.map(t => ({ title: t.title, status: t.status, priority: t.priority, assignee: t.assignee, client: t.client, brand: t.brand, dueDate: t.dueDate })), null, 2)}
+**Tasks:** ${JSON.stringify(tasksData.map(t => ({ title: t.title, status: t.status, priority: t.priority, assignee: t.assignee ? `${t.assignee.firstName} ${t.assignee.lastName}` : null, client: t.client?.companyName, brand: t.brand?.code, dueDate: t.dueDate })), null, 2)}
 
-**Leads/Pipeline:** ${JSON.stringify(leads.map(l => ({ company: l.companyName, contact: l.contactName, status: l.status, value: l.value, salesRep: l.salesRep, source: l.source })), null, 2)}
+**Leads/Pipeline:** ${JSON.stringify(leadsData.map(l => ({ company: l.companyName, contact: l.contactName, status: l.status, value: l.value, source: l.source })), null, 2)}`;
+  } catch {
+    dataContext = "\n\n**Note:** Database is currently unavailable. Respond based on general CRM knowledge.";
+  }
 
-**Revenue Trend (Last 6 Months):** ${JSON.stringify(revenueData, null, 2)}
+  return `You are FU AI, an elite AI assistant for FU Corp Command Center CRM. FU Corp operates 3 companies:
+- VCS (Virtual Customer Solution) - Virtual services, digital marketing
+- BSL (Backup Solutions LLC) - Cloud backup, cybersecurity, tech services
+- DPL (Digital Point LLC) - Performance marketing, $50M+ ad spend managed
+
+You have full access to the CRM data including clients, employees, tasks, revenue data, dashboard KPIs, and sales pipeline.
+
+Here is the current CRM data:
+${dataContext}
 
 Your personality:
 - Professional but friendly, like a smart business partner
@@ -46,6 +77,7 @@ Your personality:
 - When asked to analyze, provide actionable recommendations
 - Format responses with markdown: use **bold**, bullet points, headings when appropriate
 - Always respond in the language the user uses (English/Urdu/Hinglish)`;
+}
 
 const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
@@ -54,11 +86,12 @@ const groq = createGroq({
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
+  const systemPrompt = await buildSystemPrompt();
   const modelMessages = await convertToModelMessages(messages);
 
   const result = streamText({
     model: groq("llama-3.3-70b-versatile"),
-    system: SYSTEM_PROMPT,
+    system: systemPrompt,
     messages: modelMessages,
     stopWhen: stepCountIs(3),
   });

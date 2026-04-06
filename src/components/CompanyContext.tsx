@@ -10,9 +10,9 @@ export interface Company {
 }
 
 export const companies: Company[] = [
-  { id: "dpl", name: "Digital Point LLC", code: "DPL", accent: "var(--primary)" },
-  { id: "vcs", name: "Virtual Customer Solution", code: "VCS", accent: "var(--neon-cyan)" },
-  { id: "bsl", name: "Backup Solutions LLC", code: "BSL", accent: "var(--neon-blue)" },
+  { id: "dpl", name: "Digital Point LLC", code: "DPL", accent: "#22C55E" },
+  { id: "vcs", name: "Virtual Customer Solution", code: "VCS", accent: "#FF6B00" },
+  { id: "bsl", name: "Backup Solutions LLC", code: "BSL", accent: "#3B82F6" },
 ];
 
 interface CompanyContextValue {

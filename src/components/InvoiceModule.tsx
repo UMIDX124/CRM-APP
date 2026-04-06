@@ -6,7 +6,6 @@ import {
   AlertCircle, XCircle, Eye, X, Save, Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { clients, brands } from "@/data/mock-data";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { formatCurrency } from "@/lib/types";
@@ -26,6 +25,12 @@ const statusCfg: Record<InvoiceStatus, { label: string; color: string; icon: typ
   DRAFT: { label: "Draft", color: "#71717A", icon: FileText },
   CANCELLED: { label: "Cancelled", color: "#52525B", icon: XCircle },
 };
+
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 
 const sampleInvoices: Invoice[] = [
   { id: "1", number: "INV-2026-001", clientId: "5", clientName: "SecureBank", brand: "BSL", items: [{ description: "Cybersecurity Audit Q1", quantity: 1, rate: 25000 }], subtotal: 25000, tax: 0, total: 25000, status: "PAID", issueDate: "2026-03-01", dueDate: "2026-03-15", paidDate: "2026-03-12" },
@@ -105,7 +110,8 @@ export default function InvoiceModule() {
     setSaving(true);
     const invNum = `INV-${new Date().getFullYear()}-${String(invoices.length + 1).padStart(3, "0")}`;
     const newInv: Invoice = { id: String(Date.now()), number: invNum, clientId: "", clientName: form.clientName, brand: form.brand, items: form.items, subtotal: formTotal, tax: 0, total: formTotal, status: "PENDING", issueDate: new Date().toISOString().split("T")[0], dueDate: form.dueDate || new Date(Date.now() + 15 * 86400000).toISOString().split("T")[0] };
-    await apiMutate("/api/invoices", "POST", newInv);
+    const result = await apiMutate("/api/invoices", "POST", newInv);
+    if (!result.ok) { showError(result.error || "Failed to create invoice"); setSaving(false); return; }
     setInvoices((prev) => [...prev, newInv]);
     success(`Invoice ${invNum} created`);
     setSaving(false);
@@ -114,7 +120,8 @@ export default function InvoiceModule() {
   };
 
   const markPaid = async (id: string) => {
-    await apiMutate(`/api/invoices/${id}`, "PATCH", { status: "PAID", paidDate: new Date().toISOString().split("T")[0] });
+    const result = await apiMutate(`/api/invoices/${id}`, "PATCH", { status: "PAID", paidDate: new Date().toISOString().split("T")[0] });
+    if (!result.ok) { showError(result.error || "Failed to mark as paid"); return; }
     setInvoices((prev) => prev.map((i) => (i.id === id ? { ...i, status: "PAID" as InvoiceStatus, paidDate: new Date().toISOString().split("T")[0] } : i)));
     success("Marked as paid");
     setSelectedInvoice(null);
@@ -257,7 +264,7 @@ export default function InvoiceModule() {
             </div>
             <div className="p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Client *</label><select value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="input-field"><option value="">Select...</option>{clients.map((c) => <option key={c.id} value={c.companyName}>{c.companyName}</option>)}</select></div>
+                <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Client *</label><select value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} className="input-field"><option value="">Select...</option>{([] as { id: string; companyName: string }[]).map((c) => <option key={c.id} value={c.companyName}>{c.companyName}</option>)}</select></div>
                 <div><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Due Date</label><input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} className="input-field" /></div>
               </div>
               <div>

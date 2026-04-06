@@ -5,15 +5,22 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
   Settings, ChevronLeft, Moon, Sun, LogOut, Menu, Bell,
-  ClipboardCheck, FileText, DollarSign, CalendarOff, ChevronDown,
+  ClipboardCheck, FileText, DollarSign, CalendarOff, ChevronDown, Zap, Filter,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { brands } from "@/data/mock-data";
+
+// Static brand data — no mock-data import needed
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" as const },
   { href: "/clients", label: "Clients", icon: Building2, section: "main" as const },
   { href: "/pipeline", label: "Pipeline", icon: Briefcase, section: "main" as const },
+  { href: "/funnel", label: "Lead Funnel", icon: Filter, section: "main" as const },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" as const },
   { href: "/employees", label: "Team", icon: Users, section: "hr" as const },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" as const },
@@ -47,20 +54,19 @@ export default function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const currentBrand = brands.find((b) => b.id === selectedBrand);
-  const brandColor = currentBrand?.color || "#FF6B00";
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <>
       {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" onClick={onMobileClose} />
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden" onClick={onMobileClose} />
       )}
 
       <aside
         className={clsx(
           "fixed top-0 left-0 h-full flex flex-col z-50 transition-all duration-300 ease-out",
-          "bg-[rgba(8,8,14,0.55)] backdrop-blur-xl border-r border-[rgba(255,255,255,0.06)]",
+          "bg-[var(--surface)] border-r border-[var(--border)]",
           collapsed ? "w-[68px]" : "w-[256px]",
           !isMobileOpen && "-translate-x-full lg:translate-x-0"
         )}
@@ -68,22 +74,20 @@ export default function Sidebar({
         {/* Brand Header */}
         <div className={clsx(
           "flex items-center gap-3 border-b border-[var(--border)]",
-          collapsed ? "px-3 py-5 justify-center" : "px-4 py-5"
+          collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
         )}>
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-[12px] shrink-0 shadow-lg relative"
-            style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`, color: "#000", boxShadow: `0 4px 16px ${brandColor}30` }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-[11px] shrink-0"
+            style={{ background: currentBrand?.color || "#6366F1", color: "#fff" }}
           >
             {currentBrand?.code?.[0] || "F"}
-            {/* Online indicator */}
-            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-[var(--surface)]" />
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0 relative">
               <select
                 value={selectedBrand}
                 onChange={(e) => onBrandChange(e.target.value)}
-                className="w-full bg-transparent text-[var(--foreground)] text-[14px] font-semibold appearance-none cursor-pointer focus:outline-none pr-6 tracking-tight"
+                className="w-full bg-transparent text-[var(--foreground)] text-[13px] font-semibold appearance-none cursor-pointer focus:outline-none pr-6 tracking-tight"
                 title={currentBrand?.name}
               >
                 {brands.map((b) => (
@@ -103,9 +107,9 @@ export default function Sidebar({
           {(["main", "hr", "finance", "system"] as const).map((section) => {
             const items = navItems.filter((i) => i.section === section);
             return (
-              <div key={section} className={section !== "main" ? "mt-5" : ""}>
+              <div key={section} className={section !== "main" ? "mt-4" : ""}>
                 {!collapsed && sectionLabels[section] && (
-                  <p className="px-3 mb-1.5 text-[9px] font-semibold text-[var(--foreground-dim)] uppercase tracking-[0.12em] opacity-60">
+                  <p className="px-3 mb-1.5 text-[10px] font-medium text-[var(--foreground-dim)] uppercase tracking-[0.08em] opacity-60">
                     {sectionLabels[section]}
                   </p>
                 )}
@@ -120,14 +124,8 @@ export default function Sidebar({
                           className={clsx("sidebar-item", active && "active", collapsed && "justify-center px-0")}
                           title={collapsed ? item.label : undefined}
                         >
-                          <item.icon
-                            className="w-[18px] h-[18px] shrink-0 transition-colors"
-                            style={active ? { color: brandColor } : undefined}
-                          />
+                          <item.icon className="w-[18px] h-[18px] shrink-0" />
                           {!collapsed && <span className="truncate">{item.label}</span>}
-                          {active && !collapsed && (
-                            <div className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: brandColor, boxShadow: `0 0 6px ${brandColor}` }} />
-                          )}
                         </Link>
                       </li>
                     );
@@ -151,26 +149,23 @@ export default function Sidebar({
 
           {/* User Card */}
           <div className={clsx(
-            "flex items-center gap-3 rounded-xl p-2.5 mt-1",
-            "bg-gradient-to-r from-[var(--background)] to-[var(--background-secondary)]",
-            "border border-[var(--border-subtle)]",
+            "flex items-center gap-3 rounded-lg p-2.5 mt-1",
+            "bg-[var(--background)]",
+            "border border-[var(--border)]",
             collapsed && "justify-center p-2"
           )}>
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 text-[11px] font-bold shadow-md"
-              style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}BB)`, color: "#000" }}
-            >
+            <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center shrink-0 text-[11px] font-semibold text-white">
               {currentUser?.name?.charAt(0) || "U"}
             </div>
             {!collapsed && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[var(--foreground)] truncate">{currentUser?.name}</p>
+                  <p className="text-[12px] font-medium text-[var(--foreground)] truncate">{currentUser?.name}</p>
                   <p className="text-[10px] text-[var(--foreground-dim)]">{currentUser?.role?.replace(/_/g, " ")}</p>
                 </div>
                 <button
                   onClick={onLogout}
-                  className="text-[var(--foreground-dim)] hover:text-[var(--danger)] transition-colors shrink-0 p-1 rounded-md hover:bg-red-500/10"
+                  className="text-[var(--foreground-dim)] hover:text-[var(--danger)] transition-colors shrink-0 p-1 rounded hover:bg-red-500/10"
                   title="Log out"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -184,14 +179,14 @@ export default function Sidebar({
         <button
           onClick={() => onCollapsedChange(!collapsed)}
           className={clsx(
-            "absolute -right-3.5 top-[72px] w-7 h-7 rounded-full",
-            "bg-[var(--surface-elevated)] border border-[var(--border)]",
+            "absolute -right-3 top-[68px] w-6 h-6 rounded-full",
+            "bg-[var(--surface)] border border-[var(--border)]",
             "flex items-center justify-center",
             "text-[var(--foreground-dim)] hover:text-[var(--foreground)] hover:border-[var(--border-hover)]",
-            "transition-all shadow-md hidden lg:flex"
+            "transition-all shadow-sm hidden lg:flex"
           )}
         >
-          <ChevronLeft className={clsx("w-3.5 h-3.5 transition-transform duration-300", collapsed && "rotate-180")} />
+          <ChevronLeft className={clsx("w-3 h-3 transition-transform duration-300", collapsed && "rotate-180")} />
         </button>
       </aside>
     </>
@@ -202,23 +197,20 @@ export function MobileHeader({
   onMenuOpen, brandColor, title,
 }: { onMenuOpen: () => void; brandColor: string; title: string }) {
   return (
-    <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[var(--surface)]/90 backdrop-blur-xl border-b border-[var(--border)]">
+    <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[var(--surface)] border-b border-[var(--border)]">
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-3">
           <button onClick={onMenuOpen} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
             <Menu className="w-5 h-5 text-[var(--foreground-muted)]" />
           </button>
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shadow-sm"
-            style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}CC)`, color: "#000" }}
-          >
+          <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center font-bold text-[10px] text-white">
             FU
           </div>
           <span className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{title}</span>
         </div>
         <button className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors relative">
           <Bell className="w-5 h-5 text-[var(--foreground-muted)]" />
-          <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[var(--primary)] rounded-full shadow-sm" style={{ boxShadow: `0 0 6px ${brandColor}60` }} />
+          <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[var(--primary)] rounded-full" />
         </button>
       </div>
     </header>

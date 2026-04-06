@@ -6,10 +6,16 @@ import {
   X, Save, Loader2, User, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { tasks as mockTasks, brands, employees, clients } from "@/data/mock-data";
+import { employees, clients } from "@/data/mock-data";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { getPriorityColor } from "@/lib/types";
+
+const brands = [
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
+];
 
 interface Task {
   id: string; title: string; description: string;
@@ -59,10 +65,10 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
           }));
           setTaskList(mapped);
         } else {
-          setTaskList(mockTasks as Task[]);
+          setTaskList([]);
         }
       })
-      .catch(() => { setTaskList(mockTasks as Task[]); })
+      .catch(() => { setTaskList([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
@@ -101,11 +107,13 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
     if (!form.title.trim()) { showError("Task title required"); return; }
     setSaving(true);
     if (editingId) {
-      await apiMutate(`/api/tasks/${editingId}`, "PATCH", form);
+      const result = await apiMutate(`/api/tasks/${editingId}`, "PATCH", form);
+      if (!result.ok) { showError(result.error || "Failed to update task"); setSaving(false); return; }
       setTaskList((prev) => prev.map((t) => (t.id === editingId ? { ...t, ...form } : t)));
       success("Task updated");
     } else {
-      await apiMutate("/api/tasks", "POST", { ...form, status: "TODO" });
+      const result = await apiMutate("/api/tasks", "POST", { ...form, status: "TODO" });
+      if (!result.ok) { showError(result.error || "Failed to create task"); setSaving(false); return; }
       setTaskList((prev) => [...prev, { id: String(Date.now()), ...form, status: "TODO", timeSpent: 0, subtasks: 0, subtasksCompleted: 0 }]);
       success("Task created");
     }
@@ -114,14 +122,16 @@ export default function TaskManagement({ brandId }: { brandId: string }) {
   };
 
   const moveTask = async (taskId: string, newStatus: string) => {
-    await apiMutate(`/api/tasks/${taskId}`, "PATCH", { status: newStatus });
+    const result = await apiMutate(`/api/tasks/${taskId}`, "PATCH", { status: newStatus });
+    if (!result.ok) { showError(result.error || "Failed to move task"); return; }
     setTaskList((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
     const col = columns.find((c) => c.status === newStatus);
     success(`Moved to ${col?.label || newStatus}`);
   };
 
   const handleDelete = async (id: string) => {
-    await apiMutate(`/api/tasks/${id}`, "DELETE");
+    const result = await apiMutate(`/api/tasks/${id}`, "DELETE");
+    if (!result.ok) { showError(result.error || "Failed to delete task"); return; }
     setTaskList((prev) => prev.filter((t) => t.id !== id));
     setShowDeleteConfirm(null);
     success("Task deleted");

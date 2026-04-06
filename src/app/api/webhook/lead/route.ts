@@ -4,70 +4,70 @@ import { prisma } from "@/lib/db";
 /*
  * WEBHOOK: Auto Lead Capture from Website Forms
  *
- * Any website form can POST to this endpoint to create a lead automatically.
- * No authentication needed — this is a public webhook.
- *
- * USAGE ON YOUR WEBSITE:
- *
- * <form action="https://fu-corp-crm.vercel.app/api/webhook/lead" method="POST">
- *   <input name="name" placeholder="Your Name" required />
- *   <input name="email" placeholder="Email" required />
- *   <input name="phone" placeholder="Phone" />
- *   <input name="company" placeholder="Company Name" />
- *   <input name="service" placeholder="What service?" />
- *   <input name="budget" placeholder="Budget" />
- *   <input name="message" placeholder="Tell us more" />
- *   <input type="hidden" name="source" value="VCS" />
- *   <button type="submit">Submit</button>
- * </form>
- *
- * OR via JavaScript:
- *
- * fetch('https://fu-corp-crm.vercel.app/api/webhook/lead', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({
- *     name: 'John Smith',
- *     email: 'john@example.com',
- *     phone: '+1 555-1234',
- *     company: 'Acme Corp',
- *     service: 'Web Development',
- *     budget: '10000',
- *     message: 'Need a new website',
- *     source: 'VCS'  // or BSL, DPL
- *   })
- * });
+ * Accepts leads from DPL, VCS, BSL website forms.
+ * Enhanced with: formType, qualityScore, UTM attribution, auto-assignment
+ * Returns leadId for tracking.
  */
 
-// Lead scoring logic
-function scoreLead(data: { budget?: string; service?: string; company?: string; email?: string }): { priority: string; score: number } {
-  let score = 30; // Base score
+// Enhanced lead scoring with more granular components
+function scoreLead(data: {
+  budget?: string;
+  service?: string;
+  company?: string;
+  email?: string;
+  formType?: string;
+  qualityScore?: number;
+  utmSource?: string;
+}): { priority: string; score: number } {
+  let score = 0;
 
-  // Budget scoring
+  // Budget signal (0-40 pts)
   const budget = parseInt(data.budget || "0");
-  if (budget >= 20000) { score += 40; }
-  else if (budget >= 10000) { score += 30; }
-  else if (budget >= 5000) { score += 20; }
-  else if (budget >= 1000) { score += 10; }
+  if (budget >= 20000) score += 40;
+  else if (budget >= 10000) score += 30;
+  else if (budget >= 5000) score += 20;
+  else if (budget >= 1000) score += 10;
 
-  // Has company name = more serious
+  // Contact quality (0-20 pts)
+  if (data.email && !data.email.match(/@(gmail|yahoo|hotmail|outlook|aol|icloud)\./i)) score += 10;
   if (data.company && data.company.length > 2) score += 10;
 
-  // Business email (not gmail/yahoo) = more serious
-  if (data.email && !data.email.match(/@(gmail|yahoo|hotmail|outlook)\./i)) score += 10;
+  // Engagement signal based on form type (0-20 pts)
+  const formType = (data.formType || "").toLowerCase();
+  if (formType === "chatbot" || formType === "chat") score += 20;
+  else if (formType === "audit") score += 15;
+  else if (formType === "contact" || formType === "founder") score += 10;
+  else if (formType === "newsletter") score += 5;
+  else score += 10; // default for unknown forms
 
-  // Service type scoring
+  // Service match (0-10 pts)
   const service = (data.service || "").toLowerCase();
   if (service.includes("marketing") || service.includes("ads") || service.includes("seo")) score += 10;
-  if (service.includes("development") || service.includes("app")) score += 10;
+  else if (service.includes("development") || service.includes("app") || service.includes("ai")) score += 10;
+  else if (service.includes("security") || service.includes("backup")) score += 7;
+  else if (service) score += 5;
 
-  // Determine priority
+  // Attribution (0-10 pts)
+  const utm = (data.utmSource || "").toLowerCase();
+  if (utm === "referral") score += 10;
+  else if (utm === "organic" || utm === "google") score += 7;
+  else if (utm === "paid" || utm === "facebook" || utm === "meta") score += 5;
+  else score += 3; // direct
+
+  // If the website already scored the lead (e.g., DPL chatbot), blend scores
+  if (data.qualityScore && data.qualityScore > 0) {
+    score = Math.round((score + data.qualityScore) / 2);
+  }
+
+  score = Math.min(score, 100);
+
+  // Priority mapping
   let priority = "LOW";
   if (score >= 80) priority = "URGENT";
   else if (score >= 60) priority = "HIGH";
   else if (score >= 40) priority = "MEDIUM";
 
-  return { priority, score: Math.min(score, 100) };
+  return { priority, score };
 }
 
 // Map source to brand ID
@@ -76,9 +76,26 @@ function getBrandId(source: string): string | null {
   return map[source?.toUpperCase()] || null;
 }
 
+// Auto-assign lead based on source and priority
+function autoAssignRep(source: string, priority: string): string | null {
+  // URGENT leads go to founders
+  if (priority === "URGENT") {
+    return Math.random() > 0.5 ? "faizan" : "umer";
+  }
+
+  // By brand expertise
+  const assignments: Record<string, string[]> = {
+    DPL: ["faizan", "umer"],  // Performance marketing
+    VCS: ["ahmed", "ali"],     // SEO/workforce
+    BSL: ["hamza", "sarah"],   // Tech/security
+  };
+
+  const team = assignments[source?.toUpperCase()] || ["faizan", "umer"];
+  return team[Math.floor(Math.random() * team.length)];
+}
+
 export async function POST(req: Request) {
   try {
-    // Accept both JSON and form data
     let data: Record<string, string> = {};
     const contentType = req.headers.get("content-type") || "";
 
@@ -88,7 +105,6 @@ export async function POST(req: Request) {
       const formData = await req.formData();
       formData.forEach((val, key) => { data[key] = String(val); });
     } else {
-      // Try JSON first, then form
       try {
         data = await req.json();
       } catch {
@@ -97,19 +113,39 @@ export async function POST(req: Request) {
       }
     }
 
-    const { name, email, phone, company, service, budget, message, source } = data;
+    const {
+      name, email, phone, company, service, budget, message, source,
+      formType, qualityScore: qsRaw, utmSource, utmMedium, utmCampaign,
+    } = data;
 
     if (!name && !email) {
       return NextResponse.json({ error: "Name or email required" }, { status: 400 });
     }
 
     // Score the lead
-    const { priority, score } = scoreLead({ budget, service, company, email });
+    const qualityScore = parseInt(qsRaw || "0") || 0;
+    const { priority, score } = scoreLead({ budget, service, company, email, formType, qualityScore, utmSource });
     const brandId = getBrandId(source || "");
+    const assignedRep = autoAssignRep(source || "", priority);
+
+    // Build source string with form type
+    const sourceLabel = formType
+      ? `${formType.charAt(0).toUpperCase() + formType.slice(1)} - ${source || "Direct"}`
+      : `Website - ${source || "Direct"}`;
+
+    // Build notes with attribution and metadata
+    const notesParts = [];
+    if (message) notesParts.push(message);
+    if (formType) notesParts.push(`Form: ${formType}`);
+    if (utmSource) notesParts.push(`UTM: ${utmSource}/${utmMedium || "-"}/${utmCampaign || "-"}`);
+    if (assignedRep) notesParts.push(`Auto-assigned: ${assignedRep}`);
+    notesParts.push(`Score: ${score}/100 (${priority})`);
+    const notes = notesParts.join(" | ");
 
     // Create lead in database
+    let leadId: string | null = null;
     try {
-      await prisma.lead.create({
+      const lead = await prisma.lead.create({
         data: {
           companyName: company || name || "Unknown",
           contactName: name || "Unknown",
@@ -117,15 +153,41 @@ export async function POST(req: Request) {
           phone: phone || null,
           country: null,
           services: service ? service.split(",").map((s: string) => s.trim()) : [],
-          source: `Website - ${source || "Direct"}`,
+          source: sourceLabel,
           status: "NEW",
           value: parseInt(budget || "0") || 0,
           probability: score,
           brandId,
+          notes,
         },
       });
-    } catch {
-      // DB not connected — still return success
+      leadId = lead.id;
+    } catch (dbErr) {
+      console.error("Webhook DB error:", dbErr);
+    }
+
+    // Create notification for assigned rep (if DB is connected)
+    if (leadId) {
+      try {
+        // Find the assigned user
+        const assigneeEmail = assignedRep ? `${assignedRep}@digitalpointllc.com` : null;
+        if (assigneeEmail) {
+          const user = await prisma.user.findUnique({ where: { email: assigneeEmail }, select: { id: true } });
+          if (user) {
+            await prisma.notification.create({
+              data: {
+                title: `New ${priority} Lead`,
+                message: `${company || name} via ${source || "Direct"} (Score: ${score}/100)`,
+                type: "lead",
+                userId: user.id,
+                data: { leadId, priority, score, source: source || "Direct", formType: formType || "website" },
+              },
+            });
+          }
+        }
+      } catch {
+        // Notification creation failed — not critical
+      }
     }
 
     // Send notification email (if Resend configured)
@@ -136,37 +198,38 @@ export async function POST(req: Request) {
         await resend.emails.send({
           from: "FU Corp CRM <crm@fu-corp.com>",
           to: ["faizi@digitalpointllc.com", "umi@digitalpointllc.com"],
-          subject: `New Lead: ${company || name} (${priority} priority)`,
+          subject: `New Lead: ${company || name} (${priority} - Score ${score})`,
           html: `
-            <div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
-              <div style="background:#FF6B00;padding:20px;text-align:center;">
-                <h1 style="color:#000;margin:0;">New Lead Captured!</h1>
+            <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;">
+              <div style="background:#6366F1;padding:20px;text-align:center;border-radius:12px 12px 0 0;">
+                <h1 style="color:#fff;margin:0;font-size:18px;">New Lead Captured</h1>
               </div>
-              <div style="padding:30px;background:#f9f9f9;">
+              <div style="padding:24px;background:#f9fafb;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
                 <table style="width:100%;border-collapse:collapse;">
-                  <tr><td style="padding:8px;color:#666;">Name</td><td style="padding:8px;font-weight:bold;">${name || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Email</td><td style="padding:8px;">${email || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Phone</td><td style="padding:8px;">${phone || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Company</td><td style="padding:8px;">${company || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Service</td><td style="padding:8px;">${service || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Budget</td><td style="padding:8px;">$${budget || "0"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Message</td><td style="padding:8px;">${message || "—"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Source</td><td style="padding:8px;">${source || "Direct"}</td></tr>
-                  <tr><td style="padding:8px;color:#666;">Priority</td><td style="padding:8px;color:${priority === "URGENT" ? "#EF4444" : priority === "HIGH" ? "#F59E0B" : "#3B82F6"};font-weight:bold;">${priority} (Score: ${score}/100)</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Name</td><td style="padding:8px 0;font-weight:600;font-size:13px;">${name || "—"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Email</td><td style="padding:8px 0;font-size:13px;">${email || "—"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Phone</td><td style="padding:8px 0;font-size:13px;">${phone || "—"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Company</td><td style="padding:8px 0;font-size:13px;">${company || "—"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Service</td><td style="padding:8px 0;font-size:13px;">${service || "—"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Budget</td><td style="padding:8px 0;font-size:13px;">$${budget || "0"}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Source</td><td style="padding:8px 0;font-size:13px;">${sourceLabel}</td></tr>
+                  <tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Priority</td><td style="padding:8px 0;font-weight:700;font-size:13px;color:${priority === "URGENT" ? "#EF4444" : priority === "HIGH" ? "#F59E0B" : "#3B82F6"};">${priority} (Score: ${score}/100)</td></tr>
+                  ${assignedRep ? `<tr><td style="padding:8px 0;color:#6b7280;font-size:13px;">Assigned</td><td style="padding:8px 0;font-size:13px;">${assignedRep}</td></tr>` : ""}
                 </table>
-              </div>
-              <div style="padding:15px;text-align:center;color:#999;font-size:12px;">
-                <a href="https://fu-corp-crm.vercel.app/pipeline" style="color:#FF6B00;">View in CRM Pipeline</a>
+                ${message ? `<div style="margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#374151;">${message}</div>` : ""}
+                <div style="margin-top:16px;text-align:center;">
+                  <a href="https://fu-corp-crm.vercel.app/pipeline" style="display:inline-block;padding:10px 24px;background:#6366F1;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View in CRM</a>
+                </div>
               </div>
             </div>
           `,
         });
-      } catch (e) {
-        // Email failed — not critical
+      } catch (emailErr) {
+        console.error("Webhook email error:", emailErr);
       }
     }
 
-    // Google Sheets sync (if configured)
+    // Google Sheets sync
     if (process.env.GOOGLE_SHEETS_WEBHOOK_URL) {
       try {
         await fetch(process.env.GOOGLE_SHEETS_WEBHOOK_URL, {
@@ -174,8 +237,9 @@ export async function POST(req: Request) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name, email, phone, company, service, budget, message,
-            source: source || "Direct",
-            priority, score,
+            source: source || "Direct", formType: formType || "website",
+            priority, score, assignedRep,
+            utmSource, utmMedium, utmCampaign,
             date: new Date().toISOString(),
           }),
         });
@@ -184,12 +248,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // CORS headers for cross-origin form submissions
     return NextResponse.json(
       {
         success: true,
         message: "Lead captured successfully",
-        lead: { company: company || name, priority, score },
+        leadId,
+        lead: { company: company || name, priority, score, assignedRep },
       },
       {
         headers: {
@@ -208,28 +272,27 @@ export async function POST(req: Request) {
   }
 }
 
-// GET — show info page when visited in browser
+// GET — info page
 export async function GET() {
   return new Response(
     `<!DOCTYPE html>
     <html><head><title>FU Corp CRM Webhook</title></head>
-    <body style="font-family:system-ui;background:#09090B;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
+    <body style="font-family:system-ui;background:#0A0A0F;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
       <div style="text-align:center;max-width:500px;padding:40px;">
-        <div style="width:60px;height:60px;background:#FF6B00;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#000;">FU</div>
+        <div style="width:60px;height:60px;background:#6366F1;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#fff;">FU</div>
         <h1 style="font-size:24px;margin:0 0 8px;">Webhook Active</h1>
-        <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions via POST and creates leads in FU Corp CRM + Google Sheets.</p>
-        <div style="background:#111;border:1px solid #222;border-radius:12px;padding:20px;text-align:left;font-size:13px;">
-          <p style="color:#FF6B00;margin:0 0 8px;font-weight:600;">Usage:</p>
-          <code style="color:#71717A;">POST ${"{name, email, phone, company, service, budget, message, source}"}</code>
+        <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions and creates leads in FU Corp CRM.</p>
+        <div style="background:#131318;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;text-align:left;font-size:13px;">
+          <p style="color:#6366F1;margin:0 0 8px;font-weight:600;">Fields:</p>
+          <code style="color:#71717A;">name, email, phone, company, service, budget, message, source, formType, qualityScore, utmSource, utmMedium, utmCampaign</code>
         </div>
-        <p style="color:#333;font-size:11px;margin-top:20px;">FU Corp Command Center</p>
       </div>
     </body></html>`,
     { headers: { "Content-Type": "text/html" } }
   );
 }
 
-// Handle CORS preflight
+// CORS preflight
 export async function OPTIONS() {
   return NextResponse.json({}, {
     headers: {
