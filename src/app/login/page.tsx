@@ -64,7 +64,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8 animate-fade-in-up">
           <div className="inline-flex items-center justify-center mb-5">
-            <WolfLogo size="icon" animated />
+            <WolfLogo size="full" animated />
           </div>
           <h1 className="text-[24px] font-semibold text-[var(--foreground)] tracking-tight">DP Command Center</h1>
           <p className="text-[13px] text-[var(--foreground-dim)] mt-1">Enterprise CRM</p>

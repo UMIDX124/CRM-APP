@@ -1,17 +1,15 @@
 {
-  "name": "FU Corp Command Center",
-  "short_name": "FU Corp",
-  "description": "Enterprise CRM for FU Corporation",
+  "name": "DP Command Center",
+  "short_name": "DP",
+  "description": "Enterprise CRM powered by Alpha AI",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#040408",
-  "theme_color": "#FF6B00",
+  "background_color": "#0A0A0F",
+  "theme_color": "#6366F1",
   "orientation": "any",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-192.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "/icon-512.svg", "sizes": "any", "type": "image/svg+xml" },
-    { "src": "/favicon.ico", "sizes": "256x256", "type": "image/x-icon" }
+    { "src": "/wolf-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/wolf-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/wolf-32.png", "sizes": "32x32", "type": "image/png" }
   ]
 }

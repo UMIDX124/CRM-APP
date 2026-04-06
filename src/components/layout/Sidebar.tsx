@@ -78,10 +78,10 @@ export default function Sidebar({
           collapsed ? "px-3 py-4 justify-center" : "px-4 py-4"
         )}>
           <div
-            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: currentBrand?.color || "#6366F1" }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+            style={{ borderColor: `${currentBrand?.color || "#6366F1"}40`, background: "var(--surface-elevated)" }}
           >
-            <WolfIcon size={18} color="#fff" />
+            <WolfIcon size={18} />
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0 relative">
@@ -204,8 +204,8 @@ export function MobileHeader({
           <button onClick={onMenuOpen} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
             <Menu className="w-5 h-5 text-[var(--foreground-muted)]" />
           </button>
-          <div className="w-7 h-7 rounded-md bg-[var(--primary)] flex items-center justify-center">
-            <WolfIcon size={16} color="#fff" />
+          <div className="w-7 h-7 rounded-md bg-[var(--surface-elevated)] border border-[var(--border)] flex items-center justify-center">
+            <WolfIcon size={16} />
           </div>
           <span className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{title}</span>
         </div>
