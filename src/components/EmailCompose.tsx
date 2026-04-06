@@ -1,17 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send, X, Paperclip, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
-import { clients } from "@/data/mock-data";
 import { useToast } from "@/components/ui/toast";
+
+interface EmailClient { id: string; email: string; companyName: string; contactName: string }
 
 export default function EmailCompose({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [clients, setClients] = useState<EmailClient[]>([]);
   const { success, error } = useToast();
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/clients")
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          setClients(data.map((c: Record<string, unknown>) => ({
+            id: String(c.id), email: String(c.email || ""),
+            companyName: String(c.companyName || ""), contactName: String(c.contactName || ""),
+          })));
+        }
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

@@ -10,7 +10,7 @@ import {
   BarChart3, ClipboardCheck, ArrowRight, X, Sparkles, Loader2, Send,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { employees, clients, tasks, leads } from "@/data/mock-data";
+// Search data fetched from API on palette open
 
 interface CommandItem {
   id: string;
@@ -28,6 +28,11 @@ const suggestedPrompts = [
   "Draft a follow-up email",
 ];
 
+interface SearchEmployee { id: string; name: string; title: string; brand: string; email: string; department: string }
+interface SearchClient { id: string; companyName: string; contactName: string; email: string; brand: string; mrr: number }
+interface SearchTask { id: string; title: string; assignee: string; status: string; client: string; brand: string }
+interface SearchLead { id: string; companyName: string; contactName: string; value: number; status: string; salesRep: string }
+
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -37,6 +42,44 @@ export default function CommandPalette() {
   const listRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<Element | null>(null);
   const router = useRouter();
+
+  // API-fetched search data
+  const [employees, setEmployees] = useState<SearchEmployee[]>([]);
+  const [clients, setClients] = useState<SearchClient[]>([]);
+  const [tasks, setTasks] = useState<SearchTask[]>([]);
+  const [leads, setLeads] = useState<SearchLead[]>([]);
+
+  // Fetch data when palette opens
+  useEffect(() => {
+    if (!open) return;
+    Promise.all([
+      fetch("/api/employees").then(r => r.ok ? r.json() : []),
+      fetch("/api/clients").then(r => r.ok ? r.json() : []),
+      fetch("/api/tasks").then(r => r.ok ? r.json() : []),
+      fetch("/api/leads").then(r => r.ok ? r.json() : []),
+    ]).then(([emps, cls, tsks, lds]) => {
+      if (Array.isArray(emps)) setEmployees(emps.map((e: Record<string, unknown>) => ({
+        id: String(e.id), name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
+        title: String(e.title || ""), brand: (e.brand as Record<string, string>)?.code || "",
+        email: String(e.email || ""), department: String(e.department || ""),
+      })));
+      if (Array.isArray(cls)) setClients(cls.map((c: Record<string, unknown>) => ({
+        id: String(c.id), companyName: String(c.companyName || ""),
+        contactName: String(c.contactName || ""), email: String(c.email || ""),
+        brand: (c.brand as Record<string, string>)?.code || "", mrr: Number(c.mrr) || 0,
+      })));
+      if (Array.isArray(tsks)) setTasks(tsks.map((t: Record<string, unknown>) => ({
+        id: String(t.id), title: String(t.title || ""), status: String(t.status || ""),
+        assignee: t.assignee ? `${(t.assignee as Record<string, string>).firstName || ""} ${(t.assignee as Record<string, string>).lastName || ""}`.trim() : "",
+        client: (t.client as Record<string, string>)?.companyName || "", brand: (t.brand as Record<string, string>)?.code || "",
+      })));
+      if (Array.isArray(lds)) setLeads(lds.map((l: Record<string, unknown>) => ({
+        id: String(l.id), companyName: String(l.companyName || ""),
+        contactName: String(l.contactName || ""), value: Number(l.value) || 0,
+        status: String(l.status || ""), salesRep: String(l.salesRepId || ""),
+      })));
+    }).catch(() => {});
+  }, [open]);
 
   const { messages, setMessages, sendMessage, status } = useChat();
   const isStreaming = status === "streaming" || status === "submitted";
@@ -114,13 +157,13 @@ export default function CommandPalette() {
     });
     leads.forEach((l) => {
       items.push({
-        id: `lead-${l.id}`, label: l.companyName, description: `${l.contactName} · $${l.value.toLocaleString()} · ${l.status}`,
+        id: `lead-${l.id}`, label: l.companyName, description: `${l.contactName} · $${(l.value || 0).toLocaleString()} · ${l.status}`,
         icon: Briefcase, category: "Leads", action: () => navigate("/pipeline"),
         keywords: [l.contactName, l.salesRep, l.status],
       });
     });
     return items;
-  }, [navigate]);
+  }, [navigate, employees, clients, tasks, leads]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return commands.filter((c) => c.category === "Navigation");
