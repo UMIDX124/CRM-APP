@@ -11,7 +11,7 @@ export default function NotFound() {
 
       <div className="relative text-center max-w-md animate-fade-in-up">
         <div className="flex justify-center mb-6 opacity-20">
-          <WolfLogo size="full" color="var(--foreground-dim)" />
+          <WolfLogo size="mark" className="opacity-40" />
         </div>
         <div className="text-[100px] font-black leading-none mb-4 select-none text-gradient-primary">
           404
