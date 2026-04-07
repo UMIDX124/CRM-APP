@@ -43,3 +43,10 @@ next-env.d.ts
 
 # Credentials — never commit real employee logins/passwords
 EMPLOYEE_CREDENTIALS.md
+EMPLOYEE_CREDENTIALS.csv
+EMPLOYEE_CREDENTIALS_TABLE.txt
+EMPLOYEE_CREDENTIALS*.txt
+EMPLOYEE_CREDENTIALS*.csv
+
+# Parsed client data may contain PII — keep local
+scripts/parsed-clients.json
