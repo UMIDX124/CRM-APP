@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import {
   User, Building2, Bell, Shield, Palette, Globe, Save, Camera,
   Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight, Loader2, AlertCircle,
+  Moon, Sun,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useTheme } from "@/components/ThemeContext";
 const parentCompany = { name: "Alpha", code: "A", tagline: "Enterprise Command Center", website: "alpha-crm.com", founded: "2023", ceo: "Faizan & Umer" };
 const brands = [
   { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com" },
@@ -22,6 +24,7 @@ const tabs = [
 ];
 
 export default function SettingsModule() {
+  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -373,7 +376,15 @@ export default function SettingsModule() {
                     ].map((session, i) => (
                       <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-[var(--surface)]">
                         <div><p className="text-xs text-[var(--foreground-muted)]">{session.device}</p><p className="text-[10px] text-[var(--foreground-dim)]">{session.location}</p></div>
-                        {session.active ? <span className="text-[10px] text-emerald-400 font-medium">Current</span> : <button className="text-[10px] text-red-400 hover:text-red-300">Revoke</button>}
+                        {session.active ? <span className="text-[10px] text-emerald-400 font-medium">Current</span> : (
+                          <button
+                            type="button"
+                            onClick={() => alert("Session revocation requires server-side support — not yet implemented")}
+                            className="text-[10px] text-red-400 hover:text-red-300"
+                          >
+                            Revoke
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -389,32 +400,38 @@ export default function SettingsModule() {
                 <p className="text-sm text-[var(--foreground-dim)]">Customize the look and feel</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <button className="p-5 rounded-2xl bg-[var(--background)] border-2 border-[var(--primary)]/30 text-center">
-                  <div className="w-full h-20 rounded-xl bg-[var(--surface)] border border-[var(--border)] mb-3" />
+                <button
+                  type="button"
+                  onClick={() => setTheme("dark")}
+                  className={clsx(
+                    "p-5 rounded-2xl text-center transition-all cursor-pointer",
+                    theme === "dark"
+                      ? "bg-[var(--surface)] border-2 border-[var(--primary)]"
+                      : "bg-[var(--surface)] border-2 border-[var(--border)] hover:border-[var(--border-hover)]"
+                  )}
+                >
+                  <div className="w-full h-20 rounded-xl bg-[#0A0A0F] border border-[rgba(255,255,255,0.06)] mb-3 flex items-center justify-center">
+                    <Moon className="w-6 h-6 text-[var(--foreground-muted)]" />
+                  </div>
                   <p className="text-sm text-[var(--foreground)] font-medium">Dark Mode</p>
-                  <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>
+                  {theme === "dark" && <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>}
                 </button>
-                <button className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-center hover:border-[var(--border-hover)] transition-all">
-                  <div className="w-full h-20 rounded-xl bg-gray-100 border border-gray-200 mb-3" />
-                  <p className="text-sm text-[var(--foreground-muted)] font-medium">Light Mode</p>
+                <button
+                  type="button"
+                  onClick={() => setTheme("light")}
+                  className={clsx(
+                    "p-5 rounded-2xl text-center transition-all cursor-pointer",
+                    theme === "light"
+                      ? "bg-[var(--surface)] border-2 border-[var(--primary)]"
+                      : "bg-[var(--surface)] border-2 border-[var(--border)] hover:border-[var(--border-hover)]"
+                  )}
+                >
+                  <div className="w-full h-20 rounded-xl bg-[#FAFAFA] border border-[rgba(0,0,0,0.08)] mb-3 flex items-center justify-center">
+                    <Sun className="w-6 h-6 text-[#71717A]" />
+                  </div>
+                  <p className="text-sm text-[var(--foreground)] font-medium">Light Mode</p>
+                  {theme === "light" && <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>}
                 </button>
-              </div>
-              <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-                <h4 className="text-sm font-medium text-[var(--foreground)] mb-3">Accent Color</h4>
-                <div className="flex gap-3">
-                  {[
-                    { color: "#FF6B00", label: "Gold" },
-                    { color: "#0EA5E9", label: "Cyan" },
-                    { color: "#F59E0B", label: "Amber" },
-                    { color: "#10B981", label: "Emerald" },
-                    { color: "#EF4444", label: "Red" },
-                  ].map((c) => (
-                    <button key={c.color} className="flex flex-col items-center gap-1.5 group">
-                      <div className={clsx("w-10 h-10 rounded-xl border-2 transition-all", c.color === "#FF6B00" ? "border-white scale-110" : "border-transparent hover:scale-105")} style={{ backgroundColor: c.color }} />
-                      <span className="text-[10px] text-[var(--foreground-dim)]">{c.label}</span>
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
           )}

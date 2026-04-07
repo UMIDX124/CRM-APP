@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle, Trophy, DollarSign, UserPlus, MessageCircle, Star, AlertCircle, Clock } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -112,9 +113,12 @@ export default function RecentActivity() {
           <h3 className="text-lg font-semibold text-[var(--foreground)]">Recent Activity</h3>
           <p className="text-sm text-[var(--foreground-dim)] mt-0.5">Latest updates across all modules</p>
         </div>
-        <button className="text-xs text-[#FF6B00] hover:text-[#FF8A33] transition-colors font-medium">
+        <Link
+          href="/audit"
+          className="text-xs text-[var(--primary)] hover:text-[var(--primary-light)] transition-colors font-medium"
+        >
           View All
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-1">

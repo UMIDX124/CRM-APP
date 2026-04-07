@@ -116,7 +116,12 @@ export default function PayrollModule() {
         </select>
         <input type="month" value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}
           className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20" />
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground-muted)] text-sm hover:text-[var(--foreground)] transition-all">
+        <button
+          type="button"
+          disabled
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground-dim)] text-sm cursor-not-allowed opacity-50"
+          title="Coming soon"
+        >
           <Download className="w-4 h-4" /> Export Payslips
         </button>
       </div>

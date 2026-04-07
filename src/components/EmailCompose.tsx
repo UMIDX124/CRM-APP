@@ -100,7 +100,12 @@ export default function EmailCompose({ isOpen, onClose }: { isOpen: boolean; onC
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
-          <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--surface)] text-[var(--foreground-dim)] text-xs hover:text-[var(--foreground-muted)] transition-all">
+          <button
+            type="button"
+            disabled
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--surface)] text-[var(--foreground-dim)] text-xs cursor-not-allowed opacity-50"
+            title="Attachments coming soon"
+          >
             <Paperclip className="w-4 h-4" /> Attach File
           </button>
           <div className="flex gap-3">

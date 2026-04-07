@@ -10,6 +10,7 @@ import {
 import { clsx } from "clsx";
 import { WolfIcon } from "@/components/WolfLogo";
 import { useCompany } from "@/components/CompanyContext";
+import NotificationCenter from "@/components/NotificationCenter";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, section: "main" as const },
@@ -192,10 +193,7 @@ export function MobileHeader({
           </div>
           <span className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight">{title}</span>
         </div>
-        <button className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors relative">
-          <Bell className="w-5 h-5 text-[var(--foreground-muted)]" />
-          <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-[var(--primary)] rounded-full" />
-        </button>
+        <NotificationCenter />
       </div>
     </header>
   );

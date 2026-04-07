@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
@@ -11,6 +11,7 @@ import { ToastProvider } from "@/components/ui/toast";
 import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { CompanyProvider } from "@/components/CompanyContext";
+import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
 import UnifiedChat from "@/components/UnifiedChat";
 
@@ -36,13 +37,13 @@ const pageDescriptions: Record<string, string> = {
   "/settings": "System configuration and preferences",
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; role: string; email: string } | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showEmailCompose, setShowEmailCompose] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -87,10 +88,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => { document.documentElement.className = theme; }, [theme]);
+  // Theme is managed by ThemeProvider — class applied automatically
   useEffect(() => { if (!checkingAuth && !isAuthenticated) router.push("/login"); }, [checkingAuth, isAuthenticated, router]);
-
-  const toggleTheme = useCallback(() => setTheme((p) => (p === "dark" ? "light" : "dark")), []);
 
   // P0-8 FIX: Destroy server session on logout
   const handleLogout = async () => {
@@ -247,5 +246,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     </ToastProvider>
     </CompanyProvider>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </ThemeProvider>
   );
 }
