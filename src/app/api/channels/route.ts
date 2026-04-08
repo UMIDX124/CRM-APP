@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
-// GET /api/channels — list channels the user belongs to
+// GET /api/channels — list channels the user belongs to + per-channel unread count
 export async function GET() {
   try {
     const user = await getSession();
@@ -24,9 +24,35 @@ export async function GET() {
           take: 1,
           select: { content: true, createdAt: true, author: { select: { firstName: true } } },
         },
+        // Pull this user's membership row (if any) to derive lastReadAt
+        // for the unread-count calculation below.
+        members: {
+          where: { userId: user.id },
+          select: { lastReadAt: true },
+        },
       },
       orderBy: { name: "asc" },
     });
+
+    // Compute unread count per channel:
+    //   count(messages where createdAt > lastReadAt AND authorId != user)
+    // Own messages never count as unread. Channels the user isn't a member
+    // of (they can still see PUBLIC ones) report 0 until they actually join.
+    const unreadPairs = await Promise.all(
+      channels.map(async (ch) => {
+        const lastReadAt = ch.members[0]?.lastReadAt ?? null;
+        const count = await prisma.message.count({
+          where: {
+            channelId: ch.id,
+            authorId: { not: user.id },
+            deletedAt: null,
+            ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+          },
+        });
+        return [ch.id, count] as const;
+      })
+    );
+    const unreadMap = new Map(unreadPairs);
 
     return NextResponse.json(
       channels.map((ch) => ({
@@ -36,6 +62,7 @@ export async function GET() {
         type: ch.type,
         memberCount: ch._count.members,
         messageCount: ch._count.messages,
+        unreadCount: unreadMap.get(ch.id) ?? 0,
         lastMessage: ch.messages[0]
           ? {
               content: ch.messages[0].content.slice(0, 80),

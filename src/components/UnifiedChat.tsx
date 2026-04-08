@@ -23,6 +23,7 @@ interface Channel {
   type: string;
   memberCount: number;
   messageCount: number;
+  unreadCount?: number;
   lastMessage: { content: string; author: string; time: string } | null;
 }
 
@@ -404,12 +405,29 @@ function TeamTab() {
     if (!activeChannelId) return;
     setLoading(true);
     fetchMessages().finally(() => setLoading(false));
+    // Mark the channel read on open so the unread badge clears.
+    // Optimistically zero out the local counter so the UI feels instant.
+    fetch(`/api/channels/${activeChannelId}/read`, { method: "POST" }).catch(() => {});
+    setChannels((prev) =>
+      prev.map((c) => (c.id === activeChannelId ? { ...c, unreadCount: 0 } : c))
+    );
   }, [activeChannelId, fetchMessages]);
 
   // Subscribe to live message events from the shared SSE stream
   useEffect(() => {
     const unsubscribe = realtime.subscribeMessage((m) => {
-      if (m.channelId !== activeChannelIdRef.current) return;
+      // Always bump the unread counter for the channel unless it's
+      // the active one (the view will be marked-read on each open).
+      if (m.channelId !== activeChannelIdRef.current) {
+        setChannels((prev) =>
+          prev.map((c) =>
+            c.id === m.channelId
+              ? { ...c, unreadCount: (c.unreadCount ?? 0) + 1 }
+              : c
+          )
+        );
+        return;
+      }
       setMessages((prev) => {
         if (prev.some((p) => p.id === m.id)) return prev;
         return [...prev, m as unknown as TeamMessage];
@@ -662,19 +680,26 @@ function TeamTab() {
           <div className="h-px bg-[var(--border)] my-1 mx-2" />
           {channels.map((ch) => {
             const isDm = ch.type === "DIRECT";
+            const unread = ch.unreadCount ?? 0;
+            const hasUnread = unread > 0 && ch.id !== activeChannelId;
             return (
               <button key={ch.id} onClick={() => setActiveChannelId(ch.id)}
                 className={clsx("w-full flex items-center gap-1 px-2 py-1.5 text-left transition-colors",
-                  ch.id === activeChannelId ? "bg-[var(--surface-active)] text-[var(--foreground)]" : "text-[var(--foreground-dim)] hover:bg-[var(--surface-hover)]"
+                  ch.id === activeChannelId ? "bg-[var(--surface-active)] text-[var(--foreground)]" : hasUnread ? "text-[var(--foreground)] hover:bg-[var(--surface-hover)]" : "text-[var(--foreground-dim)] hover:bg-[var(--surface-hover)]"
                 )}>
                 {isDm ? (
                   <MessageSquare className="w-2.5 h-2.5 shrink-0 opacity-50" />
                 ) : (
                   <Hash className="w-2.5 h-2.5 shrink-0 opacity-50" />
                 )}
-                <span className="text-[10px] font-medium truncate">
+                <span className={clsx("text-[10px] truncate flex-1", hasUnread ? "font-semibold" : "font-medium")}>
                   {isDm ? ch.name.replace(/^dm-/, "").slice(0, 10) : ch.name}
                 </span>
+                {hasUnread && (
+                  <span className="inline-flex items-center justify-center min-w-[14px] h-[14px] rounded-full bg-[var(--primary)] text-white text-[8px] font-bold tabular-nums px-1 shrink-0">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
               </button>
             );
           })}
