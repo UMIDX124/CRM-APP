@@ -43,9 +43,22 @@ export async function GET(req: Request) {
   }
   const userId = user.id;
 
+  // Server-side cursor dedup: the client can pass `?notifCursor=ISO` and
+  // `?msgCursor=ISO` on reconnect so we don't re-hydrate events it has
+  // already seen. Without these the stream defaults to NOW and only
+  // delivers new events + a small 5-row hydrate bundle.
+  const url = new URL(req.url);
+  const notifCursorParam = url.searchParams.get("notifCursor");
+  const msgCursorParam = url.searchParams.get("msgCursor");
+  const isReconnect = !!(notifCursorParam || msgCursorParam);
+
   const encoder = new TextEncoder();
-  let notifCursor = new Date();
-  let messageCursor = new Date();
+  let notifCursor = notifCursorParam
+    ? new Date(notifCursorParam)
+    : new Date();
+  let messageCursor = msgCursorParam ? new Date(msgCursorParam) : new Date();
+  if (Number.isNaN(notifCursor.getTime())) notifCursor = new Date();
+  if (Number.isNaN(messageCursor.getTime())) messageCursor = new Date();
   // Track the last presence status we sent per peer userId so we only
   // emit deltas, not every poll cycle.
   const presenceCache = new Map<string, "online" | "away" | "offline">();
@@ -91,30 +104,34 @@ export async function GET(req: Request) {
       // Hello frame so the client knows the connection is live
       send("connected", { userId, timestamp: Date.now() });
 
-      // Hydrate from initial data: notifications, latest messages, presence
+      // Hydrate from initial data: notifications, latest messages, presence.
+      // SKIPPED on reconnect — the client already has everything up to the
+      // cursor it sent, so there's no need to re-send the last 5 notifs.
       await refreshChannels(true);
-      try {
-        const recent = await prisma.notification.findMany({
-          where: { userId },
-          orderBy: { createdAt: "desc" },
-          take: 5,
-        });
-        if (recent.length > 0) {
-          for (const n of recent.reverse()) {
-            send("notification", {
-              id: n.id,
-              type: n.type,
-              title: n.title,
-              message: n.message,
-              data: n.data,
-              isRead: n.isRead,
-              createdAt: n.createdAt,
-            });
+      if (!isReconnect) {
+        try {
+          const recent = await prisma.notification.findMany({
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          });
+          if (recent.length > 0) {
+            for (const n of recent.reverse()) {
+              send("notification", {
+                id: n.id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                data: n.data,
+                isRead: n.isRead,
+                createdAt: n.createdAt,
+              });
+            }
+            notifCursor = recent[recent.length - 1].createdAt;
           }
-          notifCursor = recent[recent.length - 1].createdAt;
+        } catch (err) {
+          console.error("[sse] notification hydrate failed:", err);
         }
-      } catch (err) {
-        console.error("[sse] notification hydrate failed:", err);
       }
 
       // Heartbeat — comments are ignored by EventSource but keep proxies open

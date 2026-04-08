@@ -80,6 +80,14 @@ export function useEventStream({
   const fallbackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backoffRef = useRef(1000);
   const connectRef = useRef<() => void>(() => {});
+  // Track the latest `createdAt` we've delivered to consumers per event
+  // type. On reconnect we pass these as query params so the server can
+  // skip the hydrate bundle and resume polling from exactly where we
+  // left off — eliminates the duplicate-notification problem where a
+  // reconnect would re-deliver the last 5 notifications for the client
+  // to dedupe locally.
+  const latestNotifCursorRef = useRef<string | null>(null);
+  const latestMsgCursorRef = useRef<string | null>(null);
 
   // Always call latest callbacks without resubscribing
   useEffect(() => {
@@ -115,7 +123,19 @@ export function useEventStream({
 
     setState((prev) => (prev === "open" ? "reconnecting" : "connecting"));
 
-    const es = new EventSource("/api/events");
+    // Build the stream URL with resume cursors. On initial connect both
+    // refs are null and the URL is the bare path.
+    const params = new URLSearchParams();
+    if (latestNotifCursorRef.current) {
+      params.set("notifCursor", latestNotifCursorRef.current);
+    }
+    if (latestMsgCursorRef.current) {
+      params.set("msgCursor", latestMsgCursorRef.current);
+    }
+    const qs = params.toString();
+    const streamUrl = qs ? `/api/events?${qs}` : "/api/events";
+
+    const es = new EventSource(streamUrl);
     sourceRef.current = es;
 
     es.addEventListener("connected", () => {
@@ -125,7 +145,13 @@ export function useEventStream({
 
     es.addEventListener("notification", (e: MessageEvent) => {
       try {
-        onNotifRef.current?.(JSON.parse(e.data) as StreamNotification);
+        const parsed = JSON.parse(e.data) as StreamNotification;
+        // Advance the resume cursor so a subsequent reconnect doesn't
+        // re-deliver this row.
+        if (parsed.createdAt) {
+          latestNotifCursorRef.current = parsed.createdAt;
+        }
+        onNotifRef.current?.(parsed);
       } catch {
         /* ignore malformed */
       }
@@ -133,7 +159,11 @@ export function useEventStream({
 
     es.addEventListener("message", (e: MessageEvent) => {
       try {
-        onMsgRef.current?.(JSON.parse(e.data) as StreamMessage);
+        const parsed = JSON.parse(e.data) as StreamMessage;
+        if (parsed.createdAt) {
+          latestMsgCursorRef.current = parsed.createdAt;
+        }
+        onMsgRef.current?.(parsed);
       } catch {
         /* ignore malformed */
       }
