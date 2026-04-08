@@ -46,6 +46,25 @@ const pageDescriptions: Record<string, string> = {
   "/settings": "System configuration and preferences",
 };
 
+// Page-level role protection. These routes should bounce non-managers
+// before they even see the page shell. API endpoints still enforce
+// their own role checks — this is UX gate, not the only line of defense.
+const MANAGER_ONLY_PAGE_PREFIXES = [
+  "/payroll",
+  "/audit",
+  "/webhooks",
+  "/reports",
+  "/employees",
+  "/expenses",
+];
+const MANAGER_ROLES = new Set(["SUPER_ADMIN", "PROJECT_MANAGER", "DEPT_HEAD"]);
+
+function isManagerOnlyPath(pathname: string): boolean {
+  return MANAGER_ONLY_PAGE_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}
+
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -99,6 +118,59 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   // Theme is managed by ThemeProvider — class applied automatically
   useEffect(() => { if (!checkingAuth && !isAuthenticated) router.push("/login"); }, [checkingAuth, isAuthenticated, router]);
+
+  // Role-based page guard — bounce non-managers off manager-only pages.
+  // Runs after auth check completes so the pageTitle doesn't flash.
+  useEffect(() => {
+    if (checkingAuth || !isAuthenticated || !currentUser) return;
+    if (isManagerOnlyPath(pathname) && !MANAGER_ROLES.has(currentUser.role)) {
+      router.replace("/");
+    }
+  }, [checkingAuth, isAuthenticated, currentUser, pathname, router]);
+
+  // Global 401 interceptor — monkey-patches window.fetch so that ANY API
+  // call 401'ing mid-session bounces the user back to /login. Without
+  // this, sessions that expire during browsing leave the UI in a broken
+  // state (stale data + silent API failures). The wrapper only engages
+  // for same-origin requests so third-party calls (e.g. Sentry, analytics)
+  // are unaffected.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const original = window.fetch;
+    let redirected = false;
+    const wrapped: typeof fetch = async (input, init) => {
+      const res = await original(input, init);
+      if (res.status === 401 && !redirected) {
+        // Only react to same-origin API calls to avoid redirect storms
+        // when a third-party returns 401.
+        let url = "";
+        try {
+          url = typeof input === "string" ? input : input instanceof URL ? input.toString() : (input as Request).url;
+        } catch {
+          url = "";
+        }
+        const isSameOrigin =
+          url.startsWith("/") || url.startsWith(window.location.origin);
+        const isApiCall = url.includes("/api/");
+        // Never redirect on the auth/me probe itself (it's allowed to 401)
+        const isAuthMe = url.includes("/api/auth/me");
+        if (isSameOrigin && isApiCall && !isAuthMe) {
+          redirected = true;
+          try {
+            localStorage.removeItem("fu-crm-user");
+          } catch {
+            // ignore
+          }
+          router.push("/login");
+        }
+      }
+      return res;
+    };
+    window.fetch = wrapped;
+    return () => {
+      window.fetch = original;
+    };
+  }, [router]);
 
   // P0-8 FIX: Destroy server session on logout
   const handleLogout = async () => {
