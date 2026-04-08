@@ -1,13 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
+import React, { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Send, X, Sparkles, Loader2, Zap, BarChart3,
   Users, Briefcase, Trash2, Copy, Check, Hash, AlertCircle,
+  MessageSquare, CornerDownRight, Reply as ReplyIcon,
 } from "lucide-react";
 import { WolfIcon } from "./WolfLogo";
 import { clsx } from "clsx";
@@ -39,6 +40,46 @@ interface TeamMessage {
   metadata: Record<string, unknown> | null;
   createdAt: string;
   author: MessageAuthor;
+  parentMessageId?: string | null;
+  parent?: { id: string; content: string; authorName: string } | null;
+  replyCount?: number;
+}
+
+interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  title: string | null;
+  avatar: string | null;
+}
+
+/**
+ * Parse @mentions out of plain text and return JSX with highlighted spans.
+ * Matches `@firstName` (word chars only). Non-matching text is returned
+ * as plain text nodes so newlines still wrap via `whitespace-pre-wrap`.
+ */
+function renderWithMentions(text: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  const regex = /@(\w+)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      out.push(text.slice(lastIndex, match.index));
+    }
+    out.push(
+      <span
+        key={`m-${key++}`}
+        className="px-1 rounded bg-[var(--primary)]/15 text-[var(--primary)] font-medium"
+      >
+        @{match[1]}
+      </span>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) out.push(text.slice(lastIndex));
+  return out;
 }
 
 // ─── Helpers ────────────────────────────────────────────
@@ -234,6 +275,15 @@ function TeamTab() {
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // DM picker modal
+  const [dmOpen, setDmOpen] = useState(false);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  // Reply target — when non-null, next message is sent with parentMessageId
+  const [replyTo, setReplyTo] = useState<TeamMessage | null>(null);
+  // Typing state for OTHER users (by channel id)
+  const [typingByChannel, setTypingByChannel] = useState<Record<string, string[]>>({});
+  const typingPingRef = useRef<number>(0);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const realtime = useRealtime();
   const activeChannelIdRef = useRef<string | null>(null);
@@ -276,35 +326,133 @@ function TeamTab() {
     return unsubscribe;
   }, [realtime]);
 
+  // Subscribe to typing events
+  useEffect(() => {
+    const unsubscribe = realtime.subscribeTyping((t) => {
+      setTypingByChannel((prev) => ({
+        ...prev,
+        [t.channelId]: t.users.map((u) => u.name),
+      }));
+    });
+    return unsubscribe;
+  }, [realtime]);
+
+  // Fetch employee list once for the DM picker
+  useEffect(() => {
+    if (!dmOpen || employees.length > 0) return;
+    fetch("/api/employees?minimal=1")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setEmployees(data);
+      })
+      .catch(() => {});
+  }, [dmOpen, employees.length]);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const sendMsg = async () => {
     if (!input.trim() || !activeChannelId || sending) return;
-    const content = input.trim(); setInput(""); setSending(true);
+    const content = input.trim();
+    const parentId = replyTo?.id ?? null;
+    setInput("");
+    setReplyTo(null);
+    setSending(true);
     try {
-      const res = await fetch(`/api/channels/${activeChannelId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content }) });
-      if (res.ok) { const newMsg = await res.json(); setMessages((prev) => [...prev, newMsg]); }
-      else { setError("Failed to send"); setInput(content); }
-    } catch { setError("Network error"); setInput(content); }
+      const res = await fetch(`/api/channels/${activeChannelId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, parentMessageId: parentId }),
+      });
+      if (res.ok) {
+        const newMsg = await res.json();
+        setMessages((prev) => [...prev, newMsg]);
+        // Clear typing state on send
+        fetch(`/api/channels/${activeChannelId}/typing`, { method: "DELETE" }).catch(() => {});
+      } else {
+        setError("Failed to send");
+        setInput(content);
+      }
+    } catch {
+      setError("Network error");
+      setInput(content);
+    }
     setSending(false);
   };
 
+  // Typing ping — throttled to once per 5s while user is composing
+  const onInputChange = (v: string) => {
+    setInput(v);
+    if (!activeChannelId || !v.trim()) return;
+    const now = Date.now();
+    if (now - typingPingRef.current > 5000) {
+      typingPingRef.current = now;
+      fetch(`/api/channels/${activeChannelId}/typing`, { method: "POST" }).catch(() => {});
+    }
+  };
+
+  const startDm = async (userId: string) => {
+    try {
+      const res = await fetch("/api/channels/dm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setDmOpen(false);
+      // Refresh channel list so the new DM shows up
+      fetch("/api/channels")
+        .then((r) => (r.ok ? r.json() : []))
+        .then((list) => {
+          if (Array.isArray(list)) {
+            setChannels(list);
+            setActiveChannelId(data.id);
+          }
+        })
+        .catch(() => {});
+    } catch {
+      // ignore
+    }
+  };
+
   const activeChannel = channels.find((c) => c.id === activeChannelId);
+  const typersHere =
+    activeChannelId && typingByChannel[activeChannelId]
+      ? typingByChannel[activeChannelId]
+      : [];
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 relative">
       <div className="flex flex-1 min-h-0">
         {/* Channel list */}
         <div className="w-[90px] shrink-0 border-r border-[var(--border)] overflow-y-auto py-1.5 scrollbar-thin">
-          {channels.map((ch) => (
-            <button key={ch.id} onClick={() => setActiveChannelId(ch.id)}
-              className={clsx("w-full flex items-center gap-1 px-2 py-1.5 text-left transition-colors",
-                ch.id === activeChannelId ? "bg-[var(--surface-active)] text-[var(--foreground)]" : "text-[var(--foreground-dim)] hover:bg-[var(--surface-hover)]"
-              )}>
-              <Hash className="w-2.5 h-2.5 shrink-0 opacity-50" />
-              <span className="text-[10px] font-medium truncate">{ch.name}</span>
-            </button>
-          ))}
+          <button
+            onClick={() => setDmOpen(true)}
+            className="w-full flex items-center gap-1 px-2 py-1.5 text-left text-[var(--primary)] hover:bg-[var(--surface-hover)] transition-colors"
+            title="Start a direct message"
+          >
+            <MessageSquare className="w-2.5 h-2.5 shrink-0" />
+            <span className="text-[10px] font-semibold">New DM</span>
+          </button>
+          <div className="h-px bg-[var(--border)] my-1 mx-2" />
+          {channels.map((ch) => {
+            const isDm = ch.type === "DIRECT";
+            return (
+              <button key={ch.id} onClick={() => setActiveChannelId(ch.id)}
+                className={clsx("w-full flex items-center gap-1 px-2 py-1.5 text-left transition-colors",
+                  ch.id === activeChannelId ? "bg-[var(--surface-active)] text-[var(--foreground)]" : "text-[var(--foreground-dim)] hover:bg-[var(--surface-hover)]"
+                )}>
+                {isDm ? (
+                  <MessageSquare className="w-2.5 h-2.5 shrink-0 opacity-50" />
+                ) : (
+                  <Hash className="w-2.5 h-2.5 shrink-0 opacity-50" />
+                )}
+                <span className="text-[10px] font-medium truncate">
+                  {isDm ? ch.name.replace(/^dm-/, "").slice(0, 10) : ch.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Messages */}
@@ -341,14 +489,34 @@ function TeamTab() {
                   );
                 }
                 return (
-                  <div key={msg.id} className="flex items-start gap-2">
+                  <div key={msg.id} className="flex items-start gap-2 group">
                     <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 text-[9px] font-semibold mt-0.5" style={{ backgroundColor: `${color}15`, color }}>{msg.author.name.charAt(0)}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-[11px] font-medium text-[var(--foreground)]">{msg.author.name}</span>
                         <span className="text-[9px] text-[var(--foreground-dim)]">{formatTime(msg.createdAt)}</span>
+                        <button
+                          onClick={() => setReplyTo(msg)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-[var(--foreground-dim)] hover:text-[var(--primary)] flex items-center gap-0.5 ml-1"
+                          title="Reply in thread"
+                        >
+                          <ReplyIcon className="w-2.5 h-2.5" /> Reply
+                        </button>
                       </div>
-                      <p className="text-[12px] text-[var(--foreground-muted)] leading-relaxed break-words">{msg.content}</p>
+                      {msg.parent && (
+                        <div className="mt-0.5 px-2 py-1 rounded border-l-2 border-[var(--primary)]/40 bg-[var(--surface-hover)]/40 text-[10px] text-[var(--foreground-dim)] truncate">
+                          <CornerDownRight className="w-2.5 h-2.5 inline mr-1" />
+                          <span className="font-medium">{msg.parent.authorName}</span>: {msg.parent.content.slice(0, 80)}
+                        </div>
+                      )}
+                      <p className="text-[12px] text-[var(--foreground-muted)] leading-relaxed break-words whitespace-pre-wrap">
+                        {renderWithMentions(msg.content)}
+                      </p>
+                      {!!msg.replyCount && msg.replyCount > 0 && (
+                        <p className="text-[10px] text-[var(--primary)] mt-0.5 font-medium">
+                          {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -364,11 +532,36 @@ function TeamTab() {
             </div>
           )}
 
+          {typersHere.length > 0 && (
+            <div className="px-3 py-1 text-[10px] text-[var(--foreground-dim)] italic">
+              {typersHere.slice(0, 3).join(", ")}{typersHere.length > 3 ? ` and ${typersHere.length - 3} more` : ""} {typersHere.length === 1 ? "is" : "are"} typing…
+            </div>
+          )}
+
+          {replyTo && (
+            <div className="px-3 py-1.5 border-t border-[var(--border)] bg-[var(--surface-hover)]/40 flex items-start gap-2">
+              <CornerDownRight className="w-3 h-3 text-[var(--primary)] mt-0.5 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-[var(--foreground-dim)]">
+                  Replying to <span className="font-medium text-[var(--foreground-muted)]">{replyTo.author.name}</span>
+                </p>
+                <p className="text-[10px] text-[var(--foreground-dim)] truncate">{replyTo.content}</p>
+              </div>
+              <button
+                onClick={() => setReplyTo(null)}
+                className="text-[var(--foreground-dim)] hover:text-[var(--foreground-muted)] shrink-0"
+                title="Cancel reply"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
           <div className="px-3 py-2 border-t border-[var(--border)]">
             <div className="flex items-center gap-2">
-              <input type="text" value={input} onChange={(e) => setInput(e.target.value)}
+              <input type="text" value={input} onChange={(e) => onInputChange(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMsg()}
-                placeholder={activeChannel ? `#${activeChannel.name}` : "Select a channel..."}
+                placeholder={activeChannel ? (activeChannel.type === "DIRECT" ? "Send a DM…" : `#${activeChannel.name}`) : "Select a channel..."}
                 disabled={!activeChannelId || sending}
                 className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--foreground)] placeholder:text-[var(--foreground-dim)] focus:outline-none focus:border-[var(--primary)] disabled:opacity-50" />
               <button onClick={sendMsg} disabled={!input.trim() || !activeChannelId || sending}
@@ -379,6 +572,57 @@ function TeamTab() {
           </div>
         </div>
       </div>
+
+      {/* DM picker modal */}
+      {dmOpen && (
+        <div
+          className="absolute inset-0 z-10 bg-[var(--background)]/80 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setDmOpen(false)}
+        >
+          <div
+            className="w-full max-w-[340px] bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="text-[13px] font-semibold text-[var(--foreground)]">Start a direct message</h3>
+              <button onClick={() => setDmOpen(false)} className="text-[var(--foreground-dim)] hover:text-[var(--foreground)]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="max-h-[320px] overflow-auto">
+              {employees.length === 0 ? (
+                <div className="p-6 text-center text-[11px] text-[var(--foreground-dim)]">
+                  <Loader2 className="w-4 h-4 mx-auto mb-2 animate-spin" />
+                  Loading team…
+                </div>
+              ) : (
+                employees.map((e) => (
+                  <button
+                    key={e.id}
+                    onClick={() => startDm(e.id)}
+                    className="w-full flex items-center gap-2 px-4 py-2 hover:bg-[var(--surface-hover)] text-left transition-colors"
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] flex items-center justify-center text-[10px] font-semibold shrink-0"
+                    >
+                      {e.firstName.charAt(0)}
+                      {e.lastName?.charAt(0) ?? ""}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12px] font-medium text-[var(--foreground)] truncate">
+                        {e.firstName} {e.lastName}
+                      </p>
+                      {e.title && (
+                        <p className="text-[10px] text-[var(--foreground-dim)] truncate">{e.title}</p>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

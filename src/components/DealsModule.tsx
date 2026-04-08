@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
   Plus,
   DollarSign,
@@ -12,6 +13,7 @@ import {
   Activity,
   Building2,
   User,
+  Upload,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/types";
 import { useCompany } from "@/components/CompanyContext";
@@ -200,6 +202,12 @@ export default function DealsModule() {
               className="input-field pl-8 text-[12px] w-[220px]"
             />
           </div>
+          <Link
+            href="/deals/import"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-[12px] font-medium text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)] transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" /> Import CSV
+          </Link>
           <button
             onClick={() => setCreateOpen(true)}
             className="btn-primary text-[12px] gap-1.5"

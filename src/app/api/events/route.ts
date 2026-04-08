@@ -18,6 +18,7 @@ import { getSession } from "@/lib/auth";
  *   - notification  (per new Notification row)
  *   - message       (per new Message row in user's channels)
  *   - presence      (when any user this user shares a channel with flips status)
+ *   - typing        (members whose typingUntil > now, per channel, delta-based)
  *   - reconnect     (server graceful close — client should reopen)
  */
 export const dynamic = "force-dynamic";
@@ -48,6 +49,9 @@ export async function GET(req: Request) {
   // Track the last presence status we sent per peer userId so we only
   // emit deltas, not every poll cycle.
   const presenceCache = new Map<string, "online" | "away" | "offline">();
+  // Track per-channel set of user IDs currently typing so we only emit
+  // deltas when the set changes.
+  const typingCache = new Map<string, string>(); // channelId -> sorted userIds joined
   let cancelled = false;
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let beatTimer: ReturnType<typeof setInterval> | undefined;
@@ -201,6 +205,50 @@ export async function GET(req: Request) {
             }
           } catch (err) {
             console.error("[sse] message poll failed:", err);
+          }
+        }
+
+        // ── 3a) Typing indicators — who's currently composing ──────
+        if (channelIds.length > 0) {
+          try {
+            const now = new Date();
+            const typers = await prisma.channelMember.findMany({
+              where: {
+                channelId: { in: channelIds },
+                typingUntil: { gt: now },
+                NOT: { userId },
+              },
+              select: {
+                channelId: true,
+                userId: true,
+                user: { select: { firstName: true } },
+              },
+            });
+            // Group by channel
+            const byChannel = new Map<string, Array<{ id: string; name: string }>>();
+            for (const t of typers) {
+              if (!byChannel.has(t.channelId)) byChannel.set(t.channelId, []);
+              byChannel.get(t.channelId)!.push({ id: t.userId, name: t.user.firstName });
+            }
+            // Emit deltas for channels whose typing set changed
+            const seen = new Set<string>();
+            for (const [cid, users] of byChannel.entries()) {
+              seen.add(cid);
+              const key = users.map((u) => u.id).sort().join(",");
+              if (typingCache.get(cid) !== key) {
+                typingCache.set(cid, key);
+                send("typing", { channelId: cid, users });
+              }
+            }
+            // Also emit empty for channels that previously had typers but no longer
+            for (const cid of typingCache.keys()) {
+              if (!seen.has(cid) && typingCache.get(cid) !== "") {
+                typingCache.set(cid, "");
+                send("typing", { channelId: cid, users: [] });
+              }
+            }
+          } catch (err) {
+            console.error("[sse] typing poll failed:", err);
           }
         }
 

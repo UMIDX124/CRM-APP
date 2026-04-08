@@ -526,13 +526,14 @@ model Channel {
 }
 
 model ChannelMember {
-  id         String    @id @default(cuid())
-  channelId  String
-  userId     String
-  role       String    @default("MEMBER") // ADMIN, MEMBER
-  isMuted    Boolean   @default(false)
-  lastReadAt DateTime?
-  joinedAt   DateTime  @default(now())
+  id           String    @id @default(cuid())
+  channelId    String
+  userId       String
+  role         String    @default("MEMBER") // ADMIN, MEMBER
+  isMuted      Boolean   @default(false)
+  lastReadAt   DateTime?
+  typingUntil  DateTime? // set ~10s in future while user is composing
+  joinedAt     DateTime  @default(now())
 
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -730,6 +731,11 @@ model Ticket {
   closedAt        DateTime?
   slaDueAt        DateTime?
 
+  // Customer Satisfaction (CSAT) — collected after resolution
+  csatRating      Int? // 1-5
+  csatComment     String?
+  csatSubmittedAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -739,6 +745,23 @@ model Ticket {
   @@index([assigneeId])
   @@index([clientId])
   @@map("tickets")
+}
+
+model TicketTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  subject     String?
+  body        String
+  category    String?  // e.g. "billing", "onboarding", "tech"
+  brandId     String?
+  isActive    Boolean  @default(true)
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([brandId])
+  @@index([category])
+  @@map("ticket_templates")
 }
 
 model TicketComment {

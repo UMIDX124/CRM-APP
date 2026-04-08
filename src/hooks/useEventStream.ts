@@ -50,10 +50,16 @@ export interface StreamPresence {
   lastSeenAt: string | null;
 }
 
+export interface StreamTyping {
+  channelId: string;
+  users: Array<{ id: string; name: string }>;
+}
+
 interface UseEventStreamOptions {
   onNotification?: (n: StreamNotification | null) => void;
   onMessage?: (m: StreamMessage) => void;
   onPresence?: (p: StreamPresence) => void;
+  onTyping?: (t: StreamTyping) => void;
   enabled?: boolean;
 }
 
@@ -61,12 +67,14 @@ export function useEventStream({
   onNotification,
   onMessage,
   onPresence,
+  onTyping,
   enabled = true,
 }: UseEventStreamOptions) {
   const [state, setState] = useState<ConnectionState>("connecting");
   const onNotifRef = useRef(onNotification);
   const onMsgRef = useRef(onMessage);
   const onPresRef = useRef(onPresence);
+  const onTypingRef = useRef(onTyping);
   const sourceRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,6 +91,9 @@ export function useEventStream({
   useEffect(() => {
     onPresRef.current = onPresence;
   }, [onPresence]);
+  useEffect(() => {
+    onTypingRef.current = onTyping;
+  }, [onTyping]);
 
   const connect = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -131,6 +142,14 @@ export function useEventStream({
     es.addEventListener("presence", (e: MessageEvent) => {
       try {
         onPresRef.current?.(JSON.parse(e.data) as StreamPresence);
+      } catch {
+        /* ignore malformed */
+      }
+    });
+
+    es.addEventListener("typing", (e: MessageEvent) => {
+      try {
+        onTypingRef.current?.(JSON.parse(e.data) as StreamTyping);
       } catch {
         /* ignore malformed */
       }

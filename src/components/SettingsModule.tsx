@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   User, Building2, Bell, Shield, Palette, Globe, Save, Camera,
   Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight, Loader2, AlertCircle,
-  Moon, Sun,
+  Moon, Sun, FileText, Plus, Trash2,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useTheme } from "@/components/ThemeContext";
@@ -18,10 +18,173 @@ const brands = [
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
   { id: "company", label: "Company", icon: Building2 },
+  { id: "templates", label: "Templates", icon: FileText },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Shield },
   { id: "appearance", label: "Appearance", icon: Palette },
 ];
+
+interface TicketTpl {
+  id: string;
+  name: string;
+  subject: string | null;
+  body: string;
+  category: string | null;
+  isActive: boolean;
+}
+
+function TemplatesPanel() {
+  const [list, setList] = useState<TicketTpl[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ name: "", subject: "", body: "", category: "" });
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ticket-templates");
+      if (res.ok) setList(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    void reload();
+  }, []);
+
+  const create = async () => {
+    if (!form.name.trim() || !form.body.trim()) {
+      setError("Name and body are required");
+      return;
+    }
+    setError(null);
+    setCreating(true);
+    try {
+      const res = await fetch("/api/ticket-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          body: form.body.trim(),
+          subject: form.subject.trim() || null,
+          category: form.category.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setForm({ name: "", subject: "", body: "", category: "" });
+        await reload();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Failed to create");
+      }
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (!confirm("Delete this template?")) return;
+    const res = await fetch(`/api/ticket-templates/${id}`, { method: "DELETE" });
+    if (res.ok) await reload();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-[15px] font-semibold text-[var(--foreground)] mb-1">Canned Responses</h3>
+        <p className="text-[12px] text-[var(--foreground-dim)]">
+          Reusable reply templates agents can drop into ticket conversations. Manager role required to create or delete.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
+        <h4 className="text-[12px] font-semibold text-[var(--foreground)]">Create template</h4>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Template name"
+            className="input-field text-[12px]"
+          />
+          <input
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            placeholder="Category (billing, tech…)"
+            className="input-field text-[12px]"
+          />
+        </div>
+        <input
+          value={form.subject}
+          onChange={(e) => setForm({ ...form, subject: e.target.value })}
+          placeholder="Subject (optional)"
+          className="input-field w-full text-[12px]"
+        />
+        <textarea
+          value={form.body}
+          onChange={(e) => setForm({ ...form, body: e.target.value })}
+          placeholder="Reply body…"
+          className="input-field w-full text-[12px] resize-none"
+          rows={4}
+        />
+        {error && <p className="text-[11px] text-red-400">{error}</p>}
+        <button
+          onClick={create}
+          disabled={creating}
+          className="btn-primary text-[12px] gap-1.5 disabled:opacity-60"
+        >
+          <Plus className="w-3 h-3" /> {creating ? "Creating…" : "Create template"}
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        <h4 className="text-[12px] font-semibold text-[var(--foreground)]">
+          Existing templates {list.length > 0 && `(${list.length})`}
+        </h4>
+        {loading ? (
+          <p className="text-[11px] text-[var(--foreground-dim)]">Loading…</p>
+        ) : list.length === 0 ? (
+          <p className="text-[11px] text-[var(--foreground-dim)] italic">No templates yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {list.map((t) => (
+              <div
+                key={t.id}
+                className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[12px] font-medium text-[var(--foreground)]">{t.name}</p>
+                    {t.category && (
+                      <p className="text-[9px] text-[var(--foreground-dim)] uppercase tracking-wider">
+                        {t.category}
+                      </p>
+                    )}
+                    {t.subject && (
+                      <p className="text-[11px] text-[var(--foreground-muted)] mt-1">
+                        Subject: {t.subject}
+                      </p>
+                    )}
+                    <p className="text-[11px] text-[var(--foreground-dim)] mt-1 whitespace-pre-wrap line-clamp-3">
+                      {t.body}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => remove(t.id)}
+                    className="text-[var(--foreground-dim)] hover:text-red-400 shrink-0 p-1"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function SettingsModule() {
   const { theme, setTheme } = useTheme();
@@ -222,6 +385,12 @@ export default function SettingsModule() {
                   </select>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === "templates" && (
+            <div className="animate-fade-in">
+              <TemplatesPanel />
             </div>
           )}
 

@@ -16,10 +16,14 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
     const clientId = url.searchParams.get("clientId");
+    const brand = url.searchParams.get("brand");
 
     const where: Record<string, unknown> = {};
     if (status) where.status = status;
     if (clientId) where.clientId = clientId;
+    // Multi-tenant brand filter — scopes feedback to the currently
+    // selected company/brand by joining through Client.brand.code.
+    if (brand) where.client = { brand: { code: brand } };
 
     const feedback = await prisma.customerFeedback.findMany({
       where,

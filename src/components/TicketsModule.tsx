@@ -13,6 +13,8 @@ import {
   Tag,
   User,
   Send,
+  Star,
+  FileText,
 } from "lucide-react";
 import { useCompany } from "@/components/CompanyContext";
 
@@ -52,6 +54,9 @@ interface Ticket {
   resolvedAt: string | null;
   slaDueAt: string | null;
   slaBreached: boolean;
+  csatRating: number | null;
+  csatComment: string | null;
+  csatSubmittedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -504,6 +509,14 @@ function CreateTicketModal({
   );
 }
 
+interface CannedTemplate {
+  id: string;
+  name: string;
+  subject: string | null;
+  body: string;
+  category: string | null;
+}
+
 function TicketDetailModal({
   ticket,
   onClose,
@@ -517,6 +530,14 @@ function TicketDetailModal({
   const [reply, setReply] = useState("");
   const [isInternal, setIsInternal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // CSAT local state
+  const [csatRating, setCsatRating] = useState<number>(0);
+  const [csatComment, setCsatComment] = useState("");
+  const [csatSubmitting, setCsatSubmitting] = useState(false);
+  const [csatError, setCsatError] = useState<string | null>(null);
+  // Templates
+  const [templates, setTemplates] = useState<CannedTemplate[]>([]);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const reload = useCallback(async () => {
     try {
@@ -530,6 +551,47 @@ function TicketDetailModal({
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Load templates once on mount
+  useEffect(() => {
+    fetch("/api/ticket-templates")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setTemplates(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const submitCsat = async () => {
+    if (!csatRating) return;
+    setCsatSubmitting(true);
+    setCsatError(null);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/csat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rating: csatRating,
+          comment: csatComment.trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCsatError(data.error || "Submission failed");
+      } else {
+        await reload();
+      }
+    } catch {
+      setCsatError("Network error");
+    } finally {
+      setCsatSubmitting(false);
+    }
+  };
+
+  const applyTemplate = (tpl: CannedTemplate) => {
+    setReply((prev) => (prev ? `${prev}\n\n${tpl.body}` : tpl.body));
+    setTemplatesOpen(false);
+  };
 
   const sendReply = async () => {
     if (!reply.trim()) return;
@@ -672,6 +734,7 @@ function TicketDetailModal({
                       ? "bg-yellow-500/5 border-yellow-500/20"
                       : "bg-[var(--background)] border-[var(--border)]"
                   }`}
+                  data-ticket-comment={c.id}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <div className="w-5 h-5 rounded-full bg-[var(--primary)] flex items-center justify-center text-[9px] font-semibold text-white">
@@ -696,9 +759,117 @@ function TicketDetailModal({
               ))
             )}
           </div>
+
+          {/* CSAT — rating widget shown only for resolved/closed tickets */}
+          {(t.status === "RESOLVED" || t.status === "CLOSED") && (
+            <div className="mt-4 p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/30">
+              {t.csatSubmittedAt ? (
+                <div>
+                  <p className="text-[10px] text-[var(--foreground-dim)] uppercase tracking-wider mb-2">
+                    Customer satisfaction
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className="w-4 h-4"
+                        fill={n <= (t.csatRating || 0) ? "#F59E0B" : "none"}
+                        stroke={n <= (t.csatRating || 0) ? "#F59E0B" : "var(--foreground-dim)"}
+                      />
+                    ))}
+                    <span className="text-[11px] text-[var(--foreground-muted)] ml-1">
+                      {t.csatRating}/5
+                    </span>
+                    <span className="text-[10px] text-[var(--foreground-dim)] ml-auto">
+                      {new Date(t.csatSubmittedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {t.csatComment && (
+                    <p className="text-[11px] text-[var(--foreground-muted)] mt-2 italic">
+                      &ldquo;{t.csatComment}&rdquo;
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <p className="text-[11px] font-medium text-[var(--foreground)] mb-1">
+                    How was your experience?
+                  </p>
+                  <p className="text-[10px] text-[var(--foreground-dim)] mb-3">
+                    Rate the support you received — this helps the team improve.
+                  </p>
+                  <div className="flex items-center gap-1 mb-3">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => setCsatRating(n)}
+                        className="p-1 hover:scale-110 transition-transform"
+                        aria-label={`${n} stars`}
+                      >
+                        <Star
+                          className="w-5 h-5"
+                          fill={n <= csatRating ? "#F59E0B" : "none"}
+                          stroke={n <= csatRating ? "#F59E0B" : "var(--foreground-dim)"}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={csatComment}
+                    onChange={(e) => setCsatComment(e.target.value)}
+                    placeholder="Optional comment…"
+                    className="input-field w-full text-[11px] resize-none mb-2"
+                    rows={2}
+                    maxLength={1000}
+                  />
+                  {csatError && (
+                    <p className="text-[10px] text-red-400 mb-2">{csatError}</p>
+                  )}
+                  <button
+                    onClick={submitCsat}
+                    disabled={!csatRating || csatSubmitting}
+                    className="btn-primary text-[11px] w-full disabled:opacity-50"
+                  >
+                    {csatSubmitting ? "Submitting…" : "Submit rating"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="p-4 border-t border-[var(--border)] space-y-2">
+        <div className="p-4 border-t border-[var(--border)] space-y-2 relative">
+          {templates.length > 0 && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTemplatesOpen((v) => !v)}
+                className="inline-flex items-center gap-1 text-[10px] text-[var(--foreground-dim)] hover:text-[var(--foreground)]"
+              >
+                <FileText className="w-3 h-3" /> Use template ({templates.length})
+              </button>
+              {templatesOpen && (
+                <div className="absolute bottom-full left-4 right-4 mb-1 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated,var(--surface))] shadow-xl max-h-60 overflow-auto z-10">
+                  {templates.map((tpl) => (
+                    <button
+                      key={tpl.id}
+                      onClick={() => applyTemplate(tpl)}
+                      className="w-full text-left px-3 py-2 hover:bg-[var(--surface-hover)] border-b border-[var(--border-subtle,var(--border))] last:border-0"
+                    >
+                      <p className="text-[11px] font-medium text-[var(--foreground)]">{tpl.name}</p>
+                      {tpl.category && (
+                        <p className="text-[9px] text-[var(--foreground-dim)] uppercase tracking-wider">
+                          {tpl.category}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-[var(--foreground-dim)] line-clamp-2 mt-0.5">
+                        {tpl.body.slice(0, 120)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <textarea
             value={reply}
             onChange={(e) => setReply(e.target.value)}
