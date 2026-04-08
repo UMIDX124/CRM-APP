@@ -7,6 +7,56 @@ import { clsx } from "clsx";
 interface CalTask { id: string; title: string; dueDate: string; priority: string; status: string; assignee: string; brand: string }
 interface CalLead { id: string; companyName: string; createdAt: string; status: string }
 
+// Narrow runtime type guards. These replace the previous optimistic
+// `String(x.field || "")` casts, which silently produced garbage rows
+// when the API shape drifts (e.g. `x.title` is an object instead of a
+// string, or `x.assignee` is null instead of `{firstName, lastName}`).
+// Rows that fail validation are DROPPED, not coerced — the UI renders
+// what it can and logs the rest.
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+function asString(v: unknown, fallback = ""): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number") return String(v);
+  return fallback;
+}
+function asDateYmd(v: unknown): string {
+  if (typeof v !== "string" || !v) return "";
+  // Accept ISO strings or already-YYYY-MM-DD — split at T handles both
+  const s = v.split("T")[0];
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : "";
+}
+function parseTask(raw: unknown): CalTask | null {
+  if (!isRecord(raw)) return null;
+  const id = asString(raw.id);
+  if (!id) return null;
+  const assigneeObj = isRecord(raw.assignee) ? raw.assignee : null;
+  const brandObj = isRecord(raw.brand) ? raw.brand : null;
+  return {
+    id,
+    title: asString(raw.title),
+    dueDate: asDateYmd(raw.dueDate),
+    priority: asString(raw.priority, "MEDIUM"),
+    status: asString(raw.status, "TODO"),
+    assignee: assigneeObj
+      ? `${asString(assigneeObj.firstName)} ${asString(assigneeObj.lastName)}`.trim()
+      : "",
+    brand: brandObj ? asString(brandObj.code) : "",
+  };
+}
+function parseLead(raw: unknown): CalLead | null {
+  if (!isRecord(raw)) return null;
+  const id = asString(raw.id);
+  if (!id) return null;
+  return {
+    id,
+    companyName: asString(raw.companyName),
+    createdAt: asDateYmd(raw.createdAt),
+    status: asString(raw.status, "NEW"),
+  };
+}
+
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1));
   const [tasks, setTasks] = useState<CalTask[]>([]);
@@ -17,24 +67,43 @@ export default function CalendarPage() {
     let cancelled = false;
     setLoading(true);
     Promise.all([
-      fetch("/api/tasks").then(r => r.ok ? r.json() : []),
-      fetch("/api/leads").then(r => r.ok ? r.json() : []),
-    ]).then(([t, l]) => {
-      if (cancelled) return;
-      if (Array.isArray(t)) setTasks(t.map((x: Record<string, unknown>) => ({
-        id: String(x.id), title: String(x.title || ""),
-        dueDate: x.dueDate ? String(x.dueDate).split("T")[0] : "",
-        priority: String(x.priority || "MEDIUM"), status: String(x.status || "TODO"),
-        assignee: x.assignee ? `${(x.assignee as Record<string, string>).firstName || ""} ${(x.assignee as Record<string, string>).lastName || ""}`.trim() : "",
-        brand: (x.brand as Record<string, string>)?.code || "",
-      })));
-      if (Array.isArray(l)) setLeads(l.map((x: Record<string, unknown>) => ({
-        id: String(x.id), companyName: String(x.companyName || ""),
-        createdAt: x.createdAt ? String(x.createdAt).split("T")[0] : "",
-        status: String(x.status || "NEW"),
-      })));
-    }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      fetch("/api/tasks").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/leads").then((r) => (r.ok ? r.json() : [])),
+    ])
+      .then(([t, l]) => {
+        if (cancelled) return;
+        if (Array.isArray(t)) {
+          const parsed = t
+            .map(parseTask)
+            .filter((x): x is CalTask => x !== null);
+          if (parsed.length !== t.length) {
+            console.warn(
+              `[calendar] dropped ${t.length - parsed.length} malformed task rows`
+            );
+          }
+          setTasks(parsed);
+        }
+        if (Array.isArray(l)) {
+          const parsed = l
+            .map(parseLead)
+            .filter((x): x is CalLead => x !== null);
+          if (parsed.length !== l.length) {
+            console.warn(
+              `[calendar] dropped ${l.length - parsed.length} malformed lead rows`
+            );
+          }
+          setLeads(parsed);
+        }
+      })
+      .catch((err) => {
+        console.error("[calendar] fetch failed:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const year = currentDate.getFullYear();
@@ -68,7 +137,7 @@ export default function CalendarPage() {
       map[day].push({ type: "lead", title: l.companyName, color: "#F59E0B" });
     });
     return map;
-  }, []);
+  }, [tasks, leads]);
 
   const days: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) days.push(null);
