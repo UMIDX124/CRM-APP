@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, Sparkles } from "lucide-react";
 import { clsx } from "clsx";
@@ -13,9 +14,15 @@ import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { CompanyProvider } from "@/components/CompanyContext";
 import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
-import UnifiedChat from "@/components/UnifiedChat";
 import { RealtimeProvider, ConnectionIndicator } from "@/components/RealtimeProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
+
+// UnifiedChat ships react-markdown + remark-gfm + ai-sdk — a substantial
+// bundle that we don't need on the initial dashboard paint. Lazy-load it
+// so it doesn't block first interactive.
+const UnifiedChat = dynamic(() => import("@/components/UnifiedChat"), {
+  ssr: false,
+});
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard", "/clients": "Clients", "/employees": "Team", "/tasks": "Tasks",

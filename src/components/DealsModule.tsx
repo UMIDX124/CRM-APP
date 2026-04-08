@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -371,17 +371,22 @@ export default function DealsModule() {
   );
 }
 
-function DealCard({
-  deal,
-  onClick,
-  onDragStart,
-  onDragEnd,
-}: {
+interface DealCardProps {
   deal: Deal;
   onClick: () => void;
   onDragStart: () => void;
   onDragEnd: () => void;
-}) {
+}
+
+// memo() — kanban re-renders on every drag move; this card only changes
+// when its deal payload changes, so the memo cuts re-renders to ~1/N where
+// N is the number of deals in the column.
+const DealCard = memo(function DealCard({
+  deal,
+  onClick,
+  onDragStart,
+  onDragEnd,
+}: DealCardProps) {
   const brandColor = deal.brand?.color || "#6366F1";
   const ownerInitials = deal.owner
     ? `${deal.owner.firstName[0] || ""}${deal.owner.lastName[0] || ""}`
@@ -485,7 +490,7 @@ function DealCard({
       </div>
     </div>
   );
-}
+});
 
 function CreateDealModal({
   onClose,

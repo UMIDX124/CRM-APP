@@ -51,6 +51,7 @@ interface Employee {
   lastName: string;
   title: string | null;
   avatar: string | null;
+  brand?: { code: string; color?: string } | null;
 }
 
 /**
@@ -283,6 +284,59 @@ function TeamTab() {
   // Typing state for OTHER users (by channel id)
   const [typingByChannel, setTypingByChannel] = useState<Record<string, string[]>>({});
   const typingPingRef = useRef<number>(0);
+  // DM brand filter (ALL = no filter)
+  const [dmBrandFilter, setDmBrandFilter] = useState<string>("ALL");
+  // Thread state — which message id is expanded, plus its loaded replies
+  const [openThreadId, setOpenThreadId] = useState<string | null>(null);
+  const [threadCache, setThreadCache] = useState<Record<string, { replies: TeamMessage[]; hasMore: boolean; nextCursor: string | null; loading: boolean }>>({});
+
+  const loadThread = async (messageId: string, append = false) => {
+    setThreadCache((prev) => ({
+      ...prev,
+      [messageId]: {
+        replies: prev[messageId]?.replies ?? [],
+        hasMore: prev[messageId]?.hasMore ?? false,
+        nextCursor: prev[messageId]?.nextCursor ?? null,
+        loading: true,
+      },
+    }));
+    try {
+      const cursor = append ? threadCache[messageId]?.nextCursor : null;
+      const url = `/api/messages/${messageId}/thread?limit=30${cursor ? `&cursor=${cursor}` : ""}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      setThreadCache((prev) => {
+        const existing = prev[messageId]?.replies ?? [];
+        return {
+          ...prev,
+          [messageId]: {
+            replies: append ? [...existing, ...data.replies] : data.replies,
+            hasMore: data.hasMore,
+            nextCursor: data.nextCursor,
+            loading: false,
+          },
+        };
+      });
+    } catch {
+      setThreadCache((prev) => ({
+        ...prev,
+        [messageId]: {
+          ...(prev[messageId] ?? { replies: [], hasMore: false, nextCursor: null }),
+          loading: false,
+        },
+      }));
+    }
+  };
+
+  const toggleThread = (messageId: string) => {
+    if (openThreadId === messageId) {
+      setOpenThreadId(null);
+      return;
+    }
+    setOpenThreadId(messageId);
+    if (!threadCache[messageId]) void loadThread(messageId);
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const realtime = useRealtime();
@@ -513,9 +567,60 @@ function TeamTab() {
                         {renderWithMentions(msg.content)}
                       </p>
                       {!!msg.replyCount && msg.replyCount > 0 && (
-                        <p className="text-[10px] text-[var(--primary)] mt-0.5 font-medium">
-                          {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
-                        </p>
+                        <button
+                          onClick={() => toggleThread(msg.id)}
+                          className="text-[10px] text-[var(--primary)] mt-0.5 font-medium hover:underline"
+                        >
+                          {openThreadId === msg.id ? "Hide" : "View"} {msg.replyCount}{" "}
+                          {msg.replyCount === 1 ? "reply" : "replies"}
+                        </button>
+                      )}
+                      {openThreadId === msg.id && (
+                        <div className="mt-2 ml-4 pl-3 border-l-2 border-[var(--primary)]/30 space-y-2">
+                          {threadCache[msg.id]?.replies.map((r) => {
+                            const rc = roleColors[r.author.role] || "#71717A";
+                            return (
+                              <div key={r.id} className="flex items-start gap-2">
+                                <div
+                                  className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[8px] font-semibold mt-0.5"
+                                  style={{ backgroundColor: `${rc}15`, color: rc }}
+                                >
+                                  {r.author.name.charAt(0)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-baseline gap-1.5">
+                                    <span className="text-[10px] font-medium text-[var(--foreground)]">
+                                      {r.author.name}
+                                    </span>
+                                    <span className="text-[9px] text-[var(--foreground-dim)]">
+                                      {formatTime(r.createdAt)}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-[var(--foreground-muted)] leading-relaxed break-words whitespace-pre-wrap">
+                                    {renderWithMentions(r.content)}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {threadCache[msg.id]?.loading && (
+                            <p className="text-[10px] text-[var(--foreground-dim)] italic">Loading…</p>
+                          )}
+                          {threadCache[msg.id]?.hasMore && !threadCache[msg.id]?.loading && (
+                            <button
+                              onClick={() => loadThread(msg.id, true)}
+                              className="text-[10px] text-[var(--primary)] hover:underline"
+                            >
+                              Load more
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setReplyTo(msg)}
+                            className="text-[10px] text-[var(--foreground-dim)] hover:text-[var(--primary)] flex items-center gap-0.5"
+                          >
+                            <ReplyIcon className="w-2.5 h-2.5" /> Reply to thread
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -589,14 +694,34 @@ function TeamTab() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="max-h-[320px] overflow-auto">
+            <div className="px-4 py-2 border-b border-[var(--border)] flex items-center gap-1">
+              {(["ALL", "VCS", "BSL", "DPL"] as const).map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setDmBrandFilter(b)}
+                  className={clsx(
+                    "text-[10px] px-2 py-1 rounded font-semibold uppercase tracking-wider transition-colors",
+                    dmBrandFilter === b
+                      ? "bg-[var(--primary)]/15 text-[var(--primary)]"
+                      : "text-[var(--foreground-dim)] hover:bg-[var(--surface-hover)]"
+                  )}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+            <div className="max-h-[280px] overflow-auto">
               {employees.length === 0 ? (
                 <div className="p-6 text-center text-[11px] text-[var(--foreground-dim)]">
                   <Loader2 className="w-4 h-4 mx-auto mb-2 animate-spin" />
                   Loading team…
                 </div>
               ) : (
-                employees.map((e) => (
+                employees
+                  .filter((e) =>
+                    dmBrandFilter === "ALL" ? true : e.brand?.code === dmBrandFilter
+                  )
+                  .map((e) => (
                   <button
                     key={e.id}
                     onClick={() => startDm(e.id)}

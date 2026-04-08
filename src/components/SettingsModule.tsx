@@ -33,12 +33,24 @@ interface TicketTpl {
   isActive: boolean;
 }
 
+const MANAGER_ROLES = new Set(["SUPER_ADMIN", "PROJECT_MANAGER", "DEPT_HEAD"]);
+
 function TemplatesPanel() {
   const [list, setList] = useState<TicketTpl[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: "", subject: "", body: "", category: "" });
   const [error, setError] = useState<string | null>(null);
+  // Role check — non-managers see read-only template list
+  const [canEdit, setCanEdit] = useState(false);
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((me) => {
+        if (me?.role) setCanEdit(MANAGER_ROLES.has(me.role));
+      })
+      .catch(() => {});
+  }, []);
 
   const reload = async () => {
     setLoading(true);
@@ -94,10 +106,13 @@ function TemplatesPanel() {
       <div>
         <h3 className="text-[15px] font-semibold text-[var(--foreground)] mb-1">Canned Responses</h3>
         <p className="text-[12px] text-[var(--foreground-dim)]">
-          Reusable reply templates agents can drop into ticket conversations. Manager role required to create or delete.
+          {canEdit
+            ? "Reusable reply templates agents can drop into ticket conversations."
+            : "Browse the team's canned replies. Managers can add or remove templates."}
         </p>
       </div>
 
+      {canEdit && (
       <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 space-y-3">
         <h4 className="text-[12px] font-semibold text-[var(--foreground)]">Create template</h4>
         <div className="grid grid-cols-2 gap-2">
@@ -136,6 +151,7 @@ function TemplatesPanel() {
           <Plus className="w-3 h-3" /> {creating ? "Creating…" : "Create template"}
         </button>
       </div>
+      )}
 
       <div className="space-y-2">
         <h4 className="text-[12px] font-semibold text-[var(--foreground)]">
@@ -169,13 +185,15 @@ function TemplatesPanel() {
                       {t.body}
                     </p>
                   </div>
-                  <button
-                    onClick={() => remove(t.id)}
-                    className="text-[var(--foreground-dim)] hover:text-red-400 shrink-0 p-1"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {canEdit && (
+                    <button
+                      onClick={() => remove(t.id)}
+                      className="text-[var(--foreground-dim)] hover:text-red-400 shrink-0 p-1"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from "@next/bundle-analyzer";
 
 /**
  * Security headers applied to every response.
@@ -47,6 +48,11 @@ const securityHeaders = [
   },
 ];
 
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+  openAnalyzer: false,
+});
+
 const nextConfig: NextConfig = {
   images: {
     // Optimized via Vercel image pipeline. All current <Image> usages point
@@ -66,4 +72,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);
