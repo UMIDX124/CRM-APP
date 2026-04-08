@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo, type FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Send, X, Sparkles, Loader2, Zap, BarChart3,
   Users, Briefcase, Trash2, Copy, Check, Hash, AlertCircle,
-  MessageSquare, CornerDownRight, Reply as ReplyIcon,
+  MessageSquare, CornerDownRight, Reply as ReplyIcon, Smile,
 } from "lucide-react";
 import { WolfIcon } from "./WolfLogo";
 import { clsx } from "clsx";
@@ -43,7 +43,12 @@ interface TeamMessage {
   parentMessageId?: string | null;
   parent?: { id: string; content: string; authorName: string } | null;
   replyCount?: number;
+  reactions?: Array<{ emoji: string; count: number; reactedByMe: boolean }>;
 }
+
+// Quick-react palette — a hand-picked set instead of a full emoji picker
+// library so we don't ship ~300KB of emoji-mart just for 8 options.
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "🔥", "✅", "👀", "🚀"] as const;
 
 interface Employee {
   id: string;
@@ -81,6 +86,33 @@ function renderWithMentions(text: string): React.ReactNode[] {
   }
   if (lastIndex < text.length) out.push(text.slice(lastIndex));
   return out;
+}
+
+/**
+ * Given the compose text and the current caret position, return the
+ * mention query if the caret is inside an `@word` token, otherwise null.
+ *
+ * Walks backwards from the caret to find a preceding `@` that sits at the
+ * start-of-input or after whitespace, collecting word characters after it.
+ * Returns null if the token breaks (non-word char), if no `@` is found,
+ * or if there's a space between the `@` and the caret.
+ */
+function getMentionQuery(text: string, caretPos: number): string | null {
+  if (caretPos < 0 || caretPos > text.length) return null;
+  let i = caretPos - 1;
+  while (i >= 0) {
+    const ch = text[i];
+    if (ch === "@") {
+      // Must be at start of input or preceded by whitespace
+      if (i === 0 || /\s/.test(text[i - 1])) {
+        return text.slice(i + 1, caretPos);
+      }
+      return null;
+    }
+    if (!/\w/.test(ch)) return null;
+    i--;
+  }
+  return null;
 }
 
 // ─── Helpers ────────────────────────────────────────────
@@ -286,6 +318,12 @@ function TeamTab() {
   const typingPingRef = useRef<number>(0);
   // DM brand filter (ALL = no filter)
   const [dmBrandFilter, setDmBrandFilter] = useState<string>("ALL");
+  // @-mention autocomplete state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Emoji reaction picker — which message id currently has its popover open
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
   // Thread state — which message id is expanded, plus its loaded replies
   const [openThreadId, setOpenThreadId] = useState<string | null>(null);
   const [threadCache, setThreadCache] = useState<Record<string, { replies: TeamMessage[]; hasMore: boolean; nextCursor: string | null; loading: boolean }>>({});
@@ -391,16 +429,17 @@ function TeamTab() {
     return unsubscribe;
   }, [realtime]);
 
-  // Fetch employee list once for the DM picker
+  // Fetch employee list once on mount — used by both the DM picker and
+  // the @-mention autocomplete dropdown. A single fetch avoids re-hits
+  // and keeps the mention dropdown instant the first time the user types "@".
   useEffect(() => {
-    if (!dmOpen || employees.length > 0) return;
     fetch("/api/employees?minimal=1")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setEmployees(data);
       })
       .catch(() => {});
-  }, [dmOpen, employees.length]);
+  }, []);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -433,14 +472,146 @@ function TeamTab() {
     setSending(false);
   };
 
-  // Typing ping — throttled to once per 5s while user is composing
-  const onInputChange = (v: string) => {
+  // Typing ping — throttled to once per 5s while user is composing.
+  // Also detects `@foo` at the caret and opens the mention dropdown.
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    const caret = e.target.selectionStart ?? v.length;
     setInput(v);
+
+    const q = getMentionQuery(v, caret);
+    if (q !== null) {
+      setMentionQuery(q);
+      setMentionIndex(0);
+    } else if (mentionQuery !== null) {
+      setMentionQuery(null);
+    }
+
     if (!activeChannelId || !v.trim()) return;
     const now = Date.now();
     if (now - typingPingRef.current > 5000) {
       typingPingRef.current = now;
       fetch(`/api/channels/${activeChannelId}/typing`, { method: "POST" }).catch(() => {});
+    }
+  };
+
+  // Memoized set of up to 5 employees whose firstName/lastName starts
+  // with the current mention query. Case-insensitive.
+  const mentionMatches = useMemo(() => {
+    if (mentionQuery === null) return [] as Employee[];
+    const q = mentionQuery.trim().toLowerCase();
+    const filtered = q
+      ? employees.filter(
+          (e) =>
+            e.firstName.toLowerCase().startsWith(q) ||
+            (e.lastName && e.lastName.toLowerCase().startsWith(q))
+        )
+      : employees;
+    return filtered.slice(0, 5);
+  }, [mentionQuery, employees]);
+
+  // Clamp the keyboard selection index to the current match list so
+  // arrow-up/down doesn't point off the end after the query narrows.
+  useEffect(() => {
+    if (mentionMatches.length === 0) {
+      setMentionIndex(0);
+    } else if (mentionIndex >= mentionMatches.length) {
+      setMentionIndex(mentionMatches.length - 1);
+    }
+  }, [mentionMatches, mentionIndex]);
+
+  // Replace the `@query` fragment under the caret with `@firstName ` and
+  // close the dropdown. Focus stays in the input.
+  const selectMention = (employee: Employee) => {
+    const el = inputRef.current;
+    const caret = el?.selectionStart ?? input.length;
+    // Walk back from caret to the `@` marker
+    let start = caret - 1;
+    while (start >= 0 && input[start] !== "@") start--;
+    if (start < 0) {
+      setMentionQuery(null);
+      return;
+    }
+    const before = input.slice(0, start);
+    const after = input.slice(caret);
+    const inserted = `@${employee.firstName} `;
+    const next = `${before}${inserted}${after}`;
+    setInput(next);
+    setMentionQuery(null);
+    // Restore caret after the inserted token
+    requestAnimationFrame(() => {
+      const pos = before.length + inserted.length;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(pos, pos);
+      }
+    });
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Mention dropdown navigation takes priority when open
+    if (mentionQuery !== null && mentionMatches.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionMatches.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((i) => (i - 1 + mentionMatches.length) % mentionMatches.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectMention(mentionMatches[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      sendMsg();
+    }
+  };
+
+  // Optimistic toggle — POST to the reactions endpoint, flip the local
+  // reactedByMe flag + count, and swap the message in-place. The server
+  // is idempotent so a double-click won't corrupt state.
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    setReactionPickerFor(null);
+    // Optimistic local update
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const reactions = m.reactions ? [...m.reactions] : [];
+        const idx = reactions.findIndex((r) => r.emoji === emoji);
+        if (idx === -1) {
+          reactions.push({ emoji, count: 1, reactedByMe: true });
+        } else {
+          const existing = reactions[idx];
+          if (existing.reactedByMe) {
+            // Was my reaction → remove
+            const nextCount = existing.count - 1;
+            if (nextCount <= 0) reactions.splice(idx, 1);
+            else reactions[idx] = { ...existing, count: nextCount, reactedByMe: false };
+          } else {
+            reactions[idx] = { ...existing, count: existing.count + 1, reactedByMe: true };
+          }
+        }
+        return { ...m, reactions };
+      })
+    );
+    try {
+      await fetch(`/api/messages/${messageId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+    } catch {
+      // On failure the optimistic state stays — next channel load refetches real state
     }
   };
 
@@ -543,7 +714,7 @@ function TeamTab() {
                   );
                 }
                 return (
-                  <div key={msg.id} className="flex items-start gap-2 group">
+                  <div key={msg.id} className="flex items-start gap-2 group relative">
                     <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 text-[9px] font-semibold mt-0.5" style={{ backgroundColor: `${color}15`, color }}>{msg.author.name.charAt(0)}</div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-1.5">
@@ -556,7 +727,31 @@ function TeamTab() {
                         >
                           <ReplyIcon className="w-2.5 h-2.5" /> Reply
                         </button>
+                        <button
+                          onClick={() =>
+                            setReactionPickerFor((id) => (id === msg.id ? null : msg.id))
+                          }
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-[var(--foreground-dim)] hover:text-[var(--primary)] flex items-center gap-0.5"
+                          title="Add reaction"
+                        >
+                          <Smile className="w-2.5 h-2.5" />
+                        </button>
                       </div>
+                      {/* Reaction picker popover — shown when user clicks the smile button */}
+                      {reactionPickerFor === msg.id && (
+                        <div className="mt-1 inline-flex items-center gap-0.5 px-1.5 py-1 rounded-lg bg-[var(--surface-elevated,var(--surface))] border border-[var(--border)] shadow-lg">
+                          {REACTION_EMOJIS.map((e) => (
+                            <button
+                              key={e}
+                              onClick={() => toggleReaction(msg.id, e)}
+                              className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--surface-hover)] text-[13px] leading-none"
+                              title={`React with ${e}`}
+                            >
+                              {e}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {msg.parent && (
                         <div className="mt-0.5 px-2 py-1 rounded border-l-2 border-[var(--primary)]/40 bg-[var(--surface-hover)]/40 text-[10px] text-[var(--foreground-dim)] truncate">
                           <CornerDownRight className="w-2.5 h-2.5 inline mr-1" />
@@ -566,6 +761,26 @@ function TeamTab() {
                       <p className="text-[12px] text-[var(--foreground-muted)] leading-relaxed break-words whitespace-pre-wrap">
                         {renderWithMentions(msg.content)}
                       </p>
+                      {msg.reactions && msg.reactions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {msg.reactions.map((r) => (
+                            <button
+                              key={r.emoji}
+                              onClick={() => toggleReaction(msg.id, r.emoji)}
+                              className={clsx(
+                                "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] leading-none border transition-colors",
+                                r.reactedByMe
+                                  ? "bg-[var(--primary)]/15 border-[var(--primary)]/40 text-[var(--primary)]"
+                                  : "bg-[var(--surface-hover)] border-[var(--border)] text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]/80"
+                              )}
+                              title={r.reactedByMe ? "Remove reaction" : "Add reaction"}
+                            >
+                              <span className="text-[11px]">{r.emoji}</span>
+                              <span className="tabular-nums">{r.count}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {!!msg.replyCount && msg.replyCount > 0 && (
                         <button
                           onClick={() => toggleThread(msg.id)}
@@ -662,10 +877,63 @@ function TeamTab() {
             </div>
           )}
 
-          <div className="px-3 py-2 border-t border-[var(--border)]">
+          <div className="px-3 py-2 border-t border-[var(--border)] relative">
+            {/* @-mention autocomplete dropdown — floats above the input */}
+            {mentionQuery !== null && mentionMatches.length > 0 && (
+              <div className="absolute left-3 right-3 bottom-full mb-1 rounded-xl border border-[var(--border)] bg-[var(--surface-elevated,var(--surface))] shadow-xl overflow-hidden z-20">
+                <div className="px-3 py-1 text-[9px] text-[var(--foreground-dim)] uppercase tracking-wider border-b border-[var(--border)]">
+                  {mentionQuery ? `Matching "${mentionQuery}"` : "Team members"}
+                </div>
+                {mentionMatches.map((emp, idx) => (
+                  <button
+                    key={emp.id}
+                    onMouseDown={(e) => {
+                      // onMouseDown fires before input blur, preserving focus
+                      e.preventDefault();
+                      selectMention(emp);
+                    }}
+                    onMouseEnter={() => setMentionIndex(idx)}
+                    className={clsx(
+                      "w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors",
+                      idx === mentionIndex
+                        ? "bg-[var(--primary)]/10 text-[var(--foreground)]"
+                        : "hover:bg-[var(--surface-hover)] text-[var(--foreground-muted)]"
+                    )}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[9px] font-semibold"
+                      style={{
+                        backgroundColor: `${emp.brand?.color || "#6366F1"}15`,
+                        color: emp.brand?.color || "#6366F1",
+                      }}
+                    >
+                      {emp.firstName.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-medium text-[var(--foreground)] truncate">
+                        @{emp.firstName}{" "}
+                        <span className="text-[var(--foreground-dim)]">{emp.lastName}</span>
+                      </p>
+                      {emp.title && (
+                        <p className="text-[9px] text-[var(--foreground-dim)] truncate">{emp.title}</p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="flex items-center gap-2">
-              <input type="text" value={input} onChange={(e) => onInputChange(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMsg()}
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={onInputChange}
+                onKeyDown={handleInputKeyDown}
+                onBlur={() => {
+                  // Close mention dropdown when focus leaves — but delay so a
+                  // click on a dropdown item has time to fire via onMouseDown.
+                  setTimeout(() => setMentionQuery(null), 120);
+                }}
                 placeholder={activeChannel ? (activeChannel.type === "DIRECT" ? "Send a DM…" : `#${activeChannel.name}`) : "Select a channel..."}
                 disabled={!activeChannelId || sending}
                 className="flex-1 bg-[var(--background)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-[12px] text-[var(--foreground)] placeholder:text-[var(--foreground-dim)] focus:outline-none focus:border-[var(--primary)] disabled:opacity-50" />
