@@ -137,7 +137,9 @@ export async function POST(req: Request) {
       });
       if (ticket.assignee?.email) {
         const appUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
-        void sendTicketAssignedToAgent(
+        // Fire-and-forget — MUST have a .catch() or a rejection becomes
+        // an unhandled promise rejection that can crash the function.
+        sendTicketAssignedToAgent(
           ticket.assignee.email,
           {
             number: ticket.number,
@@ -145,7 +147,9 @@ export async function POST(req: Request) {
             priority: ticket.priority,
           },
           appUrl
-        );
+        ).catch((err) => {
+          console.error("[tickets] sendTicketAssignedToAgent failed:", err);
+        });
       }
     }
 

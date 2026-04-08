@@ -143,7 +143,10 @@ export async function PATCH(
         : null;
       if (clientRow?.email) {
         const appUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
-        void sendTicketStatusChange(
+        // Fire-and-forget — the .catch() is REQUIRED, otherwise a
+        // Resend rejection becomes an unhandled promise rejection
+        // which can crash the function instance.
+        sendTicketStatusChange(
           clientRow.email,
           {
             number: ticket.number,
@@ -151,7 +154,9 @@ export async function PATCH(
             status: ticket.status,
           },
           appUrl
-        );
+        ).catch((err) => {
+          console.error("[tickets] sendTicketStatusChange failed:", err);
+        });
       }
     }
 
