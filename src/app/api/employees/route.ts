@@ -12,6 +12,12 @@ export async function GET(req: Request) {
     const department = url.searchParams.get("department");
     const status = url.searchParams.get("status");
     const search = url.searchParams.get("search");
+    // `?minimal=1` returns a lightweight shape for pickers (DM modal,
+    // mention dropdown fallback). Drops salary, email, phone, skills,
+    // lastLogin, hireDate — so the payload shrinks from ~1KB/employee
+    // to ~150B/employee and managers can't accidentally leak PII to
+    // UI surfaces that don't actually need it.
+    const minimal = url.searchParams.get("minimal") === "1";
 
     const where: Record<string, unknown> = {};
     if (brand) where.brand = { code: brand };
@@ -32,14 +38,23 @@ export async function GET(req: Request) {
 
     const employees = await prisma.user.findMany({
       where,
-      select: {
-        id: true, email: true, firstName: true, lastName: true, phone: true,
-        avatar: true, title: true, role: true, department: true, status: true,
-        brandId: true, hireDate: true, salary: true, currency: true, skills: true,
-        lastLogin: true, createdAt: true,
-        brand: { select: { code: true, name: true, color: true } },
-      },
-      orderBy: { createdAt: "desc" },
+      select: minimal
+        ? {
+            id: true,
+            firstName: true,
+            lastName: true,
+            title: true,
+            avatar: true,
+            brand: { select: { code: true, color: true } },
+          }
+        : {
+            id: true, email: true, firstName: true, lastName: true, phone: true,
+            avatar: true, title: true, role: true, department: true, status: true,
+            brandId: true, hireDate: true, salary: true, currency: true, skills: true,
+            lastLogin: true, createdAt: true,
+            brand: { select: { code: true, name: true, color: true } },
+          },
+      orderBy: minimal ? [{ firstName: "asc" }] : { createdAt: "desc" },
     });
 
     return NextResponse.json(employees);
