@@ -322,6 +322,8 @@ function TeamTab() {
   // @-mention autocomplete state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentionResults, setMentionResults] = useState<Employee[]>([]);
+  const mentionAbortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // Emoji reaction picker — which message id currently has its popover open
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null);
@@ -447,17 +449,19 @@ function TeamTab() {
     return unsubscribe;
   }, [realtime]);
 
-  // Fetch employee list once on mount — used by both the DM picker and
-  // the @-mention autocomplete dropdown. A single fetch avoids re-hits
-  // and keeps the mention dropdown instant the first time the user types "@".
+  // The DM picker still needs a full employee list — fetched lazily
+  // the first time the DM modal opens. The @-mention dropdown uses the
+  // new keystroke-driven /api/employees/search endpoint below, so it
+  // does NOT rely on the full list being preloaded.
   useEffect(() => {
+    if (!dmOpen || employees.length > 0) return;
     fetch("/api/employees?minimal=1")
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setEmployees(data);
       })
       .catch(() => {});
-  }, []);
+  }, [dmOpen, employees.length]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -513,23 +517,43 @@ function TeamTab() {
     }
   };
 
-  // Memoized set of up to 5 employees whose firstName/lastName starts
-  // with the current mention query. Case-insensitive.
-  const mentionMatches = useMemo(() => {
-    if (mentionQuery === null) return [] as Employee[];
-    const q = mentionQuery.trim().toLowerCase();
-    const filtered = q
-      ? employees.filter(
-          (e) =>
-            e.firstName.toLowerCase().startsWith(q) ||
-            (e.lastName && e.lastName.toLowerCase().startsWith(q))
-        )
-      : employees;
-    return filtered.slice(0, 5);
-  }, [mentionQuery, employees]);
+  // Fetch mention matches from /api/employees/search on every query
+  // change (debounced 120ms). Previous in-memory filter against a
+  // preloaded employee list is replaced so the client never pulls the
+  // full org. Aborts in-flight calls when the user keeps typing.
+  useEffect(() => {
+    if (mentionQuery === null) {
+      setMentionResults([]);
+      return;
+    }
+    mentionAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    mentionAbortRef.current = ctrl;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/employees/search?q=${encodeURIComponent(mentionQuery)}`,
+          { signal: ctrl.signal }
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as Employee[];
+        if (!ctrl.signal.aborted && Array.isArray(data)) {
+          setMentionResults(data);
+          setMentionIndex(0);
+        }
+      } catch {
+        // Aborted or network error — ignore, next keystroke will retry
+      }
+    }, 120);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [mentionQuery]);
 
-  // Clamp the keyboard selection index to the current match list so
-  // arrow-up/down doesn't point off the end after the query narrows.
+  // Alias so the render code below keeps reading `mentionMatches`
+  // without having to rename everywhere. Also clamps keyboard index.
+  const mentionMatches = mentionResults;
   useEffect(() => {
     if (mentionMatches.length === 0) {
       setMentionIndex(0);
