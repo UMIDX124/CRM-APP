@@ -8,26 +8,14 @@ interface KioskEmployee { id: string; name: string; title: string; brand: string
 export default function KioskPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [pinCode, setPinCode] = useState("");
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "success" | "error" | "verifying">("idle");
   const [employee, setEmployee] = useState<KioskEmployee | null>(null);
-  const [employees, setEmployees] = useState<KioskEmployee[]>([]);
 
-  useEffect(() => {
-    fetch("/api/employees")
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        if (Array.isArray(data)) {
-          setEmployees(data.map((e: Record<string, unknown>) => ({
-            id: String(e.id),
-            name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
-            title: String(e.title || ""),
-            brand: (e.brand as Record<string, string>)?.code || "",
-            email: String(e.email || ""),
-          })));
-        }
-      })
-      .catch(() => {});
-  }, []);
+  // Note: the employee list is intentionally NOT fetched here. The old
+  // kiosk leaked every employee (and trivially derived PINs via
+  // `parseInt(pin) - 1000`). PIN verification now lives on the server
+  // via POST /api/attendance/pin-verify which returns only the matched
+  // employee on success.
 
   useEffect(() => {
     const id = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -37,20 +25,44 @@ export default function KioskPage() {
   const timeStr = currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
   const dateStr = currentTime.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 
+  const verifyPin = async (pin: string) => {
+    setStatus("verifying");
+    try {
+      const res = await fetch("/api/attendance/pin-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as KioskEmployee;
+        setEmployee(data);
+        setStatus("success");
+        setTimeout(() => {
+          setStatus("idle");
+          setPinCode("");
+          setEmployee(null);
+        }, 4000);
+      } else {
+        setStatus("error");
+        setTimeout(() => {
+          setStatus("idle");
+          setPinCode("");
+        }, 2500);
+      }
+    } catch {
+      setStatus("error");
+      setTimeout(() => {
+        setStatus("idle");
+        setPinCode("");
+      }, 2500);
+    }
+  };
+
   const handleKey = (key: string) => {
     if (status !== "idle") return;
     if (key === "clear") { setPinCode(""); return; }
     if (key === "enter") {
-      const idx = parseInt(pinCode) - 1000;
-      const emp = employees[idx];
-      if (emp) {
-        setEmployee(emp);
-        setStatus("success");
-        setTimeout(() => { setStatus("idle"); setPinCode(""); setEmployee(null); }, 4000);
-      } else {
-        setStatus("error");
-        setTimeout(() => { setStatus("idle"); setPinCode(""); }, 2500);
-      }
+      if (pinCode.length >= 4) void verifyPin(pinCode);
       return;
     }
     if (pinCode.length < 4) setPinCode((p) => p + key);
