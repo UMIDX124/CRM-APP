@@ -73,6 +73,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     console.error("Dashboard API error:", err);
-    return NextResponse.json(null);
+    // Previously returned `NextResponse.json(null)` which masked DB
+    // failures as "no data" on the client — a critical observability
+    // gap. Now surface a real 500 with an error code + message so the
+    // dashboard can show an error state and ops can see failures in logs.
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json(
+      {
+        error: "Dashboard query failed",
+        code: "DASHBOARD_QUERY_FAILED",
+        detail: message,
+      },
+      { status: 500 }
+    );
   }
 }
