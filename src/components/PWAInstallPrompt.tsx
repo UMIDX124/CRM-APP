@@ -51,18 +51,95 @@ export default function PWAInstallPrompt() {
     useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [showIOS, setShowIOS] = useState(false);
-  const [offline, setOffline] = useState(() =>
-    typeof navigator !== "undefined" ? !navigator.onLine : false
-  );
+  // Default to ONLINE. `navigator.onLine` lies — it returns false during
+  // dev-server hiccups, corporate proxies, stale WebViews, and after Chrome
+  // DevTools offline simulation even when real connectivity is fine. We
+  // only flip to offline after a real probe of `/api/health` fails.
+  const [offline, setOffline] = useState(false);
 
+  // Offline detection via HEAD probe against /api/health.
+  // - Default: online (no banner flash on mount)
+  // - On `offline` event: probe; only show banner if probe fails
+  // - On `online` event: hide banner immediately + stop retry
+  // - While offline: re-probe every 10s so we self-recover even if the
+  //   browser's `online` event never fires
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Online/offline tracking
-    const handleOnline = () => setOffline(false);
-    const handleOffline = () => setOffline(true);
+    let retryTimer: ReturnType<typeof setInterval> | null = null;
+    let probeAbort: AbortController | null = null;
+    let cancelled = false;
+
+    async function probeReachable(): Promise<boolean> {
+      probeAbort?.abort();
+      const ctrl = new AbortController();
+      probeAbort = ctrl;
+      const timeoutId = setTimeout(() => ctrl.abort(), 3000);
+      try {
+        const res = await fetch("/api/health", {
+          method: "HEAD",
+          cache: "no-store",
+          signal: ctrl.signal,
+        });
+        // Any response (including 405 for HEAD-not-allowed) means the
+        // server is reachable and the browser has connectivity.
+        return res.status > 0;
+      } catch {
+        return false;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    const stopRetry = () => {
+      if (retryTimer) {
+        clearInterval(retryTimer);
+        retryTimer = null;
+      }
+    };
+
+    const startRetry = () => {
+      if (retryTimer) return;
+      retryTimer = setInterval(async () => {
+        if (cancelled) return;
+        const reachable = await probeReachable();
+        if (cancelled) return;
+        if (reachable) {
+          setOffline(false);
+          stopRetry();
+        }
+      }, 10000);
+    };
+
+    const handleOffline = async () => {
+      const reachable = await probeReachable();
+      if (cancelled) return;
+      if (!reachable) {
+        setOffline(true);
+        startRetry();
+      }
+    };
+
+    const handleOnline = () => {
+      probeAbort?.abort();
+      setOffline(false);
+      stopRetry();
+    };
+
     window.addEventListener("online", handleOnline);
     window.addEventListener("offline", handleOffline);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      probeAbort?.abort();
+      stopRetry();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
     // iOS detection — show after 30s if not installed and not previously dismissed
     let iosTimer: ReturnType<typeof setTimeout> | undefined;
@@ -84,15 +161,11 @@ export default function PWAInstallPrompt() {
       window.addEventListener("beforeinstallprompt", handler);
       return () => {
         window.removeEventListener("beforeinstallprompt", handler);
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
         if (iosTimer) clearTimeout(iosTimer);
       };
     }
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
       if (iosTimer) clearTimeout(iosTimer);
     };
   }, []);
