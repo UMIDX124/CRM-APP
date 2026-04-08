@@ -1,14 +1,33 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Clock, UserCheck, UserX, Coffee, Laptop, CalendarOff, ChevronLeft, ChevronRight,
   Search, Download, CheckCircle2, AlertCircle, Timer, Calendar, BarChart3,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { employees, attendanceRecords, brands, parentCompany } from "@/data/mock-data";
 import type { AttendanceStatus, AttendanceRecord } from "@/data/mock-data";
 import { downloadCSV } from "@/lib/api";
+
+// Static lookups that don't come from the database — brand colors live
+// in the companies table but for this module we only need the 3-brand
+// legend, so keep it inline to avoid an extra fetch.
+const parentCompany = { code: "ALPHA" };
+const brands = [
+  { code: "VCS", color: "#FF6B00" },
+  { code: "BSL", color: "#3B82F6" },
+  { code: "DPL", color: "#22C55E" },
+];
+
+// Shape we fetch from /api/attendance — the API record has a nested
+// `user` relation with firstName/lastName/brand. We normalize it into
+// the flat shape the existing memoized computations expect.
+interface ApiEmployee {
+  id: string;
+  name: string;
+  title: string;
+  brand: string;
+}
 
 const statusConfig: Record<AttendanceStatus, { label: string; color: string; bg: string; icon: typeof UserCheck }> = {
   PRESENT: { label: "Present", color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", icon: UserCheck },
@@ -23,13 +42,92 @@ type ViewMode = "daily" | "monthly" | "range";
 
 export default function AttendanceModule({ brandId }: { brandId: string }) {
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
-  const [selectedDate, setSelectedDate] = useState("2026-04-02");
-  const [rangeStart, setRangeStart] = useState("2026-03-28");
-  const [rangeEnd, setRangeEnd] = useState("2026-04-02");
-  const [selectedMonth, setSelectedMonth] = useState("2026-04");
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [rangeStart, setRangeStart] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 6);
+    return d.toISOString().split("T")[0];
+  });
+  const [rangeEnd, setRangeEnd] = useState(() => new Date().toISOString().split("T")[0]);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<AttendanceStatus | "ALL">("ALL");
   const [filterBrand, setFilterBrand] = useState<string>("ALL");
+
+  // Real data from the API — replaces the previous static imports
+  // from @/data/mock-data.
+  const [employees, setEmployees] = useState<ApiEmployee[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+
+  // Load the full active employee roster once on mount — used by the
+  // monthly and range views which list every employee regardless of
+  // whether they have attendance records in the selected window.
+  useEffect(() => {
+    fetch("/api/employees?minimal=1")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: unknown) => {
+        if (!Array.isArray(data)) return;
+        const mapped: ApiEmployee[] = data.map((u: unknown) => {
+          const emp = u as Record<string, unknown>;
+          const brandObj = emp.brand as Record<string, unknown> | null;
+          return {
+            id: String(emp.id),
+            name: `${emp.firstName ?? ""} ${emp.lastName ?? ""}`.trim(),
+            title: emp.title ? String(emp.title) : "",
+            brand: brandObj ? String(brandObj.code ?? "") : "",
+          };
+        });
+        setEmployees(mapped);
+      })
+      .catch((err) => console.error("[attendance] employees fetch failed:", err));
+  }, []);
+
+  // Fetch the attendance window that the current view needs. Re-runs
+  // when the view, selected date, or date range changes.
+  useEffect(() => {
+    let cancelled = false;
+    let url: string;
+    if (viewMode === "daily") {
+      url = `/api/attendance?date=${selectedDate}`;
+    } else if (viewMode === "monthly") {
+      const [yr, mo] = selectedMonth.split("-").map(Number);
+      const start = `${yr}-${String(mo).padStart(2, "0")}-01`;
+      const lastDay = new Date(yr, mo, 0).getDate();
+      const end = `${yr}-${String(mo).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      url = `/api/attendance?startDate=${start}&endDate=${end}`;
+    } else {
+      url = `/api/attendance?startDate=${rangeStart}&endDate=${rangeEnd}`;
+    }
+    fetch(url)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: unknown) => {
+        if (cancelled || !Array.isArray(data)) return;
+        // Normalize API shape { id, userId, date, status, checkIn,
+        // checkOut, hoursWorked, notes, user: {...} } into the flat
+        // shape the memoized views below expect.
+        const mapped: AttendanceRecord[] = data.map((row: unknown) => {
+          const r = row as Record<string, unknown>;
+          return {
+            id: String(r.id),
+            employeeId: String(r.userId ?? ""),
+            date: r.date ? String(r.date).split("T")[0] : "",
+            status: String(r.status ?? "ABSENT") as AttendanceStatus,
+            checkIn: r.checkIn ? String(r.checkIn) : null,
+            checkOut: r.checkOut ? String(r.checkOut) : null,
+            hoursWorked: Number(r.hoursWorked ?? 0),
+            notes: r.notes ? String(r.notes) : undefined,
+          } as AttendanceRecord;
+        });
+        setAttendanceRecords(mapped);
+      })
+      .catch((err) => console.error("[attendance] records fetch failed:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [viewMode, selectedDate, selectedMonth, rangeStart, rangeEnd]);
 
   // Daily view records
   const dailyRecords = useMemo(() => {
@@ -399,7 +497,7 @@ export default function AttendanceModule({ brandId }: { brandId: string }) {
           const rate = total > 0 ? Math.round((present / total) * 100) : 0;
 
           return (
-            <div key={brand.id} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
+            <div key={brand.code} className="p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)]">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: brand.color }} />
