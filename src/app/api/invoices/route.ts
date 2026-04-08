@@ -23,7 +23,20 @@ export async function GET(req: Request) {
       orderBy: { issueDate: "desc" },
     });
 
-    return NextResponse.json(invoices);
+    // Compute isOverdue live — PENDING invoices whose dueDate has passed.
+    // We do NOT persist the OVERDUE status transition here (that would
+    // require a cron); instead every read derives the flag from dueDate so
+    // dashboards and filters surface the real state consistently.
+    const now = Date.now();
+    const enriched = invoices.map((inv) => ({
+      ...inv,
+      isOverdue:
+        inv.status === "PENDING" &&
+        inv.dueDate instanceof Date &&
+        inv.dueDate.getTime() < now,
+    }));
+
+    return NextResponse.json(enriched);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Server error";
     return NextResponse.json({ error: msg }, { status: msg === "Unauthorized" ? 401 : 500 });

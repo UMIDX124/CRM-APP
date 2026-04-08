@@ -17,11 +17,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { id } = await params;
     const body = await req.json();
     const previous = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+
+    // Auto-set paidDate when status transitions into PAID, unless the
+    // client explicitly supplied one (e.g. backdating a payment). Without
+    // this, downstream "paid in last 30 days" queries return nothing.
+    const transitioningToPaid =
+      body.status === "PAID" && previous?.status !== "PAID";
+    const resolvedPaidDate =
+      body.paidDate !== undefined
+        ? body.paidDate
+          ? new Date(body.paidDate)
+          : null
+        : transitioningToPaid
+          ? new Date()
+          : undefined;
+
     const invoice = await prisma.invoice.update({
       where: { id },
       data: {
         ...(body.status && { status: body.status }),
-        ...(body.paidDate !== undefined && { paidDate: body.paidDate ? new Date(body.paidDate) : null }),
+        ...(resolvedPaidDate !== undefined && { paidDate: resolvedPaidDate }),
         ...(body.items && { items: body.items }),
         ...(body.subtotal !== undefined && { subtotal: body.subtotal }),
         ...(body.tax !== undefined && { tax: body.tax }),

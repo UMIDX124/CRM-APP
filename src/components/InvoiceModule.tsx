@@ -33,15 +33,6 @@ const brands = [
   { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
 ];
 
-const sampleInvoices: Invoice[] = [
-  { id: "1", number: "INV-2026-001", clientId: "5", clientName: "SecureBank", brand: "BSL", items: [{ description: "Cybersecurity Audit Q1", quantity: 1, rate: 25000 }], subtotal: 25000, tax: 0, total: 25000, status: "PAID", issueDate: "2026-03-01", dueDate: "2026-03-15", paidDate: "2026-03-12" },
-  { id: "2", number: "INV-2026-002", clientId: "7", clientName: "DTC E-Commerce Brand", brand: "DPL", items: [{ description: "Meta Ads Management", quantity: 1, rate: 22000 }], subtotal: 22000, tax: 0, total: 22000, status: "PAID", issueDate: "2026-03-01", dueDate: "2026-03-15", paidDate: "2026-03-14" },
-  { id: "3", number: "INV-2026-003", clientId: "4", clientName: "TechMart", brand: "BSL", items: [{ description: "Platform Maintenance", quantity: 1, rate: 15000 }], subtotal: 15000, tax: 0, total: 15000, status: "PENDING", issueDate: "2026-03-15", dueDate: "2026-04-05" },
-  { id: "4", number: "INV-2026-004", clientId: "8", clientName: "B2B SaaS Company", brand: "DPL", items: [{ description: "Attribution Setup", quantity: 1, rate: 28000 }], subtotal: 28000, tax: 0, total: 28000, status: "PENDING", issueDate: "2026-03-20", dueDate: "2026-04-10" },
-  { id: "5", number: "INV-2026-005", clientId: "1", clientName: "Sarah Mitchell E-Commerce", brand: "VCS", items: [{ description: "AI CX Platform", quantity: 1, rate: 8500 }], subtotal: 8500, tax: 0, total: 8500, status: "OVERDUE", issueDate: "2026-02-28", dueDate: "2026-03-15" },
-  { id: "6", number: "INV-2026-006", clientId: "6", clientName: "DataFlow Analytics", brand: "BSL", items: [{ description: "AI Dashboard Dev", quantity: 1, rate: 18000 }], subtotal: 18000, tax: 0, total: 18000, status: "PAID", issueDate: "2026-03-10", dueDate: "2026-03-25", paidDate: "2026-03-22" },
-];
-
 const defaultForm = { clientName: "", brand: "VCS", items: [{ description: "", quantity: 1, rate: 0 }] as InvoiceItem[], dueDate: "", notes: "" };
 
 export default function InvoiceModule() {
@@ -57,7 +48,11 @@ export default function InvoiceModule() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return;
-        if (data && Array.isArray(data) && data.length > 0) {
+        // Empty result from /api/invoices means the tenant genuinely has
+        // no invoices — render the empty state instead of masking it with
+        // sample data. Failures (network, 5xx) also surface as empty so the
+        // UI shows a proper empty state + the console shows the error.
+        if (data && Array.isArray(data)) {
           const mapped: Invoice[] = data.map((inv: Record<string, unknown>) => ({
             id: String(inv.id), number: String(inv.number || ""),
             clientId: String(inv.clientId || ""),
@@ -66,17 +61,22 @@ export default function InvoiceModule() {
             items: (inv.items as InvoiceItem[]) || [],
             subtotal: Number(inv.subtotal) || 0, tax: Number(inv.tax) || 0,
             total: Number(inv.total) || 0,
-            status: String(inv.status || "PENDING") as InvoiceStatus,
+            // Read the derived isOverdue flag from the API; fall back to
+            // the persisted status when the backend didn't send it.
+            status: (inv.isOverdue ? "OVERDUE" : String(inv.status || "PENDING")) as InvoiceStatus,
             issueDate: inv.issueDate ? String(inv.issueDate).split("T")[0] : "",
             dueDate: inv.dueDate ? String(inv.dueDate).split("T")[0] : "",
             paidDate: inv.paidDate ? String(inv.paidDate).split("T")[0] : undefined,
           }));
           setInvoices(mapped);
         } else {
-          setInvoices(sampleInvoices);
+          setInvoices([]);
         }
       })
-      .catch(() => { setInvoices(sampleInvoices); })
+      .catch((err) => {
+        console.error("[invoices] fetch failed:", err);
+        setInvoices([]);
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [activeCompany.code]);
