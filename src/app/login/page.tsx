@@ -128,31 +128,33 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Quick Access — email-only, no passwords */}
-            <div className="mt-6 pt-5 border-t border-[var(--border)]">
-              <p className="text-[11px] text-[var(--foreground-dim)] mb-3 font-medium">Quick Access</p>
-              <div className="space-y-1">
-                {quickAccessUsers.map((user, i) => (
-                  <button
-                    key={i}
-                    onClick={() => quickFill(user.email)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors group cursor-pointer"
-                  >
-                    <div
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-semibold shrink-0"
-                      style={{ backgroundColor: `${user.color}15`, color: user.color }}
+            {/* Quick Access — email-only, no passwords. Gated behind NEXT_PUBLIC_SHOW_DEMO_LOGINS for prod safety */}
+            {process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === 'true' && (
+              <div className="mt-6 pt-5 border-t border-[var(--border)]">
+                <p className="text-[11px] text-[var(--foreground-dim)] mb-3 font-medium">Quick Access</p>
+                <div className="space-y-1">
+                  {quickAccessUsers.map((user, i) => (
+                    <button
+                      key={i}
+                      onClick={() => quickFill(user.email)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors group cursor-pointer"
                     >
-                      {user.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-[13px] text-[var(--foreground-muted)] group-hover:text-[var(--foreground)] transition-colors">{user.name}</p>
-                      <p className="text-[10px] text-[var(--foreground-dim)]">{user.role.replace(/_/g, " ")}</p>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-[var(--foreground-dim)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                ))}
+                      <div
+                        className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-semibold shrink-0"
+                        style={{ backgroundColor: `${user.color}15`, color: user.color }}
+                      >
+                        {user.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-[13px] text-[var(--foreground-muted)] group-hover:text-[var(--foreground)] transition-colors">{user.name}</p>
+                        <p className="text-[10px] text-[var(--foreground-dim)]">{user.role.replace(/_/g, " ")}</p>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-[var(--foreground-dim)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

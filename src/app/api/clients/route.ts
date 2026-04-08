@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, isManager } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel } from "@/lib/notifications";
+import { dispatchWebhook } from "@/lib/webhooks";
 
 export async function GET(req: Request) {
   try {
@@ -59,6 +60,19 @@ export async function POST(req: Request) {
       data: { clientId: client.id },
     });
     autoPostToChannel("general", `📋 **New Client** — ${body.companyName || "Unknown"} added by ${user.firstName} ${user.lastName}`, user.id, "SYSTEM", { clientId: client.id });
+
+    await dispatchWebhook(
+      "CLIENT_CREATED",
+      {
+        id: client.id,
+        companyName: client.companyName,
+        contactName: client.contactName,
+        email: client.email,
+        status: client.status,
+        mrr: client.mrr,
+      },
+      { brandId: client.brandId }
+    );
 
     return NextResponse.json(client, { status: 201 });
   } catch (e: unknown) {

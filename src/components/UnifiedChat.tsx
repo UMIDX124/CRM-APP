@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { WolfIcon } from "./WolfLogo";
 import { clsx } from "clsx";
+import { useRealtime } from "@/components/RealtimeProvider";
 
 // ─── Shared Types ───────────────────────────────────────
 
@@ -234,7 +235,11 @@ function TeamTab() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const realtime = useRealtime();
+  const activeChannelIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    activeChannelIdRef.current = activeChannelId;
+  }, [activeChannelId]);
 
   useEffect(() => {
     fetch("/api/channels")
@@ -251,13 +256,25 @@ function TeamTab() {
     } catch { setError("Failed to load messages"); }
   }, [activeChannelId]);
 
+  // Initial load on channel switch — no more 5s polling, SSE pushes new
+  // messages via the RealtimeProvider subscription below.
   useEffect(() => {
     if (!activeChannelId) return;
     setLoading(true);
     fetchMessages().finally(() => setLoading(false));
-    pollRef.current = setInterval(fetchMessages, 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeChannelId, fetchMessages]);
+
+  // Subscribe to live message events from the shared SSE stream
+  useEffect(() => {
+    const unsubscribe = realtime.subscribeMessage((m) => {
+      if (m.channelId !== activeChannelIdRef.current) return;
+      setMessages((prev) => {
+        if (prev.some((p) => p.id === m.id)) return prev;
+        return [...prev, m as unknown as TeamMessage];
+      });
+    });
+    return unsubscribe;
+  }, [realtime]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 

@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
+
+function unauthorized(e: unknown) {
+  if (e instanceof Error && e.message === "Unauthorized") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   try {
+    await requireAuth();
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
     const clientId = url.searchParams.get("clientId");
@@ -20,6 +30,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(feedback);
   } catch (err) {
+    const u = unauthorized(err); if (u) return u;
     console.error("Feedback GET error:", err);
     return NextResponse.json([]);
   }
@@ -27,6 +38,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await requireAuth();
+    const rl = await rateLimit("feedback", req, { limit: 30, windowSec: 60 }, user.id);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
     const body = await req.json();
     if (!body.clientId || !body.message || !body.type) {
       return NextResponse.json({ error: "clientId, message, and type are required" }, { status: 400 });
@@ -44,6 +60,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(feedback, { status: 201 });
   } catch (e: unknown) {
+    const u = unauthorized(e); if (u) return u;
     const msg = e instanceof Error ? e.message : "Create failed";
     return NextResponse.json({ error: msg }, { status: 400 });
   }

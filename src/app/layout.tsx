@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -12,6 +14,8 @@ export const viewport: Viewport = {
   themeColor: "#6366F1",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover", // safe-area-inset support for notched devices
 };
 
 export const metadata: Metadata = {
@@ -60,6 +64,8 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans min-h-screen antialiased`}>
         {children}
+        <PWAInstallPrompt />
+        <Analytics />
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

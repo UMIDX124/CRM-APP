@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 import { prisma } from "@/lib/db";
 
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
+    // 30 uploads/min/user — generous for paste/drag, blocks abuse
+    const rl = await rateLimit("upload", req, { limit: 30, windowSec: 60 }, user.id);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many uploads" }, { status: 429 });
+    }
     const formData = await req.formData();
     const file = formData.get("file") as File;
     const taskId = formData.get("taskId") as string | null;

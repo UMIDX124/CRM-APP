@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bell, X, CheckCheck, Clock, DollarSign, UserPlus, AlertTriangle,
   Trophy, Zap, Briefcase, CheckSquare, Users, Building2, Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useEventStream, type StreamNotification } from "@/hooks/useEventStream";
 
 interface Notification {
   id: string;
@@ -51,11 +52,13 @@ export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
+  // hydrated = we have at least one /api/notifications response back
+  // (used for the cold-start skeleton)
+  const [hydrated, setHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
       if (res.ok) {
@@ -71,15 +74,32 @@ export default function NotificationCenter() {
       }
     } catch {
       // Network error — don't show error for background polls
+    } finally {
+      setHydrated(true);
     }
-  };
-
-  // Initial load + poll every 15 seconds
-  useEffect(() => {
-    fetchNotifications();
-    pollRef.current = setInterval(fetchNotifications, 15000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, []);
+
+  // Initial load
+  useEffect(() => {
+    void fetchNotifications();
+  }, [fetchNotifications]);
+
+  // Live SSE via local EventSource. (We could route through RealtimeProvider
+  // but NotificationCenter is rendered inside the dashboard layout — both
+  // work; this keeps the bell self-contained on routes that don't mount
+  // the provider.)
+  useEventStream({
+    onNotification: (n) => {
+      if (!n) {
+        void fetchNotifications();
+        return;
+      }
+      setNotifications((prev) => {
+        if (prev.some((p) => p.id === n.id)) return prev;
+        return [n as Notification, ...prev].slice(0, 50);
+      });
+    },
+  });
 
   // Refresh when dropdown opens
   useEffect(() => {
@@ -178,7 +198,21 @@ export default function NotificationCenter() {
 
           {/* List */}
           <div className="overflow-y-auto max-h-[400px] scrollbar-thin">
-            {loading && notifications.length === 0 ? (
+            {!hydrated ? (
+              // Cold-start skeleton — shown until first /api/notifications response
+              <div className="px-4 py-3 space-y-3" aria-label="Loading notifications">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg skeleton shrink-0" />
+                    <div className="flex-1 space-y-1.5 pt-0.5">
+                      <div className="h-3 skeleton rounded" style={{ width: `${70 - i * 8}%` }} />
+                      <div className="h-2.5 skeleton rounded" style={{ width: `${85 - i * 5}%` }} />
+                      <div className="h-2 skeleton rounded w-12 mt-1" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : loading && notifications.length === 0 ? (
               <div className="py-12 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 text-[var(--foreground-dim)] animate-spin" />
               </div>

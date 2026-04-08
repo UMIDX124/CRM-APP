@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
+import { requireAuth } from "@/lib/auth";
+
+function unauthorized(err: unknown) {
+  if (err instanceof Error && err.message === "Unauthorized") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
     const client = await prisma.client.update({
@@ -25,9 +34,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       },
       include: { brand: { select: { code: true, name: true, color: true } } },
     });
-    await logAudit({ action: "UPDATE", entity: "Client", entityId: id, userId: "system", changes: body }).catch(() => {});
+    await logAudit({ action: "UPDATE", entity: "Client", entityId: id, userId: actor.id, changes: body }).catch(() => {});
     return NextResponse.json(client);
   } catch (e: unknown) {
+    const u = unauthorized(e); if (u) return u;
     const msg = e instanceof Error ? e.message : "Update failed";
     return NextResponse.json({ error: msg }, { status: 400 });
   }
@@ -35,6 +45,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const actor = await requireAuth();
     const { id } = await params;
 
     // Get client name before deleting for notification
@@ -51,7 +62,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       prisma.client.delete({ where: { id } }),
     ]);
 
-    await logAudit({ action: "DELETE", entity: "Client", entityId: id, userId: "system" }).catch(() => {});
+    await logAudit({ action: "DELETE", entity: "Client", entityId: id, userId: actor.id }).catch(() => {});
 
     // Notify team
     const systemUser = await getSystemUserId();
@@ -60,6 +71,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
+    const u = unauthorized(e); if (u) return u;
     const msg = e instanceof Error ? e.message : "Delete failed";
     console.error("Client delete error:", e);
     return NextResponse.json({ error: msg }, { status: 400 });

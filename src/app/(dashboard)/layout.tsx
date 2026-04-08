@@ -14,6 +14,8 @@ import { CompanyProvider } from "@/components/CompanyContext";
 import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
 import UnifiedChat from "@/components/UnifiedChat";
+import { RealtimeProvider, ConnectionIndicator } from "@/components/RealtimeProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard", "/clients": "Clients", "/employees": "Team", "/tasks": "Tasks",
@@ -180,6 +182,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <CompanyProvider>
     <ToastProvider>
+    <RealtimeProvider>
       <div className="min-h-screen bg-[var(--background)]">
         <MobileHeader onMenuOpen={() => setSidebarOpen(true)} title={pageTitle} />
 
@@ -215,6 +218,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 </kbd>
               </button>
 
+              <ConnectionIndicator />
+
               <NotificationCenter />
 
               <button
@@ -234,7 +239,9 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Page Content */}
           <div className="px-4 sm:px-6 lg:px-6 py-5 lg:py-6 mobile-safe-bottom relative z-10">
             <div key={pathname} className="animate-fade-in-up">
-              {children}
+              <ErrorBoundary label={pageTitle}>
+                {children}
+              </ErrorBoundary>
             </div>
           </div>
         </main>
@@ -244,6 +251,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         <EmailCompose isOpen={showEmailCompose} onClose={() => setShowEmailCompose(false)} />
         <CommandPalette />
       </div>
+    </RealtimeProvider>
     </ToastProvider>
     </CompanyProvider>
   );

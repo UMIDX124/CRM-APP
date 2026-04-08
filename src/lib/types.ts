@@ -18,7 +18,7 @@ export interface Brand {
   code: string;
   color: string;
   website: string;
-  parentId: string;
+  companyId: string | null;
 }
 
 export interface Employee {

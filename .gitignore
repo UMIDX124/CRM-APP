@@ -26,6 +26,11 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.local.bak*
+.env*.bak
+
+# Claude Code local settings
+.claude/
 
 # Vercel
 .vercel
@@ -50,3 +55,5 @@ EMPLOYEE_CREDENTIALS*.csv
 
 # Parsed client data may contain PII — keep local
 scripts/parsed-clients.json
+
+.env*.local

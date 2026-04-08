@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRealtime } from "@/components/RealtimeProvider";
+import { useCountUp } from "@/hooks/useCountUp";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -50,6 +52,15 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const { activeCompany } = useCompany();
+  const realtime = useRealtime();
+
+  // Stable refetch we can call from the SSE handler too
+  const refetch = useCallback(() => {
+    fetch(`/api/dashboard?brand=${activeCompany.code}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setData(d); })
+      .catch(() => {});
+  }, [activeCompany.code]);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,6 +73,24 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
     return () => { cancelled = true; };
   }, [activeCompany.code]);
 
+  // Live refresh on any new chat message — cheap signal that something
+  // probably changed. Debounced to 1s so a burst of 5 messages doesn't fire
+  // 5 dashboard fetches.
+  useEffect(() => {
+    let pending: ReturnType<typeof setTimeout> | null = null;
+    const unsub = realtime.subscribeMessage(() => {
+      if (pending) return;
+      pending = setTimeout(() => {
+        pending = null;
+        refetch();
+      }, 1000);
+    });
+    return () => {
+      unsub();
+      if (pending) clearTimeout(pending);
+    };
+  }, [realtime, refetch]);
+
   const clientCount = data?.clients || 0;
   const teamCount = data?.employees || 0;
   const totalTasks = data?.tasks || 0;
@@ -72,11 +101,17 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const winRate = totalLeads > 0 ? Math.round((wonLeadsCount / totalLeads) * 100) : 0;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  // Animated numbers — re-tween whenever the underlying value changes (incl. SSE refetch)
+  const animatedRevenue = useCountUp(totalRevenue);
+  const animatedClients = useCountUp(clientCount);
+  const animatedWinRate = useCountUp(winRate);
+  const animatedLeads = useCountUp(totalLeads);
+
   const kpis = [
-    { label: "Revenue", value: formatCurrency(totalRevenue, true), change: "+12%", icon: DollarSign, color: "#10B981", href: "/invoices" },
-    { label: "Clients", value: String(clientCount), change: "+3 new", icon: Building2, color: "#3B82F6", href: "/clients" },
-    { label: "Win Rate", value: `${winRate}%`, change: `${wonLeadsCount} won`, icon: Target, color: "#6366F1", href: "/pipeline" },
-    { label: "Pipeline", value: String(totalLeads), change: `${totalLeads} active`, icon: Briefcase, color: "#06B6D4", href: "/pipeline" },
+    { label: "Revenue", value: formatCurrency(Math.round(animatedRevenue), true), change: "+12%", icon: DollarSign, color: "#10B981", href: "/invoices" },
+    { label: "Clients", value: String(Math.round(animatedClients)), change: "+3 new", icon: Building2, color: "#3B82F6", href: "/clients" },
+    { label: "Win Rate", value: `${Math.round(animatedWinRate)}%`, change: `${wonLeadsCount} won`, icon: Target, color: "#6366F1", href: "/pipeline" },
+    { label: "Pipeline", value: String(Math.round(animatedLeads)), change: `${totalLeads} active`, icon: Briefcase, color: "#06B6D4", href: "/pipeline" },
   ];
 
   const kpis2 = [

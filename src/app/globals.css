@@ -591,8 +591,41 @@ button, a, [role="button"] {
 
 /* ══════ MOBILE ══════ */
 
+/* iOS notch / Android gesture bar safe areas — applied always so layouts
+   account for them in landscape too. */
+.safe-top { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-x { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+
+/* Prevent iOS auto-zoom on input focus (triggers when font-size < 16px) */
 @media (max-width: 768px) {
-  .mobile-safe-bottom { padding-bottom: 80px; }
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch target minimum: 44x44 per Apple HIG / 48x48 per Material */
+@media (hover: none) and (pointer: coarse) {
+  button:not(.tab-item):not(.sidebar-item):not(.no-touch-min),
+  [role="button"]:not(.no-touch-min),
+  a.btn-primary,
+  a.btn-secondary {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-safe-bottom { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
   .card, .card-glow, .card-elevated, .kpi-card, .kanban-column, .kanban-card, .modal-content, .tab-list, .data-table th {
     backdrop-filter: none !important;
@@ -603,7 +636,7 @@ button, a, [role="button"] {
   td, th { overflow: hidden; text-overflow: ellipsis; }
   p, span, h1, h2, h3, h4 { overflow-wrap: break-word; }
 
-  .page-container { gap: 14px; }
+  .page-container { gap: 14px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
   .kpi-card { padding: 14px 16px; border-radius: var(--radius-lg); }
   .kpi-card p { white-space: nowrap; }
   .card, .card-glow, .card-elevated { border-radius: var(--radius-lg); }
@@ -615,7 +648,41 @@ button, a, [role="button"] {
   .data-table td:first-child { max-width: 200px; }
   .data-table td:first-child * { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .btn-primary, .btn-secondary { padding: 8px 14px; font-size: 12px; }
-  .input-field { padding: 8px 10px; font-size: 13px; }
+  .input-field { padding: 8px 10px; font-size: 16px; } /* 16px to prevent iOS zoom */
   .tab-list { padding: 2px; }
   .tab-item { padding: 5px 10px; font-size: 11px; }
+
+  /* Drawer-style modals on mobile: full width, anchored to bottom, slide up */
+  .modal-mobile-drawer {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-mobile-drawer > div {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: 92vh !important;
+    animation: slide-up 0.25s ease-out;
+  }
+
+  /* Horizontal scroll kanban on small screens — much nicer than 6 stacked rows */
+  .kanban-mobile-scroll {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .kanban-mobile-scroll > * {
+    flex: 0 0 82vw;
+    scroll-snap-align: start;
+  }
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }

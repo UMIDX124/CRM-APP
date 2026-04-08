@@ -8,12 +8,24 @@ import WolfLogo from "@/components/WolfLogo";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    // Stub — in production this would POST to /api/auth/request-reset
-    setSubmitted(true);
+    if (!email || loading) return;
+    setLoading(true);
+    try {
+      await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+    } catch {
+      // Always show success to prevent enumeration
+    } finally {
+      setSubmitted(true);
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,8 +76,8 @@ export default function ForgotPasswordPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="btn-primary w-full py-3">
-                  Send reset link
+                <button type="submit" disabled={loading} className="btn-primary w-full py-3 disabled:opacity-60">
+                  {loading ? "Sending..." : "Send reset link"}
                 </button>
               </form>
             )}

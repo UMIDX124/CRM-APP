@@ -1,5 +1,65 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/db";
+import { dispatchWebhook } from "@/lib/webhooks";
+import { rateLimit } from "@/lib/ratelimit";
+
+/**
+ * HMAC verification for inbound lead webhooks.
+ *
+ * Clients (the VCS/BSL/DPL marketing sites) send an `X-Webhook-Signature`
+ * header containing `sha256=<hex>` where the hex is HMAC-SHA256 of the raw
+ * request body using `LEAD_WEBHOOK_SECRET`. If the secret is not set in the
+ * environment (dev, first deploy), we skip verification so existing sites
+ * keep working — but log a warning. Once the secret is deployed, any request
+ * missing or mismatching the signature is rejected with 401.
+ */
+function verifySignature(rawBody: string, signatureHeader: string | null): boolean {
+  const secret = process.env.LEAD_WEBHOOK_SECRET;
+  if (!secret) {
+    console.warn("LEAD_WEBHOOK_SECRET not set — accepting webhook without signature check");
+    return true;
+  }
+  if (!signatureHeader) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const provided = signatureHeader.replace(/^sha256=/, "");
+  // Timing-safe comparison — lengths must match
+  if (expected.length !== provided.length) return false;
+  try {
+    return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(provided, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * CORS allow list for the public lead-capture webhook.
+ * Only the official subsidiary websites may POST cross-origin.
+ * Override via `WEBHOOK_ALLOWED_ORIGINS` (comma-separated) for staging.
+ */
+const DEFAULT_ALLOWED = [
+  "https://digitalpointllc.com",
+  "https://www.digitalpointllc.com",
+  "https://virtualcustomersolution.com",
+  "https://www.virtualcustomersolution.com",
+  "https://backup-solutions.vercel.app",
+];
+const ALLOWED_ORIGINS = (
+  process.env.WEBHOOK_ALLOWED_ORIGINS || DEFAULT_ALLOWED.join(",")
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function corsHeaders(origin: string | null): Record<string, string> {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : "";
+  return {
+    "Access-Control-Allow-Origin": allowed || "null",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    Vary: "Origin",
+  };
+}
 
 /*
  * WEBHOOK: Auto Lead Capture from Website Forms
@@ -95,21 +155,53 @@ function autoAssignRep(source: string, priority: string): string | null {
 }
 
 export async function POST(req: Request) {
+  const origin = req.headers.get("origin");
+  const baseHeaders = corsHeaders(origin);
+
   try {
+    // Public endpoint — IP-based rate limit (60 lead submissions/min/IP)
+    const limited = await rateLimit("webhook-lead", req, {
+      limit: 60,
+      windowSec: 60,
+    });
+    if (!limited.success) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded" },
+        { status: 429, headers: baseHeaders }
+      );
+    }
+
+    // Read raw body once so we can both verify HMAC and parse JSON/form
+    const rawBody = await req.text();
+
+    // HMAC signature verification (if LEAD_WEBHOOK_SECRET is configured)
+    const sig = req.headers.get("x-webhook-signature");
+    if (!verifySignature(rawBody, sig)) {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401, headers: baseHeaders }
+      );
+    }
+
     let data: Record<string, string> = {};
     const contentType = req.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      data = await req.json();
+      try {
+        data = rawBody ? JSON.parse(rawBody) : {};
+      } catch {
+        return NextResponse.json({ error: "Invalid JSON" }, { status: 400, headers: baseHeaders });
+      }
     } else if (contentType.includes("form")) {
-      const formData = await req.formData();
-      formData.forEach((val, key) => { data[key] = String(val); });
+      // urlencoded form — parse from rawBody
+      const params = new URLSearchParams(rawBody);
+      params.forEach((val, key) => { data[key] = val; });
     } else {
       try {
-        data = await req.json();
+        data = rawBody ? JSON.parse(rawBody) : {};
       } catch {
-        const formData = await req.formData();
-        formData.forEach((val, key) => { data[key] = String(val); });
+        const params = new URLSearchParams(rawBody);
+        params.forEach((val, key) => { data[key] = val; });
       }
     }
 
@@ -162,6 +254,22 @@ export async function POST(req: Request) {
         },
       });
       leadId = lead.id;
+
+      // Fan-out to outbound webhook subscribers
+      await dispatchWebhook(
+        "LEAD_CREATED",
+        {
+          id: lead.id,
+          companyName: lead.companyName,
+          contactName: lead.contactName,
+          email: lead.email,
+          source: lead.source,
+          value: lead.value,
+          probability: lead.probability,
+          brand: source || null,
+        },
+        { brandId }
+      );
     } catch (dbErr) {
       console.error("Webhook DB error:", dbErr);
     }
@@ -255,19 +363,13 @@ export async function POST(req: Request) {
         leadId,
         lead: { company: company || name, priority, score, assignedRep },
       },
-      {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-        },
-      }
+      { headers: baseHeaders }
     );
   } catch (error) {
     console.error("Webhook error:", error);
     return NextResponse.json(
       { error: "Failed to process lead" },
-      { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
+      { status: 500, headers: baseHeaders }
     );
   }
 }
@@ -292,13 +394,9 @@ export async function GET() {
   );
 }
 
-// CORS preflight
-export async function OPTIONS() {
+// CORS preflight — only the allow-list origins succeed
+export async function OPTIONS(req: Request) {
   return NextResponse.json({}, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
+    headers: corsHeaders(req.headers.get("origin")),
   });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 import { logAudit } from "@/lib/audit";
 
 function toCSV(data: Record<string, unknown>[]): string {
@@ -19,6 +20,11 @@ function toCSV(data: Record<string, unknown>[]): string {
 export async function GET(req: Request) {
   try {
     const user = await requireAuth();
+    // 10 exports/min/user — exports are heavy DB scans
+    const rl = await rateLimit("export", req, { limit: 10, windowSec: 60 }, user.id);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many exports" }, { status: 429 });
+    }
     const url = new URL(req.url);
     const entity = url.searchParams.get("entity");
 

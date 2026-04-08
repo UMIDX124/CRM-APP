@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, CheckSquare, Users, Briefcase } from "lucide-react";
+import { LayoutDashboard, Building2, MessageSquare, LifeBuoy, Target } from "lucide-react";
 import { clsx } from "clsx";
 
+// Bottom-nav tabs surface the 5 highest-traffic destinations on mobile.
+// Pixels: 64px height + safe-area inset, primary color when active.
 const tabs = [
   { href: "/", icon: LayoutDashboard, label: "Home" },
   { href: "/clients", icon: Building2, label: "Clients" },
-  { href: "/pipeline", icon: Briefcase, label: "Pipeline" },
-  { href: "/tasks", icon: CheckSquare, label: "Tasks" },
-  { href: "/employees", icon: Users, label: "Team" },
+  { href: "/deals", icon: Target, label: "Deals" },
+  { href: "/tickets", icon: LifeBuoy, label: "Tickets" },
+  { href: "/chat", icon: MessageSquare, label: "Chat" },
 ];
 
 export default function MobileBottomNav() {

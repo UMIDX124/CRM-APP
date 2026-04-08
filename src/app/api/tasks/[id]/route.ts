@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel } from "@/lib/notifications";
+import { requireAuth } from "@/lib/auth";
+
+function unauthorized(e: unknown) {
+  if (e instanceof Error && e.message === "Unauthorized") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
     const task = await prisma.task.update({
@@ -27,7 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         brand: { select: { code: true, color: true } },
       },
     });
-    await logAudit({ action: "UPDATE", entity: "Task", entityId: id, userId: "system", changes: body }).catch(() => {});
+    await logAudit({ action: "UPDATE", entity: "Task", entityId: id, userId: actor.id, changes: body }).catch(() => {});
 
     // Notify on status changes and assignments
     if (body.status === "COMPLETED" && task.assignee) {
@@ -41,6 +50,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     return NextResponse.json(task);
   } catch (e: unknown) {
+    const u = unauthorized(e); if (u) return u;
+    console.error("Task update error:", e);
     const msg = e instanceof Error ? e.message : "Update failed";
     return NextResponse.json({ error: msg }, { status: 400 });
   }
@@ -48,6 +59,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const actor = await requireAuth();
     const { id } = await params;
 
     // Delete child records first to avoid FK constraint violations
@@ -57,9 +69,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       prisma.task.delete({ where: { id } }),
     ]);
 
-    await logAudit({ action: "DELETE", entity: "Task", entityId: id, userId: "system" }).catch(() => {});
+    await logAudit({ action: "DELETE", entity: "Task", entityId: id, userId: actor.id }).catch(() => {});
     return NextResponse.json({ success: true });
   } catch (e: unknown) {
+    const u = unauthorized(e); if (u) return u;
     const msg = e instanceof Error ? e.message : "Delete failed";
     console.error("Task delete error:", e);
     return NextResponse.json({ error: msg }, { status: 400 });

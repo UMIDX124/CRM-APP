@@ -14,9 +14,9 @@ export const parentCompany = {
 };
 
 export const brands = [
-  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com", parentId: "0" },
-  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", parentId: "0" },
-  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", parentId: "0" },
+  { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com", companyId: "fu" },
+  { id: "2", name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", companyId: "fu" },
+  { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", companyId: "fu" },
 ];
 
 export const departments = [

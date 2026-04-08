@@ -20,11 +20,28 @@ async function main() {
   await prisma.session.deleteMany();
   await prisma.user.deleteMany();
   await prisma.brand.deleteMany();
+  await prisma.company.deleteMany();
 
-  // Create brands (subsidiaries)
-  const vcs = await prisma.brand.create({ data: { name: "Virtual Customer Solution", code: "VCS", color: "#D4AF37", website: "virtualcustomersolution.com", parentId: "FU" } });
-  const bsl = await prisma.brand.create({ data: { name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", parentId: "FU" } });
-  const dpl = await prisma.brand.create({ data: { name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", parentId: "FU" } });
+  // Create mother company
+  const fu = await prisma.company.create({
+    data: {
+      name: "FU Corp",
+      code: "FU",
+      legalName: "FU Corporation LLC",
+      description: "Mother company. Operates VCS, BSL, and DPL as wholly-owned subsidiaries.",
+      website: "fucorp.com",
+      industry: "Technology / Marketing Services",
+      timezone: "Asia/Karachi",
+      currency: "USD",
+      locale: "en",
+      isActive: true,
+    },
+  });
+
+  // Create brands (subsidiaries) under FU Corp
+  const vcs = await prisma.brand.create({ data: { name: "Virtual Customer Solution", code: "VCS", color: "#D4AF37", website: "virtualcustomersolution.com", companyId: fu.id } });
+  const bsl = await prisma.brand.create({ data: { name: "Backup Solutions LLC", code: "BSL", color: "#3B82F6", website: "backup-solutions.vercel.app", companyId: fu.id } });
+  const dpl = await prisma.brand.create({ data: { name: "Digital Point LLC", code: "DPL", color: "#22C55E", website: "digitalpointllc.com", companyId: fu.id } });
 
   console.log("Brands created: VCS, BSL, DPL");
 

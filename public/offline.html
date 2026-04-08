@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#0A0A0F" />
+    <title>Offline · Alpha Command Center</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/mascot-32.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0a0f;
+        --surface: #131318;
+        --border: rgba(255, 255, 255, 0.08);
+        --fg: #fafafa;
+        --fg-dim: #a1a1aa;
+        --primary: #6366f1;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        padding-top: max(32px, env(safe-area-inset-top));
+        padding-bottom: max(32px, env(safe-area-inset-bottom));
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 40px 28px;
+        text-align: center;
+        max-width: 420px;
+        width: 100%;
+      }
+      .icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: var(--primary);
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .icon img {
+        width: 44px;
+        height: 44px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 24px;
+        font-size: 14px;
+        color: var(--fg-dim);
+        line-height: 1.5;
+      }
+      button {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        min-height: 44px;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .status {
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--fg-dim);
+      }
+      .dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f8fafc;
+          --surface: #ffffff;
+          --border: rgba(0, 0, 0, 0.08);
+          --fg: #18181b;
+          --fg-dim: #71717a;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="icon">
+          <img src="/mascot-192.png" alt="" />
+        </div>
+        <h1>You're offline</h1>
+        <p>
+          The Alpha Command Center can't reach the network right now. Cached
+          pages still work — head back to the dashboard, or try again once
+          your connection returns.
+        </p>
+        <button onclick="location.reload()">Try Again</button>
+        <div class="status" id="status"><span class="dot"></span>Offline</div>
+      </div>
+    </div>
+    <script>
+      const status = document.getElementById('status');
+      function update() {
+        if (navigator.onLine) {
+          status.innerHTML =
+            '<span class="dot" style="background:#10b981"></span>Back online · refreshing…';
+          setTimeout(() => location.reload(), 500);
+        } else {
+          status.innerHTML = '<span class="dot"></span>Offline';
+        }
+      }
+      window.addEventListener('online', update);
+      window.addEventListener('offline', update);
+    </script>
+  </body>
+</html>

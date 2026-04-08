@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
+    await requireAuth();
     const url = new URL(req.url);
     const source = url.searchParams.get("source"); // DPL, VCS, BSL, or null for all
     const brand = url.searchParams.get("brand"); // alias for source, used by global company switcher
@@ -101,6 +103,9 @@ export async function GET(req: Request) {
       },
     });
   } catch (err) {
+    if (err instanceof Error && err.message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Funnel API error:", err);
     return NextResponse.json({ error: "Failed to load funnel data" }, { status: 500 });
   }

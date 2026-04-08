@@ -1,15 +1,73 @@
 {
   "name": "Alpha Command Center",
-  "short_name": "Alpha",
-  "description": "Enterprise CRM powered by Alpha AI",
+  "short_name": "Alpha CRM",
+  "description": "Enterprise CRM powered by Alpha AI — clients, deals, tickets, and team workflow in one place.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0A0A0F",
   "theme_color": "#6366F1",
   "orientation": "any",
+  "lang": "en",
+  "categories": ["business", "productivity"],
   "icons": [
-    { "src": "/mascot-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/mascot-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/mascot-32.png", "sizes": "32x32", "type": "image/png" }
+    {
+      "src": "/mascot-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/mascot-48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
+    {
+      "src": "/mascot-96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "/mascot-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mascot-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Open the main dashboard",
+      "url": "/",
+      "icons": [{ "src": "/mascot-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Deals Pipeline",
+      "short_name": "Deals",
+      "description": "Open the sales pipeline",
+      "url": "/deals",
+      "icons": [{ "src": "/mascot-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Tickets",
+      "short_name": "Tickets",
+      "description": "Open the support inbox",
+      "url": "/tickets",
+      "icons": [{ "src": "/mascot-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Tasks",
+      "short_name": "Tasks",
+      "description": "Open task list",
+      "url": "/tasks",
+      "icons": [{ "src": "/mascot-96.png", "sizes": "96x96" }]
+    }
   ]
 }

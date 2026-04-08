@@ -2,6 +2,8 @@ import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 import type { UIMessage } from "ai";
 import { prisma } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 
 // P0-5 FIX: Use real database data instead of mock-data imports
 
@@ -84,17 +86,37 @@ const groq = createGroq({
 });
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json();
+  try {
+    const user = await requireAuth();
 
-  const systemPrompt = await buildSystemPrompt();
-  const modelMessages = await convertToModelMessages(messages);
+    // Rate-limit AI chat: 20 requests/min/user. Groq calls cost money.
+    const rl = await rateLimit("chat", req, { limit: 20, windowSec: 60 }, user.id);
+    if (!rl.success) {
+      return new Response(JSON.stringify({ error: "Too many requests" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
-  const result = streamText({
-    model: groq("llama-3.3-70b-versatile"),
-    system: systemPrompt,
-    messages: modelMessages,
-    stopWhen: stepCountIs(3),
-  });
+    const { messages }: { messages: UIMessage[] } = await req.json();
 
-  return result.toUIMessageStreamResponse();
+    const systemPrompt = await buildSystemPrompt();
+    const modelMessages = await convertToModelMessages(messages);
+
+    const result = streamText({
+      model: groq("llama-3.3-70b-versatile"),
+      system: systemPrompt,
+      messages: modelMessages,
+      stopWhen: stepCountIs(3),
+    });
+
+    return result.toUIMessageStreamResponse();
+  } catch (err) {
+    const status = err instanceof Error && err.message === "Unauthorized" ? 401 : 500;
+    console.error("Chat API error:", err);
+    return new Response(JSON.stringify({ error: status === 401 ? "Unauthorized" : "Chat failed" }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }

@@ -85,7 +85,102 @@ enum AttendanceStatus {
   LEAVE
 }
 
+enum DealStage {
+  NEW
+  QUALIFICATION
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum DealActivityType {
+  NOTE
+  STAGE_CHANGE
+  EMAIL
+  CALL
+  MEETING
+  TASK
+  ATTACHMENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketChannel {
+  EMAIL
+  WEB
+  CHAT
+  PHONE
+  API
+}
+
+enum WebhookEvent {
+  LEAD_CREATED
+  CLIENT_CREATED
+  DEAL_CREATED
+  DEAL_STAGE_CHANGED
+  DEAL_WON
+  DEAL_LOST
+  TICKET_CREATED
+  TICKET_STATUS_CHANGED
+  TICKET_RESOLVED
+  INVOICE_CREATED
+  INVOICE_PAID
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
 // ─── Models ──────────────────────────────────────────
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String // "FU Corp"
+  code        String   @unique // "FU"
+  legalName   String? // "FU Corporation LLC"
+  description String?
+  logo        String?
+  website     String?
+  email       String?
+  phone       String?
+  taxId       String?
+  vatNumber   String?
+  address     String?
+  city        String?
+  state       String?
+  country     String?
+  countryFlag String?
+  postalCode  String?
+  industry    String?
+  foundedYear Int?
+  timezone    String   @default("Asia/Karachi")
+  currency    String   @default("USD")
+  locale      String   @default("en")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brands Brand[]
+
+  @@map("companies")
+}
 
 model Brand {
   id        String   @id @default(cuid())
@@ -93,171 +188,192 @@ model Brand {
   code      String   @unique // VCS, BSL, DPL
   color     String
   website   String?
-  parentId  String?  // "FU" for subsidiaries
+  companyId String? // FK → Company (parent mother company)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users     User[]
-  clients   Client[]
-  tasks     Task[]
-  leads     Lead[]
-  invoices  Invoice[]
+  company  Company?  @relation(fields: [companyId], references: [id])
+  users    User[]
+  clients  Client[]
+  tasks    Task[]
+  leads    Lead[]
+  invoices Invoice[]
+  deals    Deal[]
+  tickets  Ticket[]
+  webhooks Webhook[]
 
+  @@index([companyId])
   @@map("brands")
 }
 
 model User {
-  id             String         @id @default(cuid())
-  email          String         @unique
-  passwordHash   String
-  pinCode        String?        // 4-digit attendance kiosk PIN
-  firstName      String
-  lastName       String
-  phone          String?
-  avatar         String?
-  title          String?
-  role           Role           @default(EMPLOYEE)
-  department     Department?
-  status         EmployeeStatus @default(ACTIVE)
-  brandId        String?
-  hireDate       DateTime?
-  salary         Float?
-  currency       String         @default("USD")
-  skills         String[]       @default([])
-  managerId      String?
-  isActive       Boolean        @default(true)
-  lastLogin      DateTime?
-  twoFactorEnabled Boolean      @default(false)
-  language       String         @default("en")
-  timezone       String         @default("Asia/Karachi")
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id                 String         @id @default(cuid())
+  email              String         @unique
+  passwordHash       String
+  pinCode            String? // 4-digit attendance kiosk PIN
+  firstName          String
+  lastName           String
+  phone              String?
+  avatar             String?
+  title              String?
+  role               Role           @default(EMPLOYEE)
+  department         Department?
+  status             EmployeeStatus @default(ACTIVE)
+  brandId            String?
+  hireDate           DateTime?
+  salary             Float?
+  currency           String         @default("USD")
+  skills             String[]       @default([])
+  managerId          String?
+  isActive           Boolean        @default(true)
+  lastLogin          DateTime?
+  lastSeenAt         DateTime?
+  presenceStatus     String         @default("offline") // online | away | offline
+  mustChangePassword Boolean        @default(false)
+  twoFactorEnabled   Boolean        @default(false)
+  language           String         @default("en")
+  timezone           String         @default("Asia/Karachi")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
-  brand          Brand?         @relation(fields: [brandId], references: [id])
-  manager        User?          @relation("ManagerRelation", fields: [managerId], references: [id])
-  subordinates   User[]         @relation("ManagerRelation")
+  brand        Brand? @relation(fields: [brandId], references: [id])
+  manager      User?  @relation("ManagerRelation", fields: [managerId], references: [id])
+  subordinates User[] @relation("ManagerRelation")
 
-  assignedTasks  Task[]         @relation("TaskAssignee")
-  createdTasks   Task[]         @relation("TaskCreator")
-  comments       Comment[]
-  notifications  Notification[]
-  attendance     Attendance[]
-  auditLogs      AuditLog[]
-  notes          Note[]         @relation("NoteAuthor")
-  attachments    Attachment[]
-  channelsCreated Channel[]     @relation("ChannelCreator")
+  assignedTasks      Task[]            @relation("TaskAssignee")
+  createdTasks       Task[]            @relation("TaskCreator")
+  comments           Comment[]
+  notifications      Notification[]
+  attendance         Attendance[]
+  auditLogs          AuditLog[]
+  notes              Note[]            @relation("NoteAuthor")
+  attachments        Attachment[]
+  channelsCreated    Channel[]         @relation("ChannelCreator")
   channelMemberships ChannelMember[]
-  messages       Message[]
+  channelMutes       ChannelMute[]
+  messages           Message[]
+  messageReactions   MessageReaction[]
+  messageReads       MessageRead[]
+  messagePins        MessagePin[]
+  pushSubscriptions  PushSubscription[]
+  ownedDeals         Deal[]            @relation("DealOwner")
+  dealActivities     DealActivity[]
+  requestedTickets   Ticket[]          @relation("TicketRequester")
+  assignedTickets    Ticket[]          @relation("TicketAssignee")
+  ticketComments     TicketComment[]
 
   @@map("users")
 }
 
 model Client {
-  id           String       @id @default(cuid())
-  companyName  String
-  contactName  String
-  email        String
-  phone        String?
-  country      String?
-  countryFlag  String?
-  website      String?
-  source       String?
-  status       ClientStatus @default(ACTIVE)
-  healthScore     Int          @default(80)
-  mrr             Float        @default(0)
-  brandId         String
-  services        String[]     @default([])
-  lastContactDate DateTime?
-  nextFollowUp    DateTime?
+  id               String       @id @default(cuid())
+  companyName      String
+  contactName      String
+  email            String
+  phone            String?
+  country          String?
+  countryFlag      String?
+  website          String?
+  source           String?
+  status           ClientStatus @default(ACTIVE)
+  healthScore      Int          @default(80)
+  mrr              Float        @default(0)
+  brandId          String
+  services         String[]     @default([])
+  lastContactDate  DateTime?
+  nextFollowUp     DateTime?
   accountManagerId String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  brand           Brand        @relation(fields: [brandId], references: [id])
-  invoices        Invoice[]
-  notes           Note[]
-  tasks           Task[]       @relation("ClientTasks")
-  attachments     Attachment[] @relation("ClientAttachments")
-  feedback        CustomerFeedback[]
+  brand       Brand              @relation(fields: [brandId], references: [id])
+  invoices    Invoice[]
+  notes       Note[]
+  tasks       Task[]             @relation("ClientTasks")
+  attachments Attachment[]       @relation("ClientAttachments")
+  feedback    CustomerFeedback[]
+  deals       Deal[]
+  tickets     Ticket[]
 
   @@map("clients")
 }
 
 model Task {
-  id           String     @id @default(cuid())
-  title        String
-  description  String?
-  status       TaskStatus @default(TODO)
-  priority     Priority   @default(MEDIUM)
-  department   Department?
-  assigneeId   String?
-  creatorId    String
-  clientId     String?
-  brandId      String?
-  dueDate      DateTime?
-  completedAt  DateTime?
-  timeSpent    Float      @default(0)
-  order        Int        @default(0)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus  @default(TODO)
+  priority    Priority    @default(MEDIUM)
+  department  Department?
+  assigneeId  String?
+  creatorId   String
+  clientId    String?
+  brandId     String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  timeSpent   Float       @default(0)
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  assignee     User?      @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  creator      User       @relation("TaskCreator", fields: [creatorId], references: [id])
-  client       Client?    @relation("ClientTasks", fields: [clientId], references: [id])
-  brand        Brand?     @relation(fields: [brandId], references: [id])
-  comments     Comment[]
-  attachments  Attachment[] @relation("TaskAttachments")
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  client      Client?      @relation("ClientTasks", fields: [clientId], references: [id])
+  brand       Brand?       @relation(fields: [brandId], references: [id])
+  comments    Comment[]
+  attachments Attachment[] @relation("TaskAttachments")
 
   @@map("tasks")
 }
 
 model Lead {
-  id           String     @id @default(cuid())
-  companyName  String
-  contactName  String
-  email        String?
-  phone        String?
-  country      String?
-  countryFlag  String?
-  services     String[]   @default([])
-  source       String?
-  status       LeadStatus @default(NEW)
-  value        Float      @default(0)
-  probability  Int        @default(50)
-  salesRepId   String?
-  brandId      String?
+  id              String     @id @default(cuid())
+  companyName     String
+  contactName     String
+  email           String?
+  phone           String?
+  country         String?
+  countryFlag     String?
+  services        String[]   @default([])
+  source          String?
+  status          LeadStatus @default(NEW)
+  value           Float      @default(0)
+  probability     Int        @default(50)
+  salesRepId      String?
+  brandId         String?
   expectedClose   DateTime?
   lastContactDate DateTime?
   nextContactDate DateTime?
   nextAction      String?
   notes           String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  brand        Brand?     @relation(fields: [brandId], references: [id])
+  brand Brand? @relation(fields: [brandId], references: [id])
+  deals Deal[]
 
   @@map("leads")
 }
 
 model Invoice {
-  id          String        @id @default(cuid())
-  number      String        @unique
-  clientId    String
-  brandId     String
-  items       Json          // Array of { description, quantity, rate }
-  subtotal    Float
-  tax         Float         @default(0)
-  total       Float
-  status      InvoiceStatus @default(DRAFT)
-  issueDate   DateTime
-  dueDate     DateTime
-  paidDate    DateTime?
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String        @id @default(cuid())
+  number    String        @unique
+  clientId  String
+  brandId   String
+  items     Json // Array of { description, quantity, rate }
+  subtotal  Float
+  tax       Float         @default(0)
+  total     Float
+  status    InvoiceStatus @default(DRAFT)
+  issueDate DateTime
+  dueDate   DateTime
+  paidDate  DateTime?
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  client      Client        @relation(fields: [clientId], references: [id])
-  brand       Brand         @relation(fields: [brandId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
+  brand  Brand  @relation(fields: [brandId], references: [id])
 
   @@map("invoices")
 }
@@ -273,7 +389,7 @@ model Attendance {
   notes       String?
   createdAt   DateTime         @default(now())
 
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@map("attendance")
@@ -287,8 +403,8 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
+  task   Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
 
   @@map("comments")
 }
@@ -302,8 +418,8 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  author    User     @relation("NoteAuthor", fields: [authorId], references: [id])
+  client Client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  author User    @relation("NoteAuthor", fields: [authorId], references: [id])
 
   @@map("notes")
 }
@@ -319,9 +435,9 @@ model Attachment {
   uploadedById String
   createdAt    DateTime @default(now())
 
-  task         Task?    @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
-  client       Client?  @relation("ClientAttachments", fields: [clientId], references: [id], onDelete: Cascade)
-  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  task       Task?   @relation("TaskAttachments", fields: [taskId], references: [id], onDelete: Cascade)
+  client     Client? @relation("ClientAttachments", fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation(fields: [uploadedById], references: [id])
 
   @@map("attachments")
 }
@@ -336,23 +452,23 @@ model Notification {
   data      Json?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 model AuditLog {
   id        String   @id @default(cuid())
-  action    String   // CREATE, UPDATE, DELETE
-  entity    String   // User, Client, Task, Invoice, etc.
+  action    String // CREATE, UPDATE, DELETE
+  entity    String // User, Client, Task, Invoice, etc.
   entityId  String
   userId    String
-  changes   Json?    // { field: { old, new } }
+  changes   Json? // { field: { old, new } }
   metadata  Json?
   ipAddress String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([entity, entityId])
   @@index([userId])
@@ -375,7 +491,7 @@ model Session {
 model CustomerFeedback {
   id         String    @id @default(cuid())
   clientId   String
-  type       String    // COMPLAINT, PRAISE, SUGGESTION
+  type       String // COMPLAINT, PRAISE, SUGGESTION
   status     String    @default("OPEN") // OPEN, RESOLVED, UNRESOLVED
   message    String
   response   String?
@@ -383,7 +499,7 @@ model CustomerFeedback {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("customer_feedback")
 }
@@ -391,48 +507,302 @@ model CustomerFeedback {
 // ─── Team Communication System ──────────────────────────
 
 model Channel {
-  id          String          @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  type        String          @default("PUBLIC") // PUBLIC, PRIVATE, DIRECT
+  topic       String?
+  type        String   @default("PUBLIC") // PUBLIC, PRIVATE, DIRECT
   createdById String
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  createdBy   User            @relation("ChannelCreator", fields: [createdById], references: [id])
-  messages    Message[]
-  members     ChannelMember[]
+  createdBy User            @relation("ChannelCreator", fields: [createdById], references: [id])
+  messages  Message[]
+  members   ChannelMember[]
+  pins      MessagePin[]
+  mutes     ChannelMute[]
 
   @@map("channels")
 }
 
 model ChannelMember {
-  id        String   @id @default(cuid())
-  channelId String
-  userId    String
-  role      String   @default("MEMBER") // ADMIN, MEMBER
-  joinedAt  DateTime @default(now())
+  id         String    @id @default(cuid())
+  channelId  String
+  userId     String
+  role       String    @default("MEMBER") // ADMIN, MEMBER
+  isMuted    Boolean   @default(false)
+  lastReadAt DateTime?
+  joinedAt   DateTime  @default(now())
 
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([channelId, userId])
   @@map("channel_members")
 }
 
 model Message {
+  id              String    @id @default(cuid())
+  content         String
+  channelId       String
+  authorId        String
+  parentMessageId String?
+  type            String    @default("TEXT") // TEXT, SYSTEM, LEAD_ALERT, TASK_UPDATE
+  metadata        Json? // { leadId, clientId, taskId, invoiceId }
+  attachments     Json? // [{ url, name, mime, size }]
+  linkPreview     Json? // { url, title, description, image }
+  mentions        String[]  @default([])
+  editedAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  channel   Channel           @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  author    User              @relation(fields: [authorId], references: [id])
+  parent    Message?          @relation("MessageThread", fields: [parentMessageId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Message[]         @relation("MessageThread")
+  reactions MessageReaction[]
+  reads     MessageRead[]
+  pin       MessagePin?
+
+  @@index([channelId, createdAt])
+  @@index([parentMessageId])
+  @@map("messages")
+}
+
+model MessageReaction {
   id        String   @id @default(cuid())
-  content   String
-  channelId String
-  authorId  String
-  type      String   @default("TEXT") // TEXT, SYSTEM, LEAD_ALERT, TASK_UPDATE
-  metadata  Json?    // { leadId, clientId, taskId, invoiceId }
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
+}
+
+model MessageRead {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@map("message_reads")
+}
+
+model MessagePin {
+  id         String   @id @default(cuid())
+  messageId  String   @unique
+  channelId  String
+  pinnedById String
+  pinnedAt   DateTime @default(now())
+
+  message  Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  channel  Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  pinnedBy User    @relation(fields: [pinnedById], references: [id])
+
+  @@index([channelId])
+  @@map("message_pins")
+}
+
+model ChannelMute {
+  id         String    @id @default(cuid())
+  channelId  String
+  userId     String
+  mutedUntil DateTime?
+  createdAt  DateTime  @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@map("channel_mutes")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// ─── Deals / Sales Pipeline (Phase 3) ───────────────────
+
+model Deal {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  value           Float     @default(0)
+  currency        String    @default("USD")
+  stage           DealStage @default(NEW)
+  probability     Int       @default(20) // 0-100
+  expectedClose   DateTime?
+  actualClose     DateTime?
+  lostReason      String?
+  winReason       String?
+  followUpDate    DateTime?
+  stageEnteredAt  DateTime  @default(now())
+  dealScore       Int       @default(0) // 0-100, AI-computed lead heat
+  source          String?
+  tags            String[]  @default([])
+
+  ownerId  String?
+  brandId  String?
+  clientId String?
+  leadId   String?
+
+  owner  User?   @relation("DealOwner", fields: [ownerId], references: [id])
+  brand  Brand?  @relation(fields: [brandId], references: [id])
+  client Client? @relation(fields: [clientId], references: [id])
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+
+  activities DealActivity[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  author    User     @relation(fields: [authorId], references: [id])
+  @@index([stage])
+  @@index([brandId])
+  @@index([ownerId])
+  @@index([clientId])
+  @@map("deals")
+}
 
-  @@index([channelId, createdAt])
-  @@map("messages")
+model DealActivity {
+  id        String           @id @default(cuid())
+  dealId    String
+  userId    String?
+  type      DealActivityType
+  content   String
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  deal Deal  @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([dealId, createdAt])
+  @@map("deal_activities")
+}
+
+// ─── Tickets / Customer Support (Phase 4) ───────────────
+
+model Ticket {
+  id          String         @id @default(cuid())
+  number      Int            @unique @default(autoincrement())
+  subject     String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  channel     TicketChannel  @default(WEB)
+  tags        String[]       @default([])
+
+  brandId     String?
+  clientId    String?
+  requesterId String?
+  assigneeId  String?
+
+  brand     Brand?  @relation(fields: [brandId], references: [id])
+  client    Client? @relation(fields: [clientId], references: [id])
+  requester User?   @relation("TicketRequester", fields: [requesterId], references: [id])
+  assignee  User?   @relation("TicketAssignee", fields: [assigneeId], references: [id])
+
+  comments TicketComment[]
+
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  slaDueAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([priority])
+  @@index([brandId])
+  @@index([assigneeId])
+  @@index([clientId])
+  @@map("tickets")
+}
+
+model TicketComment {
+  id         String   @id @default(cuid())
+  ticketId   String
+  authorId   String
+  content    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id])
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_comments")
+}
+
+// ─── Webhook Integration (Phase 5) ──────────────────────
+
+model Webhook {
+  id          String         @id @default(cuid())
+  name        String
+  url         String
+  secret      String?
+  events      WebhookEvent[] @default([])
+  isActive    Boolean        @default(true)
+  description String?
+
+  brandId String?
+  brand   Brand?  @relation(fields: [brandId], references: [id])
+
+  totalDeliveries Int       @default(0)
+  successCount    Int       @default(0)
+  failureCount    Int       @default(0)
+  lastTriggeredAt DateTime?
+  lastErrorAt     DateTime?
+  lastError       String?
+
+  deliveries WebhookDelivery[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([brandId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id             String                @id @default(cuid())
+  webhookId      String
+  event          WebhookEvent
+  payload        Json
+  status         WebhookDeliveryStatus @default(PENDING)
+  responseStatus Int?
+  responseBody   String?
+  errorMessage   String?
+  attemptCount   Int                   @default(0)
+  durationMs     Int?
+  deliveredAt    DateTime?
+  createdAt      DateTime              @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, createdAt])
+  @@index([event])
+  @@map("webhook_deliveries")
 }

@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
   Settings, ChevronLeft, Moon, Sun, LogOut, Menu, Bell,
   ClipboardCheck, FileText, DollarSign, CalendarOff, Filter,
+  Target, LifeBuoy, Webhook,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { WolfIcon } from "@/components/WolfLogo";
@@ -17,6 +18,8 @@ const navItems = [
   { href: "/clients", label: "Clients", icon: Building2, section: "main" as const },
   { href: "/pipeline", label: "Pipeline", icon: Briefcase, section: "main" as const },
   { href: "/funnel", label: "Lead Funnel", icon: Filter, section: "main" as const },
+  { href: "/deals", label: "Deals", icon: Target, section: "sales" as const },
+  { href: "/tickets", label: "Tickets", icon: LifeBuoy, section: "sales" as const },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" as const },
   { href: "/employees", label: "Team", icon: Users, section: "hr" as const },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" as const },
@@ -24,11 +27,12 @@ const navItems = [
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" as const },
   { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" as const },
   { href: "/reports", label: "Reports", icon: BarChart3, section: "system" as const },
+  { href: "/webhooks", label: "Webhooks", icon: Webhook, section: "system" as const },
   { href: "/settings", label: "Settings", icon: Settings, section: "system" as const },
 ];
 
 const sectionLabels: Record<string, string> = {
-  main: "", hr: "People", finance: "Finance", system: "System",
+  main: "", sales: "Sales & Support", hr: "People", finance: "Finance", system: "System",
 };
 
 interface SidebarProps {
@@ -89,7 +93,7 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-3 px-2.5 overflow-y-auto scrollbar-thin">
-          {(["main", "hr", "finance", "system"] as const).map((section) => {
+          {(["main", "sales", "hr", "finance", "system"] as const).map((section) => {
             const items = navItems.filter((i) => i.section === section);
             return (
               <div key={section} className={section !== "main" ? "mt-4" : ""}>

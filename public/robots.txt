@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /
+
+# Alpha Command Center is a private CRM. Search engines should not index any
+# of its surface area, including login and marketing pages, to prevent
+# enumeration of internal routes.

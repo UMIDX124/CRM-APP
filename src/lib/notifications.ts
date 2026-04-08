@@ -1,4 +1,5 @@
 import { prisma } from "./db";
+import { sendPush, notificationToPushPayload } from "./push";
 
 // ─── Notification Types ─────────────────────────────
 export type NotificationType =
@@ -15,6 +16,10 @@ export type NotificationType =
   | "TASK_DUE"
   | "TEAM_UPDATE"
   | "MENTION"
+  | "TICKET_ASSIGNED"
+  | "TICKET_STATUS_CHANGED"
+  | "DEAL_STAGE_CHANGED"
+  | "SLA_BREACH"
   | "SYSTEM";
 
 interface CreateNotificationParams {
@@ -28,18 +33,19 @@ interface CreateNotificationParams {
 // ─── Create a notification for a specific user ──────
 export async function createNotification(params: CreateNotificationParams): Promise<void> {
   try {
+    let recipientIds: string[] = [];
     if (params.userId === "all") {
-      // Broadcast to all active users
       const users = await prisma.user.findMany({
         where: { status: "ACTIVE" },
         select: { id: true },
       });
+      recipientIds = users.map((u) => u.id);
       await prisma.notification.createMany({
-        data: users.map((u) => ({
+        data: recipientIds.map((uid) => ({
           type: params.type,
           title: params.title,
           message: params.message,
-          userId: u.id,
+          userId: uid,
           data: params.data ? JSON.parse(JSON.stringify(params.data)) : undefined,
         })),
       });
@@ -53,6 +59,28 @@ export async function createNotification(params: CreateNotificationParams): Prom
           data: params.data ? JSON.parse(JSON.stringify(params.data)) : undefined,
         },
       });
+      recipientIds = [params.userId];
+    }
+
+    // Best-effort fan-out to web push subscribers (silent on failure).
+    // Only fire push for "interesting" notification types — internal SYSTEM
+    // updates and routine status changes shouldn't buzz everyone's phone.
+    const pushable: NotificationType[] = [
+      "MENTION",
+      "TICKET_ASSIGNED",
+      "DEAL_STAGE_CHANGED",
+      "SLA_BREACH",
+      "LEAD_NEW",
+      "INVOICE_PAID",
+    ];
+    if (pushable.includes(params.type)) {
+      const payload = notificationToPushPayload({
+        type: params.type,
+        title: params.title,
+        message: params.message,
+        data: params.data,
+      });
+      await Promise.allSettled(recipientIds.map((uid) => sendPush(uid, payload)));
     }
   } catch (err) {
     console.error("Failed to create notification:", err);
