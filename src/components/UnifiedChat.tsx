@@ -1086,6 +1086,20 @@ export default function UnifiedChat() {
     localStorage.setItem("unified-chat-tab", activeTab);
   }, [activeTab]);
 
+  // Listen for the `open-unified-chat` window event so surfaces outside
+  // the component (e.g. the mobile bottom nav) can open the panel without
+  // having to share React state. Detail can optionally specify which tab
+  // to land on: { detail: { tab: "ai" | "team" } }.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setIsOpen(true);
+      const ce = e as CustomEvent<{ tab?: ChatTab }>;
+      if (ce.detail?.tab) setActiveTab(ce.detail.tab);
+    };
+    window.addEventListener("open-unified-chat", handler);
+    return () => window.removeEventListener("open-unified-chat", handler);
+  }, []);
+
   // FAB when closed
   if (!isOpen) {
     return (

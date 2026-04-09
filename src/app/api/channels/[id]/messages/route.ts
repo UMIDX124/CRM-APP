@@ -8,6 +8,57 @@ import { sanitizeText, clampLength } from "@/lib/sanitize";
 const POST_LIMIT = { limit: 30, windowSec: 60 };
 const MAX_MESSAGE_LENGTH = 4000;
 
+/**
+ * Single source of truth for channel access + auto-join semantics.
+ *
+ *   - Channel missing            → { ok: false, reason: "not_found" }
+ *   - Existing membership        → { ok: true  }
+ *   - PUBLIC channel, new user   → auto-create ChannelMember row, { ok: true }
+ *   - PRIVATE / DIRECT, non-member → { ok: false, reason: "not_member" }
+ *
+ * The auto-join path was added after a sprint audit found that the hard
+ * membership check broke the common "walk into #general and type" flow
+ * for brand-new users whose seed didn't enrol them in public rooms.
+ * `upsert` keeps this race-safe when two concurrent requests hit a
+ * brand-new public channel simultaneously.
+ */
+async function ensureChannelAccess(
+  channelId: string,
+  userId: string
+): Promise<{ ok: true } | { ok: false; reason: "not_found" | "not_member" }> {
+  const existing = await prisma.channelMember.findUnique({
+    where: { channelId_userId: { channelId, userId } },
+    select: { id: true },
+  });
+  if (existing) return { ok: true };
+
+  const channel = await prisma.channel.findUnique({
+    where: { id: channelId },
+    select: { id: true, type: true },
+  });
+  if (!channel) return { ok: false, reason: "not_found" };
+
+  if (channel.type === "PUBLIC") {
+    try {
+      await prisma.channelMember.upsert({
+        where: { channelId_userId: { channelId, userId } },
+        update: {},
+        create: { channelId, userId, role: "MEMBER" },
+      });
+      return { ok: true };
+    } catch (err) {
+      console.error(
+        `[ensureChannelAccess] auto-join failed for user=${userId} channel=${channelId}:`,
+        err
+      );
+      return { ok: false, reason: "not_member" };
+    }
+  }
+
+  // PRIVATE / DIRECT — strict membership required
+  return { ok: false, reason: "not_member" };
+}
+
 // GET /api/channels/:id/messages — fetch messages for a channel
 export async function GET(
   req: NextRequest,
@@ -22,14 +73,16 @@ export async function GET(
     const { id } = await params;
 
     // Membership check: only users who belong to the channel can read its
-    // messages. Respond with 404 for non-members so the endpoint doesn't
-    // leak which channel IDs exist. Public channels must still enrol the
-    // user via POST /api/channels/[id] before read access is granted.
-    const membership = await prisma.channelMember.findUnique({
-      where: { channelId_userId: { channelId: id, userId: user.id } },
-      select: { id: true },
-    });
-    if (!membership) {
+    // messages. For PUBLIC channels we auto-enrol any authenticated user
+    // on first access (matches Slack / Discord "public room" semantics
+    // where the whole workspace can walk into #general). For PRIVATE and
+    // DIRECT channels the check is strict — non-members get 404 so the
+    // endpoint doesn't leak which private channel IDs exist.
+    const access = await ensureChannelAccess(id, user.id);
+    if (!access.ok) {
+      console.warn(
+        `[messages GET] access denied for user=${user.id} channel=${id} reason=${access.reason}`
+      );
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -116,8 +169,20 @@ export async function GET(
       nextCursor: messages.length > 0 ? messages[messages.length - 1].id : null,
     });
   } catch (err) {
-    console.error("Messages GET error:", err);
-    return NextResponse.json({ error: "Failed to load messages" }, { status: 500 });
+    const detail = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error(
+      "[messages GET] unhandled error:",
+      JSON.stringify({ detail, stack })
+    );
+    return NextResponse.json(
+      {
+        error: "Failed to load messages",
+        code: "MESSAGE_LOAD_FAILED",
+        detail: process.env.NODE_ENV === "production" ? undefined : detail,
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -146,13 +211,13 @@ export async function POST(
 
     const { id } = await params;
 
-    // Only channel members can post messages — prevents cross-tenant
-    // writes even if a client bypasses the UI.
-    const membership = await prisma.channelMember.findUnique({
-      where: { channelId_userId: { channelId: id, userId: user.id } },
-      select: { id: true },
-    });
-    if (!membership) {
+    // Enforce the same access rule as GET: PUBLIC channels auto-enrol
+    // the caller, PRIVATE / DIRECT channels reject non-members with 404.
+    const access = await ensureChannelAccess(id, user.id);
+    if (!access.ok) {
+      console.warn(
+        `[messages POST] access denied for user=${user.id} channel=${id} reason=${access.reason}`
+      );
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -263,7 +328,22 @@ export async function POST(
       },
     }, { status: 201 });
   } catch (err) {
-    console.error("Message POST error:", err);
-    return NextResponse.json({ error: "Failed to send message" }, { status: 500 });
+    // Structured logging so failures surface with context in the runtime
+    // logs — prior "Failed to send" errors were opaque because the catch
+    // swallowed the inner Prisma/validation message.
+    const detail = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error(
+      "[messages POST] unhandled error:",
+      JSON.stringify({ detail, stack })
+    );
+    return NextResponse.json(
+      {
+        error: "Failed to send message",
+        code: "MESSAGE_SEND_FAILED",
+        detail: process.env.NODE_ENV === "production" ? undefined : detail,
+      },
+      { status: 500 }
+    );
   }
 }

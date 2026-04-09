@@ -62,8 +62,20 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const [revenue, setRevenue] = useState<RevenueResponse | null>(null);
+  // `greeting` is time-of-day dependent, which would mismatch between SSR
+  // (server clock) and hydration (client clock) and trigger React error
+  // #418. We render a neutral "Good day" on first paint and flip to the
+  // real greeting inside an effect once the component has mounted.
+  const [greeting, setGreeting] = useState<string>("Good day");
   const { activeCompany } = useCompany();
   const realtime = useRealtime();
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(
+      hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"
+    );
+  }, []);
 
   // Stable refetch we can call from the SSE handler too. Both the KPI
   // summary and the revenue chart refresh together so a new paid invoice
@@ -159,7 +171,7 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-[20px] font-semibold text-[var(--foreground)] tracking-tight flex items-center gap-2">
-            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening"}
+            {greeting}
           </h2>
           <p className="text-[13px] text-[var(--foreground-dim)] mt-0.5">Here&apos;s what&apos;s happening across your companies</p>
         </div>
