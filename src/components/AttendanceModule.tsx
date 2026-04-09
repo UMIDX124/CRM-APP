@@ -6,8 +6,22 @@ import {
   Search, Download, CheckCircle2, AlertCircle, Timer, Calendar, BarChart3,
 } from "lucide-react";
 import { clsx } from "clsx";
-import type { AttendanceStatus, AttendanceRecord } from "@/data/mock-data";
 import { downloadCSV } from "@/lib/api";
+
+// Inlined types — previously imported from @/data/mock-data which is
+// now gone. These match the Prisma `AttendanceStatus` enum and the
+// fields we normalize out of `/api/attendance`.
+type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "HALF_DAY" | "REMOTE" | "LEAVE";
+interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  date: string;
+  checkIn: string | null;
+  checkOut: string | null;
+  status: AttendanceStatus;
+  hoursWorked: number;
+  notes?: string;
+}
 
 // Static lookups that don't come from the database — brand colors live
 // in the companies table but for this module we only need the 3-brand
