@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 
@@ -12,7 +12,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
  */
 export async function GET(req: Request) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const url = new URL(req.url);
     const stage = url.searchParams.get("stage");
     const brand = url.searchParams.get("brand");
@@ -20,9 +20,16 @@ export async function GET(req: Request) {
     const clientId = url.searchParams.get("clientId");
     const q = url.searchParams.get("q");
 
-    const where: Record<string, unknown> = {};
+    // Enforce multi-tenant scoping first so no combination of filters can
+    // widen access beyond what the caller's role permits.
+    const where: Record<string, unknown> = { ...tenantWhere(user) };
     if (stage) where.stage = stage;
-    if (brand) where.brand = { code: brand };
+    // `brand=CODE` query param narrows within the tenant scope; a manager
+    // can drill into a single brand but can't escape their companyId.
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
     if (ownerId) where.ownerId = ownerId;
     if (clientId) where.clientId = clientId;
     if (q) {

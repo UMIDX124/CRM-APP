@@ -59,10 +59,18 @@ export async function getSession() {
         id: true, email: true, firstName: true, lastName: true,
         role: true, department: true, brandId: true, avatar: true,
         title: true, status: true, language: true, twoFactorEnabled: true,
+        brand: { select: { companyId: true } },
       },
     });
 
-    return user;
+    if (!user) return null;
+
+    // Flatten brand.companyId so callers can reference `user.companyId`
+    // directly when enforcing multi-tenant isolation on DB queries.
+    // Users without a brand (unassigned) get a null companyId which every
+    // tenant filter treats as "no access" — safe default.
+    const { brand, ...rest } = user;
+    return { ...rest, companyId: brand?.companyId ?? null };
   } catch (err) {
     console.error("getSession error:", err);
     return null;
@@ -99,4 +107,54 @@ export function isAdmin(role: string) {
 
 export function isManager(role: string) {
   return ["SUPER_ADMIN", "PROJECT_MANAGER", "DEPT_HEAD"].includes(role);
+}
+
+/**
+ * Tenant scoping for Prisma `where` clauses on models that live under a
+ * Brand (Client, Deal, Lead, Invoice, Ticket, Task, Webhook, …).
+ *
+ * Scoping rules:
+ *   - SUPER_ADMIN:                      no filter (sees everything)
+ *   - PROJECT_MANAGER / DEPT_HEAD:      filter by user's companyId — they
+ *                                       oversee every brand under their
+ *                                       parent company
+ *   - everyone else (EMPLOYEE, etc.):   filter by user's brandId exactly
+ *
+ * Users without a brand assignment get `{ brandId: "__none__" }` — a
+ * sentinel that matches nothing. This is safer than an empty filter
+ * which would leak all rows.
+ *
+ * Usage:
+ *   const where = { ...tenantWhere(user), status: "ACTIVE" };
+ *   await prisma.client.findMany({ where });
+ */
+export type SessionUser = {
+  id: string;
+  role: string;
+  brandId: string | null;
+  companyId: string | null;
+};
+
+export function tenantWhere(user: SessionUser): Record<string, unknown> {
+  if (user.role === "SUPER_ADMIN") return {};
+  if (user.role === "PROJECT_MANAGER" || user.role === "DEPT_HEAD") {
+    if (user.companyId) return { brand: { companyId: user.companyId } };
+    // Manager without a brand assigned → lock out
+    return { brandId: "__none__" };
+  }
+  // Regular employees: their own brand only
+  return { brandId: user.brandId ?? "__none__" };
+}
+
+/**
+ * Same scoping rules but for the User model itself (which has brandId but
+ * no relation back to Brand named "brand" for filter purposes).
+ */
+export function tenantUserWhere(user: SessionUser): Record<string, unknown> {
+  if (user.role === "SUPER_ADMIN") return {};
+  if (user.role === "PROJECT_MANAGER" || user.role === "DEPT_HEAD") {
+    if (user.companyId) return { brand: { companyId: user.companyId } };
+    return { brandId: "__none__" };
+  }
+  return { brandId: user.brandId ?? "__none__" };
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, isManager } from "@/lib/auth";
+import { requireAuth, isManager, tenantWhere } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
 import { logAudit } from "@/lib/audit";
 
@@ -34,14 +34,19 @@ const invoiceCreateSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
     const brand = url.searchParams.get("brand");
 
-    const where: Record<string, unknown> = {};
+    // Tenant scope: managers see all brands in their company; employees see
+    // only their own brand. Caller-provided filters can only narrow.
+    const where: Record<string, unknown> = { ...tenantWhere(user) };
     if (status) where.status = status;
-    if (brand) where.brand = { code: brand };
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
 
     const invoices = await prisma.invoice.findMany({
       where,

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere, tenantUserWhere } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
 import { logAudit } from "@/lib/audit";
 
@@ -32,9 +32,16 @@ export async function GET(req: Request) {
 
     let data: Record<string, unknown>[] = [];
 
+    // Every entity is tenant-scoped so a manager can't export data from
+    // brands outside their own company and an employee can't export
+    // anything outside their own brand.
+    const tenant = tenantWhere(user);
+    const userTenant = tenantUserWhere(user);
+
     switch (entity) {
       case "employees": {
         const rows = await prisma.user.findMany({
+          where: userTenant,
           select: { firstName: true, lastName: true, email: true, phone: true, title: true, role: true, department: true, status: true, salary: true, hireDate: true },
         });
         data = rows.map((r) => ({ ...r, hireDate: r.hireDate?.toISOString().split("T")[0] || "" }));
@@ -42,6 +49,7 @@ export async function GET(req: Request) {
       }
       case "clients": {
         const rows = await prisma.client.findMany({
+          where: tenant,
           select: { companyName: true, contactName: true, email: true, phone: true, country: true, status: true, mrr: true, healthScore: true },
         });
         data = rows as unknown as Record<string, unknown>[];
@@ -49,6 +57,7 @@ export async function GET(req: Request) {
       }
       case "tasks": {
         const rows = await prisma.task.findMany({
+          where: tenant,
           select: { title: true, status: true, priority: true, dueDate: true, timeSpent: true },
           orderBy: { createdAt: "desc" },
         });
@@ -57,6 +66,7 @@ export async function GET(req: Request) {
       }
       case "invoices": {
         const rows = await prisma.invoice.findMany({
+          where: tenant,
           select: { number: true, status: true, total: true, issueDate: true, dueDate: true, paidDate: true },
           orderBy: { issueDate: "desc" },
         });
@@ -69,7 +79,10 @@ export async function GET(req: Request) {
         break;
       }
       case "attendance": {
+        // Attendance is user-scoped, so we constrain via the `user` relation
+        // with the same multi-tenant rules that apply to the users list.
         const rows = await prisma.attendance.findMany({
+          where: { user: userTenant },
           include: { user: { select: { firstName: true, lastName: true } } },
           orderBy: { date: "desc" },
           take: 500,

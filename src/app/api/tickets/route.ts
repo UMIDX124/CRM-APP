@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
+import { rateLimit } from "@/lib/ratelimit";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
 import { computeSlaDueAt, type TicketPriorityLike } from "@/lib/sla";
@@ -14,7 +15,7 @@ import { createNotification } from "@/lib/notifications";
  */
 export async function GET(req: Request) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
     const priority = url.searchParams.get("priority");
@@ -23,10 +24,15 @@ export async function GET(req: Request) {
     const clientId = url.searchParams.get("clientId");
     const q = url.searchParams.get("q");
 
-    const where: Record<string, unknown> = {};
+    // Tenant scope first — stops a DEPT_HEAD from querying another
+    // company's tickets by passing ?brand=OTHER.
+    const where: Record<string, unknown> = { ...tenantWhere(user) };
     if (status) where.status = status;
     if (priority) where.priority = priority;
-    if (brand) where.brand = { code: brand };
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
     if (assigneeId) where.assigneeId = assigneeId;
     if (clientId) where.clientId = clientId;
     if (q) {
@@ -78,6 +84,15 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
+
+    // 30 ticket creations per minute per user. Tickets fan out to SLA
+    // computation, notifications, email, and webhooks — cheap per-row
+    // but worth capping against API key abuse and runaway integrations.
+    const rl = await rateLimit("tickets-create", req, { limit: 30, windowSec: 60 }, user.id);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+    }
+
     const body = await req.json();
 
     if (!body.subject || !body.description) {

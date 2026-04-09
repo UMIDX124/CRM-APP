@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth, isManager } from "@/lib/auth";
+import { requireAuth, isManager, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel } from "@/lib/notifications";
 import { dispatchWebhook } from "@/lib/webhooks";
@@ -13,8 +13,14 @@ export async function GET(req: Request) {
     const status = url.searchParams.get("status");
     const search = url.searchParams.get("search");
 
-    const where: Record<string, unknown> = {};
-    if (brand) where.brand = { code: brand };
+    // tenantWhere enforces role-based scoping (company for managers,
+    // brand for employees, unrestricted for super admin) and replaces
+    // the previous hand-rolled branch that only filtered non-managers.
+    const where: Record<string, unknown> = { ...tenantWhere(user) };
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
     if (status) where.status = status;
     if (search) {
       where.OR = [
@@ -23,7 +29,6 @@ export async function GET(req: Request) {
         { email: { contains: search, mode: "insensitive" } },
       ];
     }
-    if (!isManager(user.role) && user.brandId) where.brandId = user.brandId;
 
     const clients = await prisma.client.findMany({
       where,

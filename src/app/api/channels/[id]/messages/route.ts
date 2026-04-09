@@ -20,6 +20,19 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    // Membership check: only users who belong to the channel can read its
+    // messages. Respond with 404 for non-members so the endpoint doesn't
+    // leak which channel IDs exist. Public channels must still enrol the
+    // user via POST /api/channels/[id] before read access is granted.
+    const membership = await prisma.channelMember.findUnique({
+      where: { channelId_userId: { channelId: id, userId: user.id } },
+      select: { id: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const url = new URL(req.url);
     const cursor = url.searchParams.get("cursor");
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "50"), 100);
@@ -132,6 +145,17 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // Only channel members can post messages — prevents cross-tenant
+    // writes even if a client bypasses the UI.
+    const membership = await prisma.channelMember.findUnique({
+      where: { channelId_userId: { channelId: id, userId: user.id } },
+      select: { id: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await req.json();
     const { content, type, metadata, parentMessageId, attachments } = body;
 

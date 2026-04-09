@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
     const brand = url.searchParams.get("brand");
 
-    const where: Record<string, unknown> = {};
+    // Tenant scope first; query params can only narrow, never widen.
+    const where: Record<string, unknown> = { ...tenantWhere(user) };
     if (status) where.status = status;
-    if (brand) where.brand = { code: brand };
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
 
     const leads = await prisma.lead.findMany({
       where,

@@ -2,32 +2,53 @@ import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import { createGroq } from "@ai-sdk/groq";
 import type { UIMessage } from "ai";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere, tenantUserWhere, type SessionUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
 
 // P0-5 FIX: Use real database data instead of mock-data imports
+// Tenant-scoped: the assistant only ever sees rows from the caller's own
+// company (or brand, for non-managers), so one tenant's chat cannot leak
+// another tenant's clients, leads, or employees.
 
-async function buildSystemPrompt(): Promise<string> {
+async function buildSystemPrompt(user: SessionUser): Promise<string> {
   let dataContext = "";
 
   try {
+    const tenant = tenantWhere(user);
+    const userTenant = tenantUserWhere(user);
+
+    // Brands the caller is allowed to see — super admin sees all brands,
+    // managers see all brands within their company, employees see their
+    // own single brand.
+    const brandWhere: Record<string, unknown> =
+      user.role === "SUPER_ADMIN"
+        ? {}
+        : user.role === "PROJECT_MANAGER" || user.role === "DEPT_HEAD"
+          ? { companyId: user.companyId ?? "__none__" }
+          : { id: user.brandId ?? "__none__" };
+
     const [brandsData, employeesData, clientsData, tasksData, leadsData] = await Promise.all([
-      prisma.brand.findMany({ select: { name: true, code: true, color: true, website: true } }),
+      prisma.brand.findMany({
+        where: brandWhere,
+        select: { name: true, code: true, color: true, website: true },
+      }),
       prisma.user.findMany({
-        where: { status: "ACTIVE" },
+        where: { ...userTenant, status: "ACTIVE" },
         select: { firstName: true, lastName: true, title: true, department: true, role: true, brand: { select: { code: true } } },
         take: 50,
       }),
       prisma.client.findMany({
-        where: { status: "ACTIVE" },
+        where: { ...tenant, status: "ACTIVE" },
         select: { companyName: true, contactName: true, mrr: true, healthScore: true, services: true, brand: { select: { code: true } } },
         take: 50,
       }),
       prisma.task.findMany({
+        where: tenant,
         select: { title: true, status: true, priority: true, dueDate: true, assignee: { select: { firstName: true, lastName: true } }, client: { select: { companyName: true } }, brand: { select: { code: true } } },
         take: 50,
       }),
       prisma.lead.findMany({
+        where: tenant,
         select: { companyName: true, contactName: true, status: true, value: true, source: true, probability: true },
         take: 50,
       }),
@@ -100,7 +121,7 @@ export async function POST(req: Request) {
 
     const { messages }: { messages: UIMessage[] } = await req.json();
 
-    const systemPrompt = await buildSystemPrompt();
+    const systemPrompt = await buildSystemPrompt(user);
     const modelMessages = await convertToModelMessages(messages);
 
     const result = streamText({
