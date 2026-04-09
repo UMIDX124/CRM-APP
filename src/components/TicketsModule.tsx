@@ -69,8 +69,8 @@ const STATUS_META: Record<
   IN_PROGRESS: { label: "In Progress", color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
   WAITING_CUSTOMER: {
     label: "Waiting",
-    color: "#A855F7",
-    bg: "rgba(168,85,247,0.12)",
+    color: "#06B6D4",
+    bg: "rgba(6,182,212,0.12)",
   },
   RESOLVED: { label: "Resolved", color: "#10B981", bg: "rgba(16,185,129,0.12)" },
   CLOSED: { label: "Closed", color: "#71717A", bg: "rgba(113,113,122,0.12)" },
@@ -122,10 +122,6 @@ export default function TicketsModule() {
     return c;
   }, [tickets]);
 
-  const urgentOpenCount = tickets.filter(
-    (t) =>
-      t.priority === "URGENT" && t.status !== "CLOSED" && t.status !== "RESOLVED"
-  ).length;
   const breachedCount = tickets.filter((t) => t.slaBreached).length;
 
   return (
@@ -173,7 +169,7 @@ export default function TicketsModule() {
             label: "Awaiting Response",
             value: String(counts.WAITING_CUSTOMER),
             icon: Clock,
-            color: "#A855F7",
+            color: "#06B6D4",
           },
           {
             label: "Resolved",

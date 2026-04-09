@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, AlertTriangle, Hash, Fingerprint } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Fingerprint } from "lucide-react";
 import { clsx } from "clsx";
 interface KioskEmployee { id: string; name: string; title: string; brand: string; email: string }
 

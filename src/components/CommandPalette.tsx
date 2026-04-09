@@ -7,7 +7,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   Search, LayoutDashboard, Building2, Users, CheckSquare, Briefcase,
-  BarChart3, ClipboardCheck, ArrowRight, X, Sparkles, Loader2, Send,
+  BarChart3, ClipboardCheck, ArrowRight, Sparkles, Loader2, Send,
 } from "lucide-react";
 import { clsx } from "clsx";
 // Search data fetched from API on palette open

@@ -15,7 +15,7 @@ import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { useCompany } from "@/components/CompanyContext";
 import type { Client } from "@/lib/types";
-import { formatCurrency, getStatusColor } from "@/lib/types";
+import { formatCurrency } from "@/lib/types";
 
 const defaultForm = {
   companyName: "", contactName: "", email: "", phone: "",

@@ -1,7 +1,5 @@
 "use client";
 
-import { clsx } from "clsx";
-
 type EmptyType = "clients" | "tasks" | "employees" | "invoices" | "leads" | "attendance" | "leaves" | "projects" | "search" | "error" | "generic";
 
 const illustrations: Record<EmptyType, { svg: string; title: string; desc: string }> = {

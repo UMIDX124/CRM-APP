@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Users, DollarSign, CheckSquare, Activity } from "lucide-react";
 import { clsx } from "clsx";
 

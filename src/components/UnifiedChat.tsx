@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useRef, useEffect, useCallback, useMemo, type FormEvent } from "react";
+import React, { useState, useRef, useEffect, useCallback, type FormEvent } from "react";
 import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -119,7 +119,7 @@ function getMentionQuery(text: string, caretPos: number): string | null {
 // ─── Helpers ────────────────────────────────────────────
 
 const roleColors: Record<string, string> = {
-  SUPER_ADMIN: "#6366F1", PROJECT_MANAGER: "#3B82F6",
+  SUPER_ADMIN: "#F59E0B", PROJECT_MANAGER: "#3B82F6",
   DEPT_HEAD: "#F59E0B", TEAM_LEAD: "#22C55E", EMPLOYEE: "#71717A",
 };
 
@@ -952,8 +952,8 @@ function TeamTab() {
                     <div
                       className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[9px] font-semibold"
                       style={{
-                        backgroundColor: `${emp.brand?.color || "#6366F1"}15`,
-                        color: emp.brand?.color || "#6366F1",
+                        backgroundColor: `${emp.brand?.color || "#F59E0B"}15`,
+                        color: emp.brand?.color || "#F59E0B",
                       }}
                     >
                       {emp.firstName.charAt(0)}

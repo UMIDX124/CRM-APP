@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
-  Settings, ChevronLeft, Moon, Sun, LogOut, Menu, Bell,
+  Settings, ChevronLeft, LogOut, Menu,
   ClipboardCheck, FileText, DollarSign, CalendarOff, Filter,
   Target, LifeBuoy, Webhook,
 } from "lucide-react";
@@ -37,8 +37,6 @@ const sectionLabels: Record<string, string> = {
 
 interface SidebarProps {
   currentUser: { name: string; role: string; email: string } | null;
-  theme: "dark" | "light";
-  onToggleTheme: () => void;
   onLogout: () => void;
   isMobileOpen: boolean;
   onMobileClose: () => void;
@@ -47,12 +45,12 @@ interface SidebarProps {
 }
 
 export default function Sidebar({
-  currentUser, theme, onToggleTheme,
+  currentUser,
   onLogout, isMobileOpen, onMobileClose, collapsed, onCollapsedChange,
 }: SidebarProps) {
   const pathname = usePathname();
   const { activeCompany } = useCompany();
-  const brandColor = activeCompany.accent || "#6366F1";
+  const brandColor = activeCompany.accent || "#F59E0B";
 
   const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -127,15 +125,6 @@ export default function Sidebar({
 
         {/* Bottom */}
         <div className="p-2.5 border-t border-[var(--border)] space-y-1">
-          <button
-            onClick={onToggleTheme}
-            className={clsx("sidebar-item w-full", collapsed && "justify-center px-0")}
-            title={theme === "dark" ? "Light mode" : "Dark mode"}
-          >
-            {theme === "dark" ? <Moon className="w-[18px] h-[18px] shrink-0" /> : <Sun className="w-[18px] h-[18px] shrink-0" />}
-            {!collapsed && <span>{theme === "dark" ? "Dark" : "Light"}</span>}
-          </button>
-
           {/* User Card */}
           <div className={clsx(
             "flex items-center gap-3 rounded-lg p-2.5 mt-1",

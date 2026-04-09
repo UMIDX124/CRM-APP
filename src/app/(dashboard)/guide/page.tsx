@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import {
-  Book, Download, ChevronRight, Search, LayoutDashboard, Building2, Users,
+  Book, Download, Search, LayoutDashboard, Building2, Users,
   CheckSquare, Briefcase, ClipboardCheck, FileText, BarChart3, Settings,
-  Shield, CalendarDays, Hash, MessageCircle, Command, Bell, LogIn, Key,
-  Printer, ChevronDown, HelpCircle, Zap, Globe,
+  Shield, CalendarDays, MessageCircle, Command, Key,
+  Printer, HelpCircle, Zap,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -228,7 +228,7 @@ const sections: Section[] = [
 export default function GuidePage() {
   const [activeSection, setActiveSection] = useState("getting-started");
   const [search, setSearch] = useState("");
-  const [expandedSections, setExpandedSections] = useState<string[]>(["getting-started"]);
+  const [, setExpandedSections] = useState<string[]>(["getting-started"]);
 
   const toggleExpand = (id: string) => {
     setExpandedSections((prev) => prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]);

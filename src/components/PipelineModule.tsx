@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Search, Plus, Briefcase, DollarSign, User, X, Save,
+  Search, Plus, Briefcase, DollarSign, X, Save,
   Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List,
 } from "lucide-react";
 import { clsx } from "clsx";

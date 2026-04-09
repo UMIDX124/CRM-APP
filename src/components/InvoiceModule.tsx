@@ -2,10 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Plus, Search, FileText, DollarSign, Clock, CheckCircle2,
+  Plus, Search, FileText, Clock, CheckCircle2,
   AlertCircle, XCircle, Eye, X, Save, Loader2,
 } from "lucide-react";
-import { clsx } from "clsx";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
 import { useCompany } from "@/components/CompanyContext";

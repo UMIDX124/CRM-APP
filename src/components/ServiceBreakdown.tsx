@@ -1,7 +1,6 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { clsx } from "clsx";
 
 const serviceTypes = [
   { name: "SEO & Content", revenue: 185000, percentage: 35, color: "#FF6B00" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight, CheckSquare, Briefcase, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckSquare, Briefcase } from "lucide-react";
 import { clsx } from "clsx";
 
 interface CalTask { id: string; title: string; dueDate: string; priority: string; status: string; assignee: string; brand: string }
@@ -61,7 +61,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date(2026, 3, 1));
   const [tasks, setTasks] = useState<CalTask[]>([]);
   const [leads, setLeads] = useState<CalLead[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;

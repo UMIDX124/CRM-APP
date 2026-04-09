@@ -8,10 +8,9 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import {
-  Users, Building2, DollarSign, CheckSquare, TrendingUp,
-  ArrowUpRight, Activity, Briefcase, ArrowRight, Zap,
-  CheckCircle2, Trophy, Rocket, Shield, Cpu, BarChart3,
-  Target, Star,
+  Users, Building2, DollarSign, CheckSquare,
+  ArrowUpRight, Briefcase, ArrowRight,
+  Target,
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/types";

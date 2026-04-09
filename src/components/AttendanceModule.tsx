@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Clock, UserCheck, UserX, Coffee, Laptop, CalendarOff, ChevronLeft, ChevronRight,
-  Search, Download, CheckCircle2, AlertCircle, Timer, Calendar, BarChart3,
+  Clock, UserCheck, UserX, Laptop, CalendarOff, ChevronLeft, ChevronRight,
+  Search, Download, AlertCircle, Timer, Calendar, BarChart3,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { downloadCSV } from "@/lib/api";
@@ -54,7 +54,7 @@ const statusConfig: Record<AttendanceStatus, { label: string; color: string; bg:
 
 type ViewMode = "daily" | "monthly" | "range";
 
-export default function AttendanceModule({ brandId }: { brandId: string }) {
+export default function AttendanceModule({ brandId: _brandId }: { brandId: string }) {
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [rangeStart, setRangeStart] = useState(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Command, Search, ArrowUp, ArrowDown, CornerDownLeft, Plus, Moon, Mail, Bell } from "lucide-react";
+import { Command } from "lucide-react";
 
 const shortcuts = [
   { category: "Navigation", items: [

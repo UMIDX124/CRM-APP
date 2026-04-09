@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import {
-  User, Building2, Bell, Shield, Palette, Globe, Save, Camera,
-  Mail, Phone, MapPin, Key, Eye, EyeOff, Check, ChevronRight, Loader2, AlertCircle,
-  Moon, Sun, FileText, Plus, Trash2,
+  User, Building2, Bell, Shield, Save, Camera,
+  Key, Check, ChevronRight, Loader2, AlertCircle,
+  FileText, Plus, Trash2,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { useTheme } from "@/components/ThemeContext";
 const parentCompany = { name: "Alpha", code: "A", tagline: "Enterprise Command Center", website: "alpha-crm.com", founded: "2023", ceo: "Faizan & Umer" };
 const brands = [
   { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00", website: "virtualcustomersolution.com" },
@@ -21,7 +20,6 @@ const tabs = [
   { id: "templates", label: "Templates", icon: FileText },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Shield },
-  { id: "appearance", label: "Appearance", icon: Palette },
 ];
 
 interface TicketTpl {
@@ -205,7 +203,6 @@ function TemplatesPanel() {
 }
 
 export default function SettingsModule() {
-  const { theme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("profile");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -576,49 +573,6 @@ export default function SettingsModule() {
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === "appearance" && (
-            <div className="space-y-6 animate-fade-in">
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--foreground)] mb-1">Appearance</h2>
-                <p className="text-sm text-[var(--foreground-dim)]">Customize the look and feel</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setTheme("dark")}
-                  className={clsx(
-                    "p-5 rounded-2xl text-center transition-all cursor-pointer",
-                    theme === "dark"
-                      ? "bg-[var(--surface)] border-2 border-[var(--primary)]"
-                      : "bg-[var(--surface)] border-2 border-[var(--border)] hover:border-[var(--border-hover)]"
-                  )}
-                >
-                  <div className="w-full h-20 rounded-xl bg-[#0A0A0F] border border-[rgba(255,255,255,0.06)] mb-3 flex items-center justify-center">
-                    <Moon className="w-6 h-6 text-[var(--foreground-muted)]" />
-                  </div>
-                  <p className="text-sm text-[var(--foreground)] font-medium">Dark Mode</p>
-                  {theme === "dark" && <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTheme("light")}
-                  className={clsx(
-                    "p-5 rounded-2xl text-center transition-all cursor-pointer",
-                    theme === "light"
-                      ? "bg-[var(--surface)] border-2 border-[var(--primary)]"
-                      : "bg-[var(--surface)] border-2 border-[var(--border)] hover:border-[var(--border-hover)]"
-                  )}
-                >
-                  <div className="w-full h-20 rounded-xl bg-[#FAFAFA] border border-[rgba(0,0,0,0.08)] mb-3 flex items-center justify-center">
-                    <Sun className="w-6 h-6 text-[#71717A]" />
-                  </div>
-                  <p className="text-sm text-[var(--foreground)] font-medium">Light Mode</p>
-                  {theme === "light" && <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>}
-                </button>
               </div>
             </div>
           )}

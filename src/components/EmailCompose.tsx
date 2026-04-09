@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Send, X, Paperclip, Loader2 } from "lucide-react";
-import { clsx } from "clsx";
 import { useToast } from "@/components/ui/toast";
 
 interface EmailClient { id: string; email: string; companyName: string; contactName: string }

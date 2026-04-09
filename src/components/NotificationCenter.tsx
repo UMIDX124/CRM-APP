@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Bell, X, CheckCheck, Clock, DollarSign, UserPlus, AlertTriangle,
-  Trophy, Zap, Briefcase, CheckSquare, Users, Building2, Loader2,
+  Zap, Briefcase, CheckSquare, Users, Building2, Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { useEventStream, type StreamNotification } from "@/hooks/useEventStream";
+import { useEventStream } from "@/hooks/useEventStream";
 
 interface Notification {
   id: string;
@@ -20,7 +20,7 @@ interface Notification {
 
 const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string }> = {
   LEAD_NEW: { icon: Briefcase, color: "text-blue-400", bg: "bg-blue-500/10" },
-  LEAD_ASSIGNED: { icon: UserPlus, color: "text-indigo-400", bg: "bg-indigo-500/10" },
+  LEAD_ASSIGNED: { icon: UserPlus, color: "text-cyan-400", bg: "bg-cyan-500/10" },
   LEAD_STATUS: { icon: Briefcase, color: "text-amber-400", bg: "bg-amber-500/10" },
   CLIENT_ADDED: { icon: Building2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
   CLIENT_DELETED: { icon: Building2, color: "text-red-400", bg: "bg-red-500/10" },
@@ -30,8 +30,8 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; bg: string 
   TASK_ASSIGNED: { icon: CheckSquare, color: "text-blue-400", bg: "bg-blue-500/10" },
   TASK_STATUS: { icon: CheckSquare, color: "text-emerald-400", bg: "bg-emerald-500/10" },
   TASK_DUE: { icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
-  TEAM_UPDATE: { icon: Users, color: "text-indigo-400", bg: "bg-indigo-500/10" },
-  MENTION: { icon: Zap, color: "text-purple-400", bg: "bg-purple-500/10" },
+  TEAM_UPDATE: { icon: Users, color: "text-sky-400", bg: "bg-sky-500/10" },
+  MENTION: { icon: Zap, color: "text-amber-400", bg: "bg-amber-500/10" },
   SYSTEM: { icon: Zap, color: "text-[var(--foreground-dim)]", bg: "bg-[var(--surface-hover)]" },
   lead: { icon: Briefcase, color: "text-blue-400", bg: "bg-blue-500/10" },
 };
