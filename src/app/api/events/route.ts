@@ -50,15 +50,18 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const notifCursorParam = url.searchParams.get("notifCursor");
   const msgCursorParam = url.searchParams.get("msgCursor");
-  const isReconnect = !!(notifCursorParam || msgCursorParam);
+  const reactionCursorParam = url.searchParams.get("reactionCursor");
+  const isReconnect = !!(notifCursorParam || msgCursorParam || reactionCursorParam);
 
   const encoder = new TextEncoder();
   let notifCursor = notifCursorParam
     ? new Date(notifCursorParam)
     : new Date();
   let messageCursor = msgCursorParam ? new Date(msgCursorParam) : new Date();
+  let reactionCursor = reactionCursorParam ? new Date(reactionCursorParam) : new Date();
   if (Number.isNaN(notifCursor.getTime())) notifCursor = new Date();
   if (Number.isNaN(messageCursor.getTime())) messageCursor = new Date();
+  if (Number.isNaN(reactionCursor.getTime())) reactionCursor = new Date();
   // Track the last presence status we sent per peer userId so we only
   // emit deltas, not every poll cycle.
   const presenceCache = new Map<string, "online" | "away" | "offline">();
@@ -222,6 +225,52 @@ export async function GET(req: Request) {
             }
           } catch (err) {
             console.error("[sse] message poll failed:", err);
+          }
+        }
+
+        // ── 2b) New reactions on messages in user's channels ──
+        // Only emits "added" reactions (cursor-based on MessageReaction.createdAt).
+        // Toggle-offs delete the row and therefore don't fan out through the
+        // cursor stream — the client reconciles by re-fetching a message's
+        // reactions when the user interacts with it. Own reactions are
+        // suppressed because the UI already updates optimistically on the POST.
+        if (channelIds.length > 0) {
+          try {
+            const fresh = await prisma.messageReaction.findMany({
+              where: {
+                createdAt: { gt: reactionCursor },
+                message: { channelId: { in: channelIds } },
+                NOT: { userId },
+              },
+              orderBy: { createdAt: "asc" },
+              take: 50,
+              select: {
+                id: true,
+                messageId: true,
+                emoji: true,
+                userId: true,
+                createdAt: true,
+                message: { select: { channelId: true } },
+                user: { select: { firstName: true, lastName: true } },
+              },
+            });
+            if (fresh.length > 0) {
+              for (const r of fresh) {
+                send("reaction", {
+                  id: r.id,
+                  messageId: r.messageId,
+                  channelId: r.message.channelId,
+                  emoji: r.emoji,
+                  userId: r.userId,
+                  userName: `${r.user.firstName} ${r.user.lastName}`.trim(),
+                  added: true,
+                  createdAt: r.createdAt,
+                });
+              }
+              reactionCursor = fresh[fresh.length - 1].createdAt;
+            }
+          } catch (err) {
+            console.error("[sse] reaction poll failed:", err);
           }
         }
 

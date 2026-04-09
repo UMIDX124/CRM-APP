@@ -55,11 +55,23 @@ export interface StreamTyping {
   users: Array<{ id: string; name: string }>;
 }
 
+export interface StreamReaction {
+  id: string;
+  messageId: string;
+  channelId: string;
+  emoji: string;
+  userId: string;
+  userName: string;
+  added: boolean;
+  createdAt: string;
+}
+
 interface UseEventStreamOptions {
   onNotification?: (n: StreamNotification | null) => void;
   onMessage?: (m: StreamMessage) => void;
   onPresence?: (p: StreamPresence) => void;
   onTyping?: (t: StreamTyping) => void;
+  onReaction?: (r: StreamReaction) => void;
   enabled?: boolean;
 }
 
@@ -68,6 +80,7 @@ export function useEventStream({
   onMessage,
   onPresence,
   onTyping,
+  onReaction,
   enabled = true,
 }: UseEventStreamOptions) {
   const [state, setState] = useState<ConnectionState>("connecting");
@@ -75,6 +88,7 @@ export function useEventStream({
   const onMsgRef = useRef(onMessage);
   const onPresRef = useRef(onPresence);
   const onTypingRef = useRef(onTyping);
+  const onReactionRef = useRef(onReaction);
   const sourceRef = useRef<EventSource | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -88,6 +102,7 @@ export function useEventStream({
   // to dedupe locally.
   const latestNotifCursorRef = useRef<string | null>(null);
   const latestMsgCursorRef = useRef<string | null>(null);
+  const latestReactionCursorRef = useRef<string | null>(null);
 
   // Always call latest callbacks without resubscribing
   useEffect(() => {
@@ -102,6 +117,9 @@ export function useEventStream({
   useEffect(() => {
     onTypingRef.current = onTyping;
   }, [onTyping]);
+  useEffect(() => {
+    onReactionRef.current = onReaction;
+  }, [onReaction]);
 
   const connect = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -123,14 +141,17 @@ export function useEventStream({
 
     setState((prev) => (prev === "open" ? "reconnecting" : "connecting"));
 
-    // Build the stream URL with resume cursors. On initial connect both
-    // refs are null and the URL is the bare path.
+    // Build the stream URL with resume cursors. On initial connect every
+    // ref is null and the URL is the bare path.
     const params = new URLSearchParams();
     if (latestNotifCursorRef.current) {
       params.set("notifCursor", latestNotifCursorRef.current);
     }
     if (latestMsgCursorRef.current) {
       params.set("msgCursor", latestMsgCursorRef.current);
+    }
+    if (latestReactionCursorRef.current) {
+      params.set("reactionCursor", latestReactionCursorRef.current);
     }
     const qs = params.toString();
     const streamUrl = qs ? `/api/events?${qs}` : "/api/events";
@@ -180,6 +201,18 @@ export function useEventStream({
     es.addEventListener("typing", (e: MessageEvent) => {
       try {
         onTypingRef.current?.(JSON.parse(e.data) as StreamTyping);
+      } catch {
+        /* ignore malformed */
+      }
+    });
+
+    es.addEventListener("reaction", (e: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(e.data) as StreamReaction;
+        if (parsed.createdAt) {
+          latestReactionCursorRef.current = parsed.createdAt;
+        }
+        onReactionRef.current?.(parsed);
       } catch {
         /* ignore malformed */
       }

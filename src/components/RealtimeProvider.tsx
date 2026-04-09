@@ -6,6 +6,7 @@ import {
   type StreamMessage,
   type StreamPresence,
   type StreamTyping,
+  type StreamReaction,
   type ConnectionState,
 } from "@/hooks/useEventStream";
 import { usePresenceHeartbeat } from "@/hooks/usePresenceHeartbeat";
@@ -32,6 +33,7 @@ interface RealtimeContextValue {
   subscribeMessage: (cb: Subscriber<StreamMessage>) => () => void;
   subscribePresence: (cb: Subscriber<StreamPresence>) => () => void;
   subscribeTyping: (cb: Subscriber<StreamTyping>) => () => void;
+  subscribeReaction: (cb: Subscriber<StreamReaction>) => () => void;
 }
 
 const RealtimeContext = createContext<RealtimeContextValue | null>(null);
@@ -47,6 +49,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
   const messageSubsRef = useMemo(() => new Set<Subscriber<StreamMessage>>(), []);
   const presenceSubsRef = useMemo(() => new Set<Subscriber<StreamPresence>>(), []);
   const typingSubsRef = useMemo(() => new Set<Subscriber<StreamTyping>>(), []);
+  const reactionSubsRef = useMemo(() => new Set<Subscriber<StreamReaction>>(), []);
 
   const handleMessage = useCallback(
     (m: StreamMessage) => {
@@ -93,10 +96,24 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     [typingSubsRef]
   );
 
+  const handleReaction = useCallback(
+    (r: StreamReaction) => {
+      reactionSubsRef.forEach((cb) => {
+        try {
+          cb(r);
+        } catch (err) {
+          console.error("[realtime] reaction subscriber threw:", err);
+        }
+      });
+    },
+    [reactionSubsRef]
+  );
+
   const { state } = useEventStream({
     onMessage: handleMessage,
     onPresence: handlePresence,
     onTyping: handleTyping,
+    onReaction: handleReaction,
   });
 
   usePresenceHeartbeat();
@@ -141,18 +158,29 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     [typingSubsRef]
   );
 
+  const subscribeReaction = useCallback(
+    (cb: Subscriber<StreamReaction>) => {
+      reactionSubsRef.add(cb);
+      return () => {
+        reactionSubsRef.delete(cb);
+      };
+    },
+    [reactionSubsRef]
+  );
+
   // Cleanup on unmount: drop all subscribers so detached components don't leak
   useEffect(() => {
     return () => {
       messageSubsRef.clear();
       presenceSubsRef.clear();
       typingSubsRef.clear();
+      reactionSubsRef.clear();
     };
-  }, [messageSubsRef, presenceSubsRef, typingSubsRef]);
+  }, [messageSubsRef, presenceSubsRef, typingSubsRef, reactionSubsRef]);
 
   const value = useMemo<RealtimeContextValue>(
-    () => ({ state, presence, subscribeMessage, subscribePresence, subscribeTyping }),
-    [state, presence, subscribeMessage, subscribePresence, subscribeTyping]
+    () => ({ state, presence, subscribeMessage, subscribePresence, subscribeTyping, subscribeReaction }),
+    [state, presence, subscribeMessage, subscribePresence, subscribeTyping, subscribeReaction]
   );
 
   return (
@@ -172,6 +200,7 @@ export function useRealtime() {
       subscribeMessage: () => () => {},
       subscribePresence: () => () => {},
       subscribeTyping: () => () => {},
+      subscribeReaction: () => () => {},
     };
   }
   return ctx;
