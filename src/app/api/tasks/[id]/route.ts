@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel } from "@/lib/notifications";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 
 function unauthorized(e: unknown) {
   if (e instanceof Error && e.message === "Unauthorized") {
@@ -16,6 +16,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
+
+    // Tenant ownership check — prevents cross-tenant PATCH.
+    const existing = await prisma.task.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
     const task = await prisma.task.update({
       where: { id },
       data: {
@@ -61,6 +71,14 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const actor = await requireAuth();
     const { id } = await params;
+
+    const existing = await prisma.task.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
 
     // Delete child records first to avoid FK constraint violations
     await prisma.$transaction([

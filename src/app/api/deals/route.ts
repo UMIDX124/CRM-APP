@@ -1,8 +1,32 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
+
+const DEAL_STAGES = ["NEW", "QUALIFICATION", "PROPOSAL", "NEGOTIATION", "CLOSED_WON", "CLOSED_LOST"] as const;
+
+// Strict deal-create schema. Replaces the previous `...body` spread that
+// let callers inject any writable field (including brandId pointing at
+// another tenant's brand). Every field that touches the database is
+// whitelisted and bounded.
+const dealCreateSchema = z.object({
+  title: z.string().min(1).max(240),
+  description: z.string().max(4000).optional().nullable(),
+  value: z.number().nonnegative().finite().optional().default(0),
+  currency: z.string().length(3).optional().default("USD"),
+  stage: z.enum(DEAL_STAGES).optional().default("NEW"),
+  probability: z.number().int().min(0).max(100).optional().default(20),
+  expectedClose: z.string().optional().nullable(),
+  ownerId: z.string().optional().nullable(),
+  brandId: z.string().optional().nullable(),
+  clientId: z.string().optional().nullable(),
+  leadId: z.string().optional().nullable(),
+  source: z.string().max(120).optional().nullable(),
+  tags: z.array(z.string().max(60)).max(20).optional().default([]),
+});
+
 
 /**
  * GET /api/deals
@@ -90,31 +114,39 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
-    const body = await req.json();
 
-    if (!body.title || typeof body.title !== "string") {
+    const raw = await req.json().catch(() => null);
+    const parsed = dealCreateSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "title is required" },
+        {
+          error: "Validation failed",
+          code: "DEAL_VALIDATION",
+          issues: parsed.error.issues.map((i) => ({
+            path: i.path.join("."),
+            message: i.message,
+          })),
+        },
         { status: 400 }
       );
     }
+    const body = parsed.data;
 
     const deal = await prisma.deal.create({
       data: {
         title: body.title,
         description: body.description ?? null,
-        value: typeof body.value === "number" ? body.value : 0,
-        currency: body.currency || "USD",
-        stage: body.stage || "NEW",
-        probability:
-          typeof body.probability === "number" ? body.probability : 20,
+        value: body.value,
+        currency: body.currency,
+        stage: body.stage,
+        probability: body.probability,
         expectedClose: body.expectedClose ? new Date(body.expectedClose) : null,
         ownerId: body.ownerId ?? user.id,
         brandId: body.brandId ?? null,
         clientId: body.clientId ?? null,
         leadId: body.leadId ?? null,
         source: body.source ?? null,
-        tags: Array.isArray(body.tags) ? body.tags : [],
+        tags: body.tags,
       },
       include: {
         brand: { select: { code: true, color: true } },

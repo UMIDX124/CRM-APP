@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook, type WebhookEventName } from "@/lib/webhooks";
 import { sendTicketStatusChange } from "@/lib/email";
@@ -10,11 +10,14 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const { id } = await ctx.params;
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id },
+    // Tenant-scoped fetch. Prevents a caller in company A from reading
+    // a ticket in company B by guessing the id. Returns 404 on scope
+    // miss so we don't leak existence across tenants.
+    const ticket = await prisma.ticket.findFirst({
+      where: { id, ...tenantWhere(user) },
       include: {
         brand: { select: { code: true, color: true, name: true } },
         client: {
@@ -66,7 +69,11 @@ export async function PATCH(
     const { id } = await ctx.params;
     const body = await req.json();
 
-    const existing = await prisma.ticket.findUnique({ where: { id } });
+    // Tenant-scoped existence check. findFirst + tenantWhere closes the
+    // cross-tenant mutation bypass.
+    const existing = await prisma.ticket.findFirst({
+      where: { id, ...tenantWhere(user) },
+    });
     if (!existing) {
       return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
     }
@@ -185,6 +192,15 @@ export async function DELETE(
   try {
     const user = await requireAuth();
     const { id } = await ctx.params;
+
+    const existing = await prisma.ticket.findFirst({
+      where: { id, ...tenantWhere(user) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
+    }
+
     await prisma.ticket.delete({ where: { id } });
     await logAudit({
       action: "DELETE",

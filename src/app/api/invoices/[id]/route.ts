@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook } from "@/lib/webhooks";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 
 function unauthorized(e: unknown) {
   if (e instanceof Error && e.message === "Unauthorized") {
@@ -16,7 +16,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
-    const previous = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+
+    // Tenant-scoped lookup. Uses findFirst so we can AND the tenant
+    // filter with the id — cross-tenant PATCH bypass closed.
+    const previous = await prisma.invoice.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { status: true },
+    });
+    if (!previous) {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
 
     // Auto-set paidDate when status transitions into PAID, unless the
     // client explicitly supplied one (e.g. backdating a payment). Without
@@ -78,6 +87,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const actor = await requireAuth();
     const { id } = await params;
+
+    const existing = await prisma.invoice.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    }
+
     await prisma.invoice.delete({ where: { id } });
     await logAudit({ action: "DELETE", entity: "Invoice", entityId: id, userId: actor.id }).catch(() => {});
     return NextResponse.json({ success: true });

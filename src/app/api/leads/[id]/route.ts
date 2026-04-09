@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 
 function unauthorized(e: unknown) {
   if (e instanceof Error && e.message === "Unauthorized") {
@@ -16,6 +16,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
+
+    // Tenant ownership check — closes the cross-tenant PATCH bypass.
+    const existing = await prisma.lead.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    }
+
     const lead = await prisma.lead.update({
       where: { id },
       data: {
@@ -65,6 +75,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const actor = await requireAuth();
     const { id } = await params;
+
+    const existing = await prisma.lead.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    }
+
     await prisma.lead.delete({ where: { id } });
     await logAudit({ action: "DELETE", entity: "Lead", entityId: id, userId: actor.id }).catch(() => {});
     return NextResponse.json({ success: true });

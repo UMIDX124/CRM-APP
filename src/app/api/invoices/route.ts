@@ -106,6 +106,46 @@ export async function POST(req: Request) {
     }
     const body = parsed.data;
 
+    // Verify caller actually owns the target brand/client — otherwise
+    // a DPL manager could create an invoice on a VCS client by guessing
+    // the id. Without this check the new Zod schema just validates
+    // format, not ownership.
+    const brandOk = await prisma.brand.findFirst({
+      where: { id: body.brandId, ...(user.role === "SUPER_ADMIN" ? {} : user.role === "PROJECT_MANAGER" || user.role === "DEPT_HEAD" ? { companyId: user.companyId ?? "__none__" } : { id: user.brandId ?? "__none__" }) },
+      select: { id: true },
+    });
+    if (!brandOk) {
+      return NextResponse.json({ error: "Invalid brand for your tenant" }, { status: 403 });
+    }
+    const clientOk = await prisma.client.findFirst({
+      where: { id: body.clientId, ...tenantWhere(user) },
+      select: { id: true },
+    });
+    if (!clientOk) {
+      return NextResponse.json({ error: "Invalid client for your tenant" }, { status: 403 });
+    }
+
+    // Server-side recompute so the client can't inflate `subtotal` /
+    // `total`. We trust the line items (already Zod-validated) and
+    // derive the money values from them. If the caller submitted
+    // mismatched figures we log it and use the recomputed values.
+    const computedSubtotal = body.items.reduce(
+      (s, item) => s + item.quantity * item.rate,
+      0
+    );
+    const computedTotal = computedSubtotal + (body.tax ?? 0);
+    const roundedSubtotal = Math.round(computedSubtotal * 100) / 100;
+    const roundedTotal = Math.round(computedTotal * 100) / 100;
+    const subtotalDelta = Math.abs(body.subtotal - roundedSubtotal);
+    const totalDelta = Math.abs(body.total - roundedTotal);
+    if (subtotalDelta > 0.02 || totalDelta > 0.02) {
+      console.warn(
+        `[invoices] client-submitted totals mismatch — recomputing. ` +
+          `client: subtotal=${body.subtotal}, total=${body.total}. ` +
+          `server: subtotal=${roundedSubtotal}, total=${roundedTotal}`
+      );
+    }
+
     const count = await prisma.invoice.count();
     const number = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(3, "0")}`;
 
@@ -115,9 +155,9 @@ export async function POST(req: Request) {
         clientId: body.clientId,
         brandId: body.brandId,
         items: body.items,
-        subtotal: body.subtotal,
+        subtotal: roundedSubtotal,
         tax: body.tax,
-        total: body.total,
+        total: roundedTotal,
         status: body.status,
         issueDate: new Date(body.issueDate),
         dueDate: new Date(body.dueDate),
@@ -127,7 +167,7 @@ export async function POST(req: Request) {
 
     await logAudit({
       action: "CREATE", entity: "Invoice", entityId: invoice.id, userId: user.id,
-      changes: { invoice: { old: null, new: { number, total: body.total, clientId: body.clientId } } },
+      changes: { invoice: { old: null, new: { number, total: roundedTotal, clientId: body.clientId } } },
     });
 
     return NextResponse.json(invoice, { status: 201 });

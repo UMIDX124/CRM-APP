@@ -158,3 +158,26 @@ export function tenantUserWhere(user: SessionUser): Record<string, unknown> {
   }
   return { brandId: user.brandId ?? "__none__" };
 }
+
+/**
+ * Assert that a tenant-scoped row with the given id exists and is visible
+ * to `user`. Use this BEFORE any mutation on a detail route to prevent
+ * ID-guessing cross-tenant bypasses.
+ *
+ * Usage:
+ *   const exists = await prisma.deal.findFirst({
+ *     where: { id, ...tenantWhere(user) },
+ *     select: { id: true },
+ *   });
+ *   if (!exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
+ *
+ * We return 404 (not 403) so the endpoint doesn't leak whether the row
+ * exists in another tenant's scope.
+ */
+export type TenantModelName =
+  | "deal"
+  | "ticket"
+  | "invoice"
+  | "client"
+  | "lead"
+  | "task";

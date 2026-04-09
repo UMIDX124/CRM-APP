@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook, type WebhookEventName } from "@/lib/webhooks";
 
@@ -9,11 +9,14 @@ export async function GET(
   ctx: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAuth();
+    const user = await requireAuth();
     const { id } = await ctx.params;
 
-    const deal = await prisma.deal.findUnique({
-      where: { id },
+    // findFirst + tenantWhere prevents a user from fetching a deal by ID
+    // outside of their company/brand scope. Return 404 (not 403) so we
+    // don't leak whether the row exists elsewhere.
+    const deal = await prisma.deal.findFirst({
+      where: { id, ...tenantWhere(user) },
       include: {
         brand: { select: { code: true, color: true, name: true } },
         owner: {
@@ -59,7 +62,12 @@ export async function PATCH(
     const { id } = await ctx.params;
     const body = await req.json();
 
-    const existing = await prisma.deal.findUnique({ where: { id } });
+    // Tenant-scoped existence check. findFirst + tenantWhere closes the
+    // cross-tenant PATCH bypass where any authenticated user could
+    // guess-and-mutate another company's deal.
+    const existing = await prisma.deal.findFirst({
+      where: { id, ...tenantWhere(user) },
+    });
     if (!existing) {
       return NextResponse.json({ error: "Deal not found" }, { status: 404 });
     }
@@ -184,6 +192,16 @@ export async function DELETE(
   try {
     const user = await requireAuth();
     const { id } = await ctx.params;
+
+    // Tenant ownership check before destructive op.
+    const existing = await prisma.deal.findFirst({
+      where: { id, ...tenantWhere(user) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
     await prisma.deal.delete({ where: { id } });
     await logAudit({
       action: "DELETE",

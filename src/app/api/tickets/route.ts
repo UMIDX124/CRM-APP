@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, tenantWhere } from "@/lib/auth";
 import { rateLimit } from "@/lib/ratelimit";
@@ -7,6 +8,22 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { computeSlaDueAt, type TicketPriorityLike } from "@/lib/sla";
 import { sendTicketAssignedToAgent } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
+
+// Strict ticket-create schema. Rejects anything outside the whitelist
+// and enforces enum priority/channel — the previous "check subject +
+// description" guard left tags/metadata/priority wide open.
+const ticketCreateSchema = z.object({
+  subject: z.string().min(1).max(500),
+  description: z.string().min(1).max(10000),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional().default("MEDIUM"),
+  channel: z.enum(["EMAIL", "WEB", "CHAT", "PHONE", "API"]).optional().default("WEB"),
+  tags: z.array(z.string().max(60)).max(20).optional().default([]),
+  brandId: z.string().optional().nullable(),
+  clientId: z.string().optional().nullable(),
+  requesterId: z.string().optional().nullable(),
+  assigneeId: z.string().optional().nullable(),
+  slaDueAt: z.string().optional().nullable(),
+});
 
 /**
  * GET /api/tickets
@@ -93,16 +110,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    const body = await req.json();
-
-    if (!body.subject || !body.description) {
+    const raw = await req.json().catch(() => null);
+    const parsed = ticketCreateSchema.safeParse(raw);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "subject and description are required" },
+        {
+          error: "Validation failed",
+          code: "TICKET_VALIDATION",
+          issues: parsed.error.issues.map((i) => ({
+            path: i.path.join("."),
+            message: i.message,
+          })),
+        },
         { status: 400 }
       );
     }
+    const body = parsed.data;
 
-    const priority = (body.priority || "MEDIUM") as TicketPriorityLike;
+    const priority = body.priority as TicketPriorityLike;
     // Auto-compute SLA due date from priority unless caller passed an override
     const slaDueAt = body.slaDueAt
       ? new Date(body.slaDueAt)
@@ -113,9 +138,9 @@ export async function POST(req: Request) {
         subject: body.subject,
         description: body.description,
         priority,
-        channel: body.channel || "WEB",
+        channel: body.channel,
         status: "OPEN",
-        tags: Array.isArray(body.tags) ? body.tags : [],
+        tags: body.tags,
         brandId: body.brandId ?? null,
         clientId: body.clientId ?? null,
         requesterId: body.requesterId ?? user.id,

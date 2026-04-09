@@ -1,7 +1,29 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+
+// Strict lead-create schema. Replaces the previous raw `body` spread
+// that allowed callers to inject any writable field.
+const leadCreateSchema = z.object({
+  companyName: z.string().min(1).max(240),
+  contactName: z.string().min(1).max(240),
+  email: z.string().email().max(320).optional().nullable(),
+  phone: z.string().max(60).optional().nullable(),
+  country: z.string().max(120).optional().nullable(),
+  countryFlag: z.string().max(10).optional().nullable(),
+  services: z.array(z.string().max(120)).max(20).optional().default([]),
+  source: z.string().max(120).optional().nullable(),
+  status: z.enum(["NEW", "QUALIFIED", "PROPOSAL_SENT", "NEGOTIATION", "WON", "LOST"]).optional().default("NEW"),
+  value: z.number().nonnegative().finite().optional().default(0),
+  probability: z.number().int().min(0).max(100).optional().default(50),
+  salesRepId: z.string().optional().nullable(),
+  brandId: z.string().optional().nullable(),
+  expectedClose: z.string().optional().nullable(),
+  nextAction: z.string().max(500).optional().nullable(),
+  notes: z.string().max(4000).optional().nullable(),
+});
 
 export async function GET(req: Request) {
   try {
@@ -34,9 +56,44 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
-    const body = await req.json();
 
-    const lead = await prisma.lead.create({ data: body });
+    const raw = await req.json().catch(() => null);
+    const parsed = leadCreateSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          code: "LEAD_VALIDATION",
+          issues: parsed.error.issues.map((i) => ({
+            path: i.path.join("."),
+            message: i.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+    const body = parsed.data;
+
+    const lead = await prisma.lead.create({
+      data: {
+        companyName: body.companyName,
+        contactName: body.contactName,
+        email: body.email ?? null,
+        phone: body.phone ?? null,
+        country: body.country ?? null,
+        countryFlag: body.countryFlag ?? null,
+        services: body.services,
+        source: body.source ?? null,
+        status: body.status,
+        value: body.value,
+        probability: body.probability,
+        salesRepId: body.salesRepId ?? null,
+        brandId: body.brandId ?? null,
+        expectedClose: body.expectedClose ? new Date(body.expectedClose) : null,
+        nextAction: body.nextAction ?? null,
+        notes: body.notes ?? null,
+      },
+    });
 
     await logAudit({
       action: "CREATE", entity: "Lead", entityId: lead.id, userId: user.id,

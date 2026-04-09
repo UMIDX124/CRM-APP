@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, tenantWhere } from "@/lib/auth";
 
 function unauthorized(err: unknown) {
   if (err instanceof Error && err.message === "Unauthorized") {
@@ -16,6 +16,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await requireAuth();
     const { id } = await params;
     const body = await req.json();
+
+    // Tenant-scoped ownership check. Without this, any authenticated
+    // user could PATCH any client record by ID.
+    const existing = await prisma.client.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+
     const client = await prisma.client.update({
       where: { id },
       data: {
@@ -48,9 +59,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const actor = await requireAuth();
     const { id } = await params;
 
-    // Get client name before deleting for notification
-    const clientRecord = await prisma.client.findUnique({ where: { id }, select: { companyName: true } });
-    const clientName = clientRecord?.companyName || "Unknown";
+    // Tenant ownership check before a hard delete — prevents destructive
+    // cross-tenant writes.
+    const clientRecord = await prisma.client.findFirst({
+      where: { id, ...tenantWhere(actor) },
+      select: { companyName: true },
+    });
+    if (!clientRecord) {
+      return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+    const clientName = clientRecord.companyName || "Unknown";
 
     // Disconnect or delete all child records before deleting the client
     await prisma.$transaction([
