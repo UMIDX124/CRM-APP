@@ -37,37 +37,63 @@ interface DashboardModuleProps {
   brandColor: string;
 }
 
-// Static revenue chart data (to be replaced with real time-series data from API later)
-const revenueData = [
-  { month: "Nov", vcs: 42000, bsl: 28000, dpl: 22000 },
-  { month: "Dec", vcs: 45000, bsl: 32000, dpl: 25000 },
-  { month: "Jan", vcs: 48000, bsl: 30000, dpl: 28000 },
-  { month: "Feb", vcs: 52000, bsl: 35000, dpl: 32000 },
-  { month: "Mar", vcs: 55000, bsl: 38000, dpl: 35000 },
-  { month: "Apr", vcs: 58000, bsl: 40000, dpl: 38000 },
-];
+// Revenue chart shape returned by /api/dashboard/revenue. Each row has a
+// `month` label ("Nov 2025") plus one numeric key per brand code
+// (`vcs`, `bsl`, `dpl`, …) summed from PAID invoices in that month.
+interface RevenueRow {
+  month: string;
+  [brand: string]: string | number;
+}
+interface RevenueResponse {
+  months: RevenueRow[];
+  brands: string[];
+}
+
+// Brand colors used for the stacked areas. Unknown brand codes fall back
+// to a neutral gold so the chart still renders.
+const BRAND_COLORS: Record<string, string> = {
+  vcs: "#FF6B00",
+  bsl: "#3B82F6",
+  dpl: "#22C55E",
+  fallback: "#F59E0B",
+};
 
 export default function DashboardModule({ brandId: _brandId, brandColor: _brandColor }: DashboardModuleProps) {
   const [timeRange, setTimeRange] = useState("30d");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [revenue, setRevenue] = useState<RevenueResponse | null>(null);
   const { activeCompany } = useCompany();
   const realtime = useRealtime();
 
-  // Stable refetch we can call from the SSE handler too
+  // Stable refetch we can call from the SSE handler too. Both the KPI
+  // summary and the revenue chart refresh together so a new paid invoice
+  // shows up in both places on the same tick.
   const refetch = useCallback(() => {
     fetch(`/api/dashboard?brand=${activeCompany.code}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) setData(d); })
+      .catch(() => {});
+    fetch(`/api/dashboard/revenue?months=6`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setRevenue(d); })
       .catch(() => {});
   }, [activeCompany.code]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/dashboard?brand=${activeCompany.code}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (!cancelled && d) setData(d); })
+    Promise.all([
+      fetch(`/api/dashboard?brand=${activeCompany.code}`)
+        .then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/dashboard/revenue?months=6`)
+        .then((r) => (r.ok ? r.json() : null)),
+    ])
+      .then(([summary, rev]) => {
+        if (cancelled) return;
+        if (summary) setData(summary);
+        if (rev) setRevenue(rev);
+      })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -110,7 +136,7 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const kpis = [
     { label: "Revenue", value: formatCurrency(Math.round(animatedRevenue), true), change: "+12%", icon: DollarSign, color: "#10B981", href: "/invoices" },
     { label: "Clients", value: String(Math.round(animatedClients)), change: "+3 new", icon: Building2, color: "#3B82F6", href: "/clients" },
-    { label: "Win Rate", value: `${Math.round(animatedWinRate)}%`, change: `${wonLeadsCount} won`, icon: Target, color: "#6366F1", href: "/pipeline" },
+    { label: "Win Rate", value: `${Math.round(animatedWinRate)}%`, change: `${wonLeadsCount} won`, icon: Target, color: "#F59E0B", href: "/pipeline" },
     { label: "Pipeline", value: String(Math.round(animatedLeads)), change: `${totalLeads} active`, icon: Briefcase, color: "#06B6D4", href: "/pipeline" },
   ];
 
@@ -195,45 +221,69 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
             </div>
           </div>
           <div className="h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gV" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF6B00" stopOpacity={0.2} /><stop offset="100%" stopColor="#FF6B00" stopOpacity={0} /></linearGradient>
-                  <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3B82F6" stopOpacity={0.15} /><stop offset="100%" stopColor="#3B82F6" stopOpacity={0} /></linearGradient>
-                  <linearGradient id="gD" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22C55E" stopOpacity={0.15} /><stop offset="100%" stopColor="#22C55E" stopOpacity={0} /></linearGradient>
-                </defs>
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "var(--foreground-dim)", fontSize: 11 }} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--foreground-dim)", fontSize: 11 }} tickFormatter={(v) => `$${v / 1000}k`} />
-                <Tooltip content={({ active, payload, label }) => {
-                  if (!active || !payload) return null;
-                  const total = payload.reduce((s, e) => s + (e.value as number), 0);
-                  return (
-                    <div className="card-glass p-3 shadow-xl min-w-[160px] border border-[var(--border)]" style={{ borderRadius: 12 }}>
-                      <p className="text-[11px] text-[var(--foreground-dim)] mb-2 font-medium">{label}</p>
-                      {payload.map((e) => (
-                        <div key={e.name} className="flex items-center justify-between gap-4 py-0.5">
-                          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: e.color }} /><span className="text-[11px] text-[var(--foreground-muted)]">{String(e.name).toUpperCase()}</span></div>
-                          <span className="text-[12px] font-semibold text-[var(--foreground)] tabular-nums">${(e.value as number).toLocaleString()}</span>
+            {loading ? (
+              <div className="h-full w-full skeleton rounded-xl" />
+            ) : !revenue || revenue.months.length === 0 ? (
+              <div className="h-full w-full flex flex-col items-center justify-center text-[var(--foreground-dim)]">
+                <DollarSign className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-[13px] font-medium">No paid invoices yet</p>
+                <p className="text-[11px] mt-0.5">Revenue appears here once invoices are marked PAID</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenue.months} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    {revenue.brands.map((code) => {
+                      const color = BRAND_COLORS[code] ?? BRAND_COLORS.fallback;
+                      return (
+                        <linearGradient key={code} id={`grev-${code}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.2} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "var(--foreground-dim)", fontSize: 11 }} dy={8} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--foreground-dim)", fontSize: 11 }} tickFormatter={(v) => `$${v / 1000}k`} />
+                  <Tooltip content={({ active, payload, label }) => {
+                    if (!active || !payload) return null;
+                    const total = payload.reduce((s, e) => s + (e.value as number), 0);
+                    return (
+                      <div className="card-glass p-3 shadow-xl min-w-[160px] border border-[var(--border)]" style={{ borderRadius: 12 }}>
+                        <p className="text-[11px] text-[var(--foreground-dim)] mb-2 font-medium">{label}</p>
+                        {payload.map((e) => (
+                          <div key={e.name} className="flex items-center justify-between gap-4 py-0.5">
+                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: e.color }} /><span className="text-[11px] text-[var(--foreground-muted)]">{String(e.name).toUpperCase()}</span></div>
+                            <span className="text-[12px] font-semibold text-[var(--foreground)] tabular-nums">${(e.value as number).toLocaleString()}</span>
+                          </div>
+                        ))}
+                        <div className="mt-2 pt-2 border-t border-[var(--border)] flex justify-between">
+                          <span className="text-[10px] text-[var(--foreground-dim)]">Total</span>
+                          <span className="text-[12px] font-bold text-[var(--primary)] tabular-nums">${total.toLocaleString()}</span>
                         </div>
-                      ))}
-                      <div className="mt-2 pt-2 border-t border-[var(--border)] flex justify-between">
-                        <span className="text-[10px] text-[var(--foreground-dim)]">Total</span>
-                        <span className="text-[12px] font-bold text-[var(--primary)] tabular-nums">${total.toLocaleString()}</span>
                       </div>
-                    </div>
-                  );
-                }} />
-                <Area type="monotone" dataKey="vcs" stroke="#FF6B00" strokeWidth={2} fill="url(#gV)" dot={false} />
-                <Area type="monotone" dataKey="bsl" stroke="#3B82F6" strokeWidth={1.5} fill="url(#gB)" dot={false} />
-                <Area type="monotone" dataKey="dpl" stroke="#22C55E" strokeWidth={1.5} fill="url(#gD)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
+                    );
+                  }} />
+                  {revenue.brands.map((code) => (
+                    <Area
+                      key={code}
+                      type="monotone"
+                      dataKey={code}
+                      stroke={BRAND_COLORS[code] ?? BRAND_COLORS.fallback}
+                      strokeWidth={2}
+                      fill={`url(#grev-${code})`}
+                      dot={false}
+                    />
+                  ))}
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
           <div className="flex items-center gap-6 mt-3 pt-3 border-t border-[var(--border)]">
-            {[{ name: "VCS", color: "#FF6B00" }, { name: "BSL", color: "#3B82F6" }, { name: "DPL", color: "#22C55E" }].map((b) => (
-              <div key={b.name} className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: b.color }} />
-                <span className="text-[11px] text-[var(--foreground-dim)] font-medium">{b.name}</span>
+            {(revenue?.brands ?? []).map((code) => (
+              <div key={code} className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRAND_COLORS[code] ?? BRAND_COLORS.fallback }} />
+                <span className="text-[11px] text-[var(--foreground-dim)] font-medium">{code.toUpperCase()}</span>
               </div>
             ))}
           </div>
@@ -327,7 +377,7 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
             {[
               { label: "Total Leads", value: String(totalLeads), color: "#3B82F6" },
               { label: "Won Deals", value: String(wonLeadsCount), color: "#10B981" },
-              { label: "Win Rate", value: `${winRate}%`, color: "#6366F1" },
+              { label: "Win Rate", value: `${winRate}%`, color: "#F59E0B" },
             ].map(m => (
               <div key={m.label} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -369,7 +419,7 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
         {[
           { label: "Add Client", href: "/clients", icon: Building2, color: "#3B82F6" },
           { label: "Create Task", href: "/tasks", icon: CheckSquare, color: "#10B981" },
-          { label: "New Lead", href: "/pipeline", icon: Briefcase, color: "#6366F1" },
+          { label: "New Lead", href: "/pipeline", icon: Briefcase, color: "#F59E0B" },
           { label: "Send Invoice", href: "/invoices", icon: DollarSign, color: "#F59E0B" },
         ].map((link) => (
           <Link key={link.label} href={link.href} className="card p-4 flex items-center gap-3 hover:border-[var(--border-hover)] transition-all group cursor-pointer">
