@@ -240,15 +240,15 @@ model User {
   manager      User?  @relation("ManagerRelation", fields: [managerId], references: [id])
   subordinates User[] @relation("ManagerRelation")
 
-  assignedTasks      Task[]            @relation("TaskAssignee")
-  createdTasks       Task[]            @relation("TaskCreator")
+  assignedTasks      Task[]             @relation("TaskAssignee")
+  createdTasks       Task[]             @relation("TaskCreator")
   comments           Comment[]
   notifications      Notification[]
   attendance         Attendance[]
   auditLogs          AuditLog[]
-  notes              Note[]            @relation("NoteAuthor")
+  notes              Note[]             @relation("NoteAuthor")
   attachments        Attachment[]
-  channelsCreated    Channel[]         @relation("ChannelCreator")
+  channelsCreated    Channel[]          @relation("ChannelCreator")
   channelMemberships ChannelMember[]
   channelMutes       ChannelMute[]
   messages           Message[]
@@ -256,12 +256,15 @@ model User {
   messageReads       MessageRead[]
   messagePins        MessagePin[]
   pushSubscriptions  PushSubscription[]
-  ownedDeals         Deal[]            @relation("DealOwner")
+  ownedDeals         Deal[]             @relation("DealOwner")
   dealActivities     DealActivity[]
-  requestedTickets   Ticket[]          @relation("TicketRequester")
-  assignedTickets    Ticket[]          @relation("TicketAssignee")
+  requestedTickets   Ticket[]           @relation("TicketRequester")
+  assignedTickets    Ticket[]           @relation("TicketAssignee")
   ticketComments     TicketComment[]
 
+  @@index([brandId])
+  @@index([managerId])
+  @@index([status])
   @@map("users")
 }
 
@@ -295,6 +298,9 @@ model Client {
   deals       Deal[]
   tickets     Ticket[]
 
+  @@index([brandId])
+  @@index([status])
+  @@index([accountManagerId])
   @@map("clients")
 }
 
@@ -323,6 +329,12 @@ model Task {
   comments    Comment[]
   attachments Attachment[] @relation("TaskAttachments")
 
+  @@index([assigneeId])
+  @@index([creatorId])
+  @@index([clientId])
+  @@index([brandId])
+  @@index([status])
+  @@index([dueDate])
   @@map("tasks")
 }
 
@@ -352,6 +364,9 @@ model Lead {
   brand Brand? @relation(fields: [brandId], references: [id])
   deals Deal[]
 
+  @@index([brandId])
+  @@index([status])
+  @@index([salesRepId])
   @@map("leads")
 }
 
@@ -375,6 +390,10 @@ model Invoice {
   client Client @relation(fields: [clientId], references: [id])
   brand  Brand  @relation(fields: [brandId], references: [id])
 
+  @@index([clientId])
+  @@index([brandId])
+  @@index([status])
+  @@index([dueDate])
   @@map("invoices")
 }
 
@@ -454,6 +473,8 @@ model Notification {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -485,6 +506,8 @@ model Session {
   userAgent    String?
   createdAt    DateTime @default(now())
 
+  @@index([userId])
+  @@index([expires])
   @@map("sessions")
 }
 
@@ -501,6 +524,7 @@ model CustomerFeedback {
 
   client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([clientId])
   @@map("customer_feedback")
 }
 
@@ -526,14 +550,14 @@ model Channel {
 }
 
 model ChannelMember {
-  id           String    @id @default(cuid())
-  channelId    String
-  userId       String
-  role         String    @default("MEMBER") // ADMIN, MEMBER
-  isMuted      Boolean   @default(false)
-  lastReadAt   DateTime?
-  typingUntil  DateTime? // set ~10s in future while user is composing
-  joinedAt     DateTime  @default(now())
+  id          String    @id @default(cuid())
+  channelId   String
+  userId      String
+  role        String    @default("MEMBER") // ADMIN, MEMBER
+  isMuted     Boolean   @default(false)
+  lastReadAt  DateTime?
+  typingUntil DateTime? // set ~10s in future while user is composing
+  joinedAt    DateTime  @default(now())
 
   channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -647,22 +671,22 @@ model PushSubscription {
 // ─── Deals / Sales Pipeline (Phase 3) ───────────────────
 
 model Deal {
-  id              String    @id @default(cuid())
-  title           String
-  description     String?
-  value           Float     @default(0)
-  currency        String    @default("USD")
-  stage           DealStage @default(NEW)
-  probability     Int       @default(20) // 0-100
-  expectedClose   DateTime?
-  actualClose     DateTime?
-  lostReason      String?
-  winReason       String?
-  followUpDate    DateTime?
-  stageEnteredAt  DateTime  @default(now())
-  dealScore       Int       @default(0) // 0-100, AI-computed lead heat
-  source          String?
-  tags            String[]  @default([])
+  id             String    @id @default(cuid())
+  title          String
+  description    String?
+  value          Float     @default(0)
+  currency       String    @default("USD")
+  stage          DealStage @default(NEW)
+  probability    Int       @default(20) // 0-100
+  expectedClose  DateTime?
+  actualClose    DateTime?
+  lostReason     String?
+  winReason      String?
+  followUpDate   DateTime?
+  stageEnteredAt DateTime  @default(now())
+  dealScore      Int       @default(0) // 0-100, AI-computed lead heat
+  source         String?
+  tags           String[]  @default([])
 
   ownerId  String?
   brandId  String?
@@ -752,7 +776,7 @@ model TicketTemplate {
   name        String
   subject     String?
   body        String
-  category    String?  // e.g. "billing", "onboarding", "tech"
+  category    String? // e.g. "billing", "onboarding", "tech"
   brandId     String?
   isActive    Boolean  @default(true)
   createdById String?
