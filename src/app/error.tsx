@@ -31,7 +31,7 @@ export default function RootError({
         )}
         <button
           onClick={reset}
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-[#6366F1] text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-[var(--primary)] text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
         >
           Try again
         </button>

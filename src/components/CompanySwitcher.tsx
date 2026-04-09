@@ -18,7 +18,7 @@ export default function CompanySwitcher() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const resolvedAccent = activeCompany.accent || "#6366F1";
+  const resolvedAccent = activeCompany.accent || "#F59E0B";
 
   return (
     <div ref={ref} className="relative">
@@ -51,7 +51,7 @@ export default function CompanySwitcher() {
           </div>
           {companies.map((company) => {
             const isActive = company.id === activeCompany.id;
-            const color = company.accent || "#6366F1";
+            const color = company.accent || "#F59E0B";
             return (
               <button
                 key={company.id}

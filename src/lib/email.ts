@@ -70,7 +70,7 @@ export async function sendEmail(args: SendArgs): Promise<boolean> {
 function wrap(content: string): string {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;max-width:600px;margin:0 auto;background:#0a0a0f;color:#fafafa;">
-      <div style="background:#6366F1;padding:24px;text-align:center;border-radius:12px 12px 0 0;">
+      <div style="background:#F59E0B;padding:24px;text-align:center;border-radius:12px 12px 0 0;">
         <h1 style="color:#fff;margin:0;font-size:18px;letter-spacing:-0.01em;">Alpha Command Center</h1>
       </div>
       <div style="padding:24px;background:#131318;border:1px solid rgba(255,255,255,0.06);border-top:none;border-radius:0 0 12px 12px;">
@@ -96,7 +96,7 @@ export function sendTicketStatusChange(
         <tr><td style="padding:6px 0;color:#71717a;">New status</td><td style="padding:6px 0;font-weight:600;">${ticket.status}</td></tr>
       </table>
       <div style="margin-top:20px;text-align:center;">
-        <a href="${appUrl}/tickets" style="display:inline-block;padding:10px 24px;background:#6366F1;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View ticket</a>
+        <a href="${appUrl}/tickets" style="display:inline-block;padding:10px 24px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View ticket</a>
       </div>
     `),
   });
@@ -139,7 +139,7 @@ export function sendPasswordResetEmail(
       <p style="margin:0 0 12px;font-size:14px;">Hi ${escapeHtml(firstName)},</p>
       <p style="margin:0 0 16px;font-size:14px;">We received a request to reset your password. Click the button below to choose a new one. This link expires in 30 minutes.</p>
       <div style="text-align:center;margin:24px 0;">
-        <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:#6366F1;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">Reset password</a>
+        <a href="${resetUrl}" style="display:inline-block;padding:12px 28px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">Reset password</a>
       </div>
       <p style="margin:0;font-size:11px;color:#71717a;">If you didn&rsquo;t request this, you can safely ignore this email — your password will not change.</p>
     `),
@@ -162,7 +162,7 @@ export function sendTicketAssignedToAgent(
         <tr><td style="padding:6px 0;color:#71717a;">Priority</td><td style="padding:6px 0;font-weight:600;">${ticket.priority}</td></tr>
       </table>
       <div style="margin-top:20px;text-align:center;">
-        <a href="${appUrl}/tickets" style="display:inline-block;padding:10px 24px;background:#6366F1;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View ticket</a>
+        <a href="${appUrl}/tickets" style="display:inline-block;padding:10px 24px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View ticket</a>
       </div>
     `),
   });

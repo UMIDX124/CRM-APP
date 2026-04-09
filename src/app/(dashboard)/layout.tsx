@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Sparkles } from "lucide-react";
+import { Search } from "lucide-react";
 import { clsx } from "clsx";
 import Sidebar, { MobileHeader } from "@/components/layout/Sidebar";
 import CommandPalette from "@/components/CommandPalette";
@@ -12,7 +12,6 @@ import { ToastProvider } from "@/components/ui/toast";
 import EmailCompose from "@/components/EmailCompose";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { CompanyProvider } from "@/components/CompanyContext";
-import { ThemeProvider, useTheme } from "@/components/ThemeContext";
 import CompanySwitcher from "@/components/CompanySwitcher";
 import { RealtimeProvider, ConnectionIndicator } from "@/components/RealtimeProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -65,10 +64,9 @@ function isManagerOnlyPath(pathname: string): boolean {
   );
 }
 
-function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; role: string; email: string } | null>(null);
@@ -116,7 +114,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Theme is managed by ThemeProvider — class applied automatically
   useEffect(() => { if (!checkingAuth && !isAuthenticated) router.push("/login"); }, [checkingAuth, isAuthenticated, router]);
 
   // Role-based page guard — bounce non-managers off manager-only pages.
@@ -267,7 +264,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
         <Sidebar
           currentUser={currentUser}
-          theme={theme} onToggleTheme={toggleTheme} onLogout={handleLogout}
+          onLogout={handleLogout}
           isMobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)}
           collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed}
         />
@@ -336,10 +333,3 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ThemeProvider>
-      <DashboardLayoutInner>{children}</DashboardLayoutInner>
-    </ThemeProvider>
-  );
-}

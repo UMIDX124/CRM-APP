@@ -14,12 +14,14 @@
   --surface-hover: #1E1E26;
   --surface-active: #24242D;
 
-  /* ─── Brand Accent (used sparingly) ─── */
-  --primary: #6366F1;
-  --primary-light: #818CF8;
-  --primary-dark: #4F46E5;
-  --primary-glow: rgba(99, 102, 241, 0.15);
-  --primary-subtle: rgba(99, 102, 241, 0.06);
+  /* ─── Brand Accent (amber wolf) ─── */
+  --primary: #F59E0B;
+  --primary-light: #FBBF24;
+  --primary-dark: #D97706;
+  --primary-glow: rgba(245, 158, 11, 0.15);
+  --primary-subtle: rgba(245, 158, 11, 0.06);
+  --primary-hover: #D97706;
+  --primary-dim: rgba(245, 158, 11, 0.12);
 
   /* ─── Subsidiary Brand Colors (accent only) ─── */
   --brand-vcs: #FF6B00;
@@ -35,7 +37,6 @@
   --danger: #EF4444;
   --warning: #F59E0B;
   --info: #06B6D4;
-  --purple: #A855F7;
 
   /* ─── Text Colors ─── */
   --foreground: #ECECF1;
@@ -45,7 +46,7 @@
   /* ─── Border Colors ─── */
   --border: rgba(255, 255, 255, 0.06);
   --border-subtle: rgba(255, 255, 255, 0.03);
-  --border-primary: rgba(99, 102, 241, 0.25);
+  --border-primary: rgba(245, 158, 11, 0.25);
   --border-hover: rgba(255, 255, 255, 0.1);
 
   /* ─── Shadows (clean, no neon) ─── */
@@ -54,8 +55,8 @@
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
-  --shadow-primary: 0 4px 16px rgba(99, 102, 241, 0.12);
-  --shadow-ring: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  --shadow-primary: 0 4px 16px rgba(245, 158, 11, 0.12);
+  --shadow-ring: 0 0 0 3px rgba(245, 158, 11, 0.15);
 
   /* ─── Radii ─── */
   --radius-xs: 4px;
@@ -80,7 +81,6 @@
   --color-danger: var(--danger);
   --color-warning: var(--warning);
   --color-gold: var(--warning);
-  --color-purple: var(--purple);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
   --color-foreground-dim: var(--foreground-dim);
@@ -108,7 +108,7 @@ body {
 }
 
 h1, h2, h3, h4 { letter-spacing: -0.025em; font-weight: 600; }
-::selection { background: rgba(99, 102, 241, 0.25); color: #fff; }
+::selection { background: rgba(245, 158, 11, 0.25); color: #fff; }
 
 /* ══════ CARDS ══════ */
 
@@ -533,57 +533,10 @@ button, a, [role="button"] {
 }
 
 @keyframes row-highlight {
-  0% { background: rgba(99, 102, 241, 0.06); }
+  0% { background: rgba(245, 158, 11, 0.06); }
   100% { background: transparent; }
 }
 .row-new { animation: row-highlight 1.5s ease-out; }
-
-/* ══════ LIGHT MODE ══════ */
-
-.light {
-  --background: #FAFAFA;
-  --background-secondary: #F4F4F5;
-  --surface: #FFFFFF;
-  --surface-elevated: #FAFAFA;
-  --surface-hover: #F4F4F5;
-  --surface-active: #E4E4E7;
-
-  --primary: #4F46E5;
-  --primary-light: #6366F1;
-  --primary-dark: #4338CA;
-  --primary-glow: rgba(79, 70, 229, 0.1);
-  --primary-subtle: rgba(79, 70, 229, 0.04);
-
-  --foreground: #09090B;
-  --foreground-muted: #3F3F46;
-  --foreground-dim: #71717A;
-
-  --border: rgba(0, 0, 0, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.04);
-  --border-hover: rgba(0, 0, 0, 0.14);
-  --border-primary: rgba(79, 70, 229, 0.2);
-
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1);
-  --shadow-primary: 0 4px 12px rgba(79, 70, 229, 0.1);
-  --shadow-ring: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.light [class*="text-white"] { color: var(--foreground) !important; }
-.light [class*="text-white/"] { color: var(--foreground-muted) !important; }
-.light [class*="border-white/"] { border-color: var(--border) !important; }
-.light [class*="bg-white/"] { background-color: rgba(0, 0, 0, 0.02) !important; }
-.light [class*="bg-[#1"], .light [class*="bg-[#0"] { background: var(--surface) !important; }
-.light aside { background: rgba(255, 255, 255, 0.9) !important; backdrop-filter: blur(16px) !important; }
-.light *::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); }
-.light .skeleton {
-  background: linear-gradient(90deg, #F4F4F5 0%, #E4E4E7 40%, #D4D4D8 50%, #E4E4E7 60%, #F4F4F5 100%);
-  background-size: 400% 100%;
-  animation: skeleton-shimmer 2s ease-in-out infinite;
-}
 
 .scrollbar-thin::-webkit-scrollbar { width: 3px; }
 .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }

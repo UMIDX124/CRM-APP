@@ -20,7 +20,7 @@ export async function POST(req: Request) {
         to: [to],
         subject,
         html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #6366F1; padding: 20px; text-align: center;">
+          <div style="background: #F59E0B; padding: 20px; text-align: center;">
             <h1 style="color: #fff; margin: 0; font-size: 24px;">Alpha</h1>
           </div>
           <div style="padding: 30px; background: #f9f9f9;">

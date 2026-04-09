@@ -7,7 +7,7 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0A0A0F",
-  "theme_color": "#6366F1",
+  "theme_color": "#F59E0B",
   "orientation": "any",
   "lang": "en",
   "categories": ["business", "productivity"],

@@ -65,7 +65,7 @@ const STAGES: { id: DealStage; label: string; color: string }[] = [
   { id: "NEW", label: "New", color: "#3B82F6" },
   { id: "QUALIFICATION", label: "Qualification", color: "#06B6D4" },
   { id: "PROPOSAL", label: "Proposal", color: "#F59E0B" },
-  { id: "NEGOTIATION", label: "Negotiation", color: "#6366F1" },
+  { id: "NEGOTIATION", label: "Negotiation", color: "#D97706" },
   { id: "CLOSED_WON", label: "Won", color: "#10B981" },
   { id: "CLOSED_LOST", label: "Lost", color: "#EF4444" },
 ];
@@ -232,7 +232,7 @@ export default function DealsModule() {
             value: formatCurrency(weightedValue, true),
             sub: `of ${formatCurrency(totalValue, true)} total`,
             icon: DollarSign,
-            color: "#6366F1",
+            color: "#06B6D4",
           },
           {
             label: "Won Revenue",
@@ -387,7 +387,7 @@ const DealCard = memo(function DealCard({
   onDragStart,
   onDragEnd,
 }: DealCardProps) {
-  const brandColor = deal.brand?.color || "#6366F1";
+  const brandColor = deal.brand?.color || "#F59E0B";
   const ownerInitials = deal.owner
     ? `${deal.owner.firstName[0] || ""}${deal.owner.lastName[0] || ""}`
     : "?";
@@ -721,7 +721,7 @@ function DealDetailModal({
   };
 
   const d = fullDeal || deal;
-  const stageColor = STAGES.find((s) => s.id === d.stage)?.color || "#6366F1";
+  const stageColor = STAGES.find((s) => s.id === d.stage)?.color || "#F59E0B";
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 modal-mobile-drawer">

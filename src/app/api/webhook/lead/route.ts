@@ -309,7 +309,7 @@ export async function POST(req: Request) {
           subject: `New Lead: ${company || name} (${priority} - Score ${score})`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;">
-              <div style="background:#6366F1;padding:20px;text-align:center;border-radius:12px 12px 0 0;">
+              <div style="background:#F59E0B;padding:20px;text-align:center;border-radius:12px 12px 0 0;">
                 <h1 style="color:#fff;margin:0;font-size:18px;">New Lead Captured</h1>
               </div>
               <div style="padding:24px;background:#f9fafb;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px;">
@@ -326,7 +326,7 @@ export async function POST(req: Request) {
                 </table>
                 ${message ? `<div style="margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#374151;">${message}</div>` : ""}
                 <div style="margin-top:16px;text-align:center;">
-                  <a href="https://fu-corp-crm.vercel.app/pipeline" style="display:inline-block;padding:10px 24px;background:#6366F1;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View in CRM</a>
+                  <a href="https://fu-corp-crm.vercel.app/pipeline" style="display:inline-block;padding:10px 24px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">View in CRM</a>
                 </div>
               </div>
             </div>
@@ -381,11 +381,11 @@ export async function GET() {
     <html><head><title>Alpha CRM Webhook</title></head>
     <body style="font-family:system-ui;background:#0A0A0F;color:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;">
       <div style="text-align:center;max-width:500px;padding:40px;">
-        <div style="width:60px;height:60px;background:#6366F1;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#fff;">A</div>
+        <div style="width:60px;height:60px;background:#F59E0B;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-weight:900;font-size:20px;color:#fff;">A</div>
         <h1 style="font-size:24px;margin:0 0 8px;">Webhook Active</h1>
         <p style="color:#71717A;font-size:14px;margin:0 0 24px;">This endpoint receives form submissions and creates leads in Alpha CRM.</p>
         <div style="background:#131318;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;text-align:left;font-size:13px;">
-          <p style="color:#6366F1;margin:0 0 8px;font-weight:600;">Fields:</p>
+          <p style="color:#F59E0B;margin:0 0 8px;font-weight:600;">Fields:</p>
           <code style="color:#71717A;">name, email, phone, company, service, budget, message, source, formType, qualityScore, utmSource, utmMedium, utmCampaign</code>
         </div>
       </div>

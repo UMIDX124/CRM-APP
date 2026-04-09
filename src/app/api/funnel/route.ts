@@ -75,7 +75,7 @@ export async function GET(req: Request) {
         { stage: "New", count: stages.NEW.length, value: stageValue(stages.NEW), color: "#3B82F6" },
         { stage: "Qualified", count: stages.QUALIFIED.length, value: stageValue(stages.QUALIFIED), color: "#06B6D4" },
         { stage: "Proposal", count: stages.PROPOSAL_SENT.length, value: stageValue(stages.PROPOSAL_SENT), color: "#F59E0B" },
-        { stage: "Negotiation", count: stages.NEGOTIATION.length, value: stageValue(stages.NEGOTIATION), color: "#6366F1" },
+        { stage: "Negotiation", count: stages.NEGOTIATION.length, value: stageValue(stages.NEGOTIATION), color: "#D97706" },
         { stage: "Won", count: stages.WON.length, value: stageValue(stages.WON), color: "#10B981" },
         { stage: "Lost", count: stages.LOST.length, value: stageValue(stages.LOST), color: "#EF4444" },
       ],

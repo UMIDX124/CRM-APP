@@ -109,7 +109,7 @@ export default function WebhooksModule() {
             label: "Active Webhooks",
             value: String(webhooks.filter((w) => w.isActive).length),
             icon: WebhookIcon,
-            color: "#6366F1",
+            color: "#F59E0B",
           },
           {
             label: "Total Deliveries",

@@ -8,7 +8,7 @@ import WolfLogo from "@/components/WolfLogo";
 
 // P0-6 FIX: No passwords exposed in frontend — email-only quick-fill
 const quickAccessUsers = [
-  { email: "umi@digitalpointllc.com", role: "SUPER_ADMIN", name: "Umer", color: "#6366F1" },
+  { email: "umi@digitalpointllc.com", role: "SUPER_ADMIN", name: "Umer", color: "#F59E0B" },
   { email: "faizi@digitalpointllc.com", role: "SUPER_ADMIN", name: "Faizan", color: "#3B82F6" },
   { email: "ali@digitalpointllc.com", role: "PROJECT_MANAGER", name: "Ali Hassan", color: "#22C55E" },
   { email: "client@example.com", role: "EMPLOYEE", name: "Client Demo", color: "#F59E0B" },
@@ -57,7 +57,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,rgba(99,102,241,0.08)_0%,transparent_70%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(ellipse,rgba(245,158,11,0.08)_0%,transparent_70%)]" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-[radial-gradient(ellipse,rgba(59,130,246,0.05)_0%,transparent_70%)]" />
       </div>
 

@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  TrendingUp, Users, DollarSign, Target, ArrowRight,
-  Filter, Building2, Mail, Phone, Calendar, Zap,
-} from "lucide-react";
+import { TrendingUp, Users, DollarSign, Target } from "lucide-react";
 import { formatCurrency } from "@/lib/types";
 import { useCompany } from "@/components/CompanyContext";
 
@@ -133,7 +130,7 @@ export default function FunnelPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Total Leads", value: String(data?.total || 0), icon: Users, color: "#3B82F6" },
-          { label: "Pipeline Value", value: formatCurrency(metrics.totalValue, true), icon: DollarSign, color: "#6366F1" },
+          { label: "Pipeline Value", value: formatCurrency(metrics.totalValue, true), icon: DollarSign, color: "#F59E0B" },
           { label: "Won Revenue", value: formatCurrency(metrics.wonValue, true), icon: TrendingUp, color: "#10B981" },
           { label: "Win Rate", value: `${metrics.conversionRate}%`, icon: Target, color: "#F59E0B" },
         ].map((kpi, i) => (
@@ -209,7 +206,7 @@ export default function FunnelPage() {
           ) : (
             <div className="space-y-3">
               {(data?.sourceBreakdown || []).map(src => {
-                const color = brandColors[src.name] || "#6366F1";
+                const color = brandColors[src.name] || "#F59E0B";
                 const pct = (data?.total || 1) > 0 ? Math.round((src.count / (data?.total || 1)) * 100) : 0;
                 return (
                   <div key={src.name}>
@@ -251,7 +248,7 @@ export default function FunnelPage() {
             <div className="space-y-1">
               {leads.slice(0, 10).map(lead => {
                 const scoreColor = getScoreColor(lead.score || 0);
-                const brandColor = lead.brandColor || brandColors[lead.brand || ""] || "#6366F1";
+                const brandColor = lead.brandColor || brandColors[lead.brand || ""] || "#F59E0B";
                 return (
                   <div key={lead.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[var(--surface-hover)] transition-colors group">
                     <div
