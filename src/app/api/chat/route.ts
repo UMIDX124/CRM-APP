@@ -31,6 +31,9 @@ async function buildSystemPrompt(user: SessionUser): Promise<string> {
       prisma.brand.findMany({
         where: brandWhere,
         select: { name: true, code: true, color: true, website: true },
+        // Cap the brand list fed into the LLM system prompt so a tenant
+        // with hundreds of brands can't blow past Groq's context window.
+        take: 25,
       }),
       prisma.user.findMany({
         where: { ...userTenant, status: "ACTIVE" },

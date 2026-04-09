@@ -23,6 +23,10 @@ export async function GET(req: Request) {
         _count: { select: { brands: true } },
       },
       orderBy: { name: "asc" },
+      // Hard cap — this endpoint is only used by the company switcher
+      // which renders a dropdown; no real product ever needs more than
+      // a few hundred top-level companies in a single response.
+      take: 200,
     });
 
     return NextResponse.json(companies);

@@ -41,15 +41,39 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           ? new Date()
           : undefined;
 
+    // Server-side recompute on items updates — same policy as POST.
+    // If the caller provides `items` we derive subtotal/total from them
+    // and ignore any client-sent money values to prevent tampering.
+    type ItemShape = { quantity?: number; rate?: number };
+    let resolvedSubtotal: number | undefined;
+    let resolvedTotal: number | undefined;
+    if (Array.isArray(body.items)) {
+      const tax = typeof body.tax === "number" ? body.tax : 0;
+      const sub = (body.items as ItemShape[]).reduce(
+        (s, it) => s + (Number(it.quantity) || 0) * (Number(it.rate) || 0),
+        0
+      );
+      resolvedSubtotal = Math.round(sub * 100) / 100;
+      resolvedTotal = Math.round((sub + tax) * 100) / 100;
+      if (
+        typeof body.subtotal === "number" &&
+        Math.abs(body.subtotal - resolvedSubtotal) > 0.02
+      ) {
+        console.warn(
+          `[invoices PATCH] client subtotal=${body.subtotal} differs from server=${resolvedSubtotal}; using server value`
+        );
+      }
+    }
+
     const invoice = await prisma.invoice.update({
       where: { id },
       data: {
         ...(body.status && { status: body.status }),
         ...(resolvedPaidDate !== undefined && { paidDate: resolvedPaidDate }),
-        ...(body.items && { items: body.items }),
-        ...(body.subtotal !== undefined && { subtotal: body.subtotal }),
+        ...(Array.isArray(body.items) && { items: body.items }),
+        ...(resolvedSubtotal !== undefined && { subtotal: resolvedSubtotal }),
         ...(body.tax !== undefined && { tax: body.tax }),
-        ...(body.total !== undefined && { total: body.total }),
+        ...(resolvedTotal !== undefined && { total: resolvedTotal }),
         ...(body.dueDate && { dueDate: new Date(body.dueDate) }),
         ...(body.notes !== undefined && { notes: body.notes }),
       },
@@ -58,7 +82,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         brand: { select: { code: true, color: true } },
       },
     });
-    await logAudit({ action: "UPDATE", entity: "Invoice", entityId: id, userId: actor.id, changes: body }).catch(() => {});
+    await logAudit({
+      action: "UPDATE",
+      entity: "Invoice",
+      entityId: id,
+      userId: actor.id,
+      changes: body,
+    }).catch((err) =>
+      console.error("[invoices PATCH] audit log failed:", err)
+    );
 
     // Fire INVOICE_PAID when status transitions into PAID
     if (body.status === "PAID" && previous?.status !== "PAID") {

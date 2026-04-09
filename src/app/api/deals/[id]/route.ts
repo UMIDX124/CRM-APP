@@ -4,6 +4,18 @@ import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { dispatchWebhook, type WebhookEventName } from "@/lib/webhooks";
 
+// Valid deal stages — kept in sync with the DealStage enum in
+// prisma/schema.prisma. Used to reject PATCH bodies that try to
+// transition a deal to an undefined stage.
+const VALID_DEAL_STAGES = new Set([
+  "NEW",
+  "QUALIFICATION",
+  "PROPOSAL",
+  "NEGOTIATION",
+  "CLOSED_WON",
+  "CLOSED_LOST",
+]);
+
 export async function GET(
   _req: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -106,6 +118,18 @@ export async function PATCH(
     const stageChanged =
       typeof body.stage === "string" && body.stage !== existing.stage;
     if (stageChanged) {
+      // Validate the stage is one of the enum values — previously the
+      // handler accepted any string and Prisma would throw a generic
+      // 500. Now we reject with a clean 400 and list the allowed values.
+      if (!VALID_DEAL_STAGES.has(body.stage)) {
+        return NextResponse.json(
+          {
+            error: "Invalid stage",
+            allowed: Array.from(VALID_DEAL_STAGES),
+          },
+          { status: 400 }
+        );
+      }
       // Enforce win/loss reason gate
       if (body.stage === "CLOSED_WON" && !body.winReason && !existing.winReason) {
         return NextResponse.json(
@@ -128,26 +152,39 @@ export async function PATCH(
       updateData.stageEnteredAt = new Date();
     }
 
-    const deal = await prisma.deal.update({
-      where: { id },
-      data: updateData,
-      include: {
-        brand: { select: { code: true, color: true } },
-        owner: { select: { firstName: true, lastName: true } },
-      },
-    });
-
-    if (stageChanged) {
-      await prisma.dealActivity.create({
-        data: {
-          dealId: id,
-          userId: user.id,
-          type: "STAGE_CHANGE",
-          content: `Stage changed from ${existing.stage} to ${deal.stage}`,
-          metadata: { from: existing.stage, to: deal.stage },
+    // Atomically update the deal and (if stage changed) append the
+    // STAGE_CHANGE activity in a single transaction. This prevents
+    // drift where stage moved but the activity log missed it due to
+    // a DB error between the two writes.
+    const [deal] = await prisma.$transaction([
+      prisma.deal.update({
+        where: { id },
+        data: updateData,
+        include: {
+          brand: { select: { code: true, color: true } },
+          owner: { select: { firstName: true, lastName: true } },
         },
-      });
+      }),
+      ...(stageChanged
+        ? [
+            prisma.dealActivity.create({
+              data: {
+                dealId: id,
+                userId: user.id,
+                type: "STAGE_CHANGE" as const,
+                content: `Stage changed from ${existing.stage} to ${body.stage}`,
+                metadata: { from: existing.stage, to: body.stage },
+              },
+            }),
+          ]
+        : []),
+    ]);
 
+    // Webhooks and audit log are intentionally OUTSIDE the transaction:
+    // they must not rollback a successful deal update if an external
+    // service is down. Audit log loss is logged; webhook loss is
+    // captured by the WebhookDelivery retry path.
+    if (stageChanged) {
       const stageEvents: WebhookEventName[] = ["DEAL_STAGE_CHANGED"];
       if (deal.stage === "CLOSED_WON") stageEvents.push("DEAL_WON");
       if (deal.stage === "CLOSED_LOST") stageEvents.push("DEAL_LOST");
@@ -173,7 +210,7 @@ export async function PATCH(
       entityId: id,
       userId: user.id,
       changes: updateData,
-    });
+    }).catch((err) => console.error("[deals PATCH] audit log failed:", err));
 
     return NextResponse.json(deal);
   } catch (e: unknown) {

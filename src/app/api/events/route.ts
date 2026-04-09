@@ -23,6 +23,11 @@ import { getSession } from "@/lib/auth";
  */
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+// Streaming functions on Vercel default to a 25s execution limit; the
+// SSE stream intentionally runs for MAX_LIFETIME_MS (4 min) before
+// self-terminating, so we bump the platform cap to 300s (5 min) to
+// give the graceful-shutdown path room to complete.
+export const maxDuration = 300;
 
 const POLL_INTERVAL_MS = 3000;
 const HEARTBEAT_INTERVAL_MS = 25000;
@@ -186,6 +191,10 @@ export async function GET(req: Request) {
               where: {
                 channelId: { in: channelIds },
                 createdAt: { gt: messageCursor },
+                // Soft-deleted messages must not fan out again — prior
+                // behavior replayed them via the stream because the
+                // filter was missing.
+                deletedAt: null,
                 // Don't echo the user's own messages back via SSE — they
                 // already have them locally from the optimistic POST.
                 NOT: { authorId: userId },
