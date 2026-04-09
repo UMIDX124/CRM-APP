@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, isManager } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(
@@ -41,6 +41,9 @@ export async function PATCH(
 ) {
   try {
     const user = await requireAuth();
+    if (!isManager(user.role)) {
+      return NextResponse.json({ error: "Manager access required" }, { status: 403 });
+    }
     const { id } = await ctx.params;
     const body = await req.json();
 
@@ -98,6 +101,9 @@ export async function DELETE(
 ) {
   try {
     const user = await requireAuth();
+    if (!isManager(user.role)) {
+      return NextResponse.json({ error: "Manager access required" }, { status: 403 });
+    }
     const { id } = await ctx.params;
     await prisma.webhook.delete({ where: { id } });
     await logAudit({

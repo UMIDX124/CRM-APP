@@ -57,7 +57,12 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
             healthScore: Number(c.healthScore) || 80,
             healthStatus: Number(c.healthScore) >= 80 ? "HEALTHY" : Number(c.healthScore) >= 50 ? "AT_RISK" : "CRITICAL",
             services: Array.isArray(c.services) ? c.services as string[] : [],
-            activeTasks: Number(c.activeTasks) || 0,
+            // _count comes from the API's include{_count:{tasks:...}}.
+            // Falls back to 0 for legacy payload shapes.
+            activeTasks:
+              Number((c._count as Record<string, unknown> | undefined)?.tasks) ||
+              Number(c.activeTasks) ||
+              0,
             lastActivity: String(c.lastActivity || ""),
           }));
           setClientList(mapped);
@@ -85,7 +90,7 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
   const perPage = 10;
 
   const filtered = useMemo(() => {
-    let list = clientList.filter((c) => {
+    const list = clientList.filter((c) => {
       if (search) {
         const q = search.toLowerCase();
         if (!c.companyName.toLowerCase().includes(q) && !c.contactName.toLowerCase().includes(q) && !c.email.toLowerCase().includes(q)) return false;

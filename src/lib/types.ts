@@ -79,8 +79,6 @@ export interface Task {
   brand: string;
   dueDate: string;
   timeSpent: number;
-  subtasks: number;
-  subtasksCompleted: number;
 }
 
 export interface Lead {

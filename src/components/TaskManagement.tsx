@@ -18,11 +18,14 @@ const brands = [
   { id: "3", name: "Digital Point LLC", code: "DPL", color: "#22C55E" },
 ];
 
+// Local Task shape used by the kanban UI. Previously carried
+// `subtasks` / `subtasksCompleted` fields that were always 0 and
+// never rendered — dead weight, removed.
 interface Task {
   id: string; title: string; description: string;
   status: string; priority: string; assignee: string;
   client: string; brand: string; dueDate: string;
-  timeSpent: number; subtasks: number; subtasksCompleted: number;
+  timeSpent: number;
 }
 
 const columns = [
@@ -91,7 +94,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
             client: (t.client as Record<string, string>)?.companyName || "",
             brand: (t.brand as Record<string, string>)?.code || "",
             dueDate: t.dueDate ? String(t.dueDate).split("T")[0] : "",
-            timeSpent: Number(t.timeSpent) || 0, subtasks: 0, subtasksCompleted: 0,
+            timeSpent: Number(t.timeSpent) || 0,
           }));
           setTaskList(mapped);
         } else {
@@ -165,7 +168,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
     } else {
       const result = await apiMutate("/api/tasks", "POST", { ...form, status: "TODO" });
       if (!result.ok) { showError(result.error || "Failed to create task"); setSaving(false); return; }
-      setTaskList((prev) => [...prev, { id: String(Date.now()), ...form, status: "TODO", timeSpent: 0, subtasks: 0, subtasksCompleted: 0 }]);
+      setTaskList((prev) => [...prev, { id: String(Date.now()), ...form, status: "TODO", timeSpent: 0 }]);
       success("Task created");
     }
     setSaving(false);

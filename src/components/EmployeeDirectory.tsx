@@ -47,18 +47,30 @@ export default function EmployeeDirectory({ brandId: _brandId }: { brandId: stri
       .then((data) => {
         if (cancelled) return;
         if (data && Array.isArray(data) && data.length > 0) {
-          const mapped: Employee[] = data.map((e: Record<string, unknown>) => ({
-            id: String(e.id), name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
-            email: String(e.email || ""), phone: String(e.phone || ""), avatar: (e.avatar as string) || null,
-            title: String(e.title || ""), department: String(e.department || "DEV"),
-            brand: (e.brand as Record<string, string>)?.code || String(e.brand || ""),
-            hiredBy: "FU", role: String(e.role || "EMPLOYEE") as Role,
-            status: String(e.status || "ACTIVE") as EmployeeStatus,
-            hireDate: String(e.hireDate || ""), salary: Number(e.salary) || 0, currency: "USD",
-            performanceScore: 85, availability: "AVAILABLE" as const,
-            skills: Array.isArray(e.skills) ? (e.skills as string[]) : [],
-            workload: 50, tasksCompleted: 0, totalTasks: 0,
-          }));
+          const mapped: Employee[] = data.map((e: Record<string, unknown>) => {
+            const total = Number(e.totalTasks) || 0;
+            const done = Number(e.tasksCompleted) || 0;
+            // Workload is a rough "how busy is this person right now"
+            // proxy based on their open (non-completed) task count.
+            // 10 open tasks = 100% workload. Real workload would factor
+            // in due dates + priority, but this is a good first pass.
+            const open = Math.max(0, total - done);
+            return {
+              id: String(e.id), name: `${e.firstName || ""} ${e.lastName || ""}`.trim(),
+              email: String(e.email || ""), phone: String(e.phone || ""), avatar: (e.avatar as string) || null,
+              title: String(e.title || ""), department: String(e.department || "DEV"),
+              brand: (e.brand as Record<string, string>)?.code || String(e.brand || ""),
+              hiredBy: "FU", role: String(e.role || "EMPLOYEE") as Role,
+              status: String(e.status || "ACTIVE") as EmployeeStatus,
+              hireDate: String(e.hireDate || ""), salary: Number(e.salary) || 0, currency: "USD",
+              performanceScore: Number(e.performanceScore) || 0,
+              availability: "AVAILABLE" as const,
+              skills: Array.isArray(e.skills) ? (e.skills as string[]) : [],
+              workload: Math.min(100, open * 10),
+              tasksCompleted: done,
+              totalTasks: total,
+            };
+          });
           setEmployeeList(mapped);
         } else {
           setEmployeeList([]);

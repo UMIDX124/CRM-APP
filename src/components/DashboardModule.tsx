@@ -62,6 +62,9 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
   const [revenue, setRevenue] = useState<RevenueResponse | null>(null);
+  // Surface API failures so a down database shows an explicit retry
+  // banner instead of stale data + silent .catch(() => {}).
+  const [loadError, setLoadError] = useState<string | null>(null);
   // `greeting` is time-of-day dependent, which would mismatch between SSR
   // (server clock) and hydration (client clock) and trigger React error
   // #418. We render a neutral "Good day" on first paint and flip to the
@@ -81,31 +84,51 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   // summary and the revenue chart refresh together so a new paid invoice
   // shows up in both places on the same tick.
   const refetch = useCallback(() => {
-    fetch(`/api/dashboard?brand=${activeCompany.code}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setData(d); })
-      .catch(() => {});
-    fetch(`/api/dashboard/revenue?months=6`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d) setRevenue(d); })
-      .catch(() => {});
+    setLoadError(null);
+    Promise.all([
+      fetch(`/api/dashboard?brand=${activeCompany.code}`).then(async (r) => {
+        if (!r.ok) throw new Error(`dashboard ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/dashboard/revenue?months=6`).then(async (r) => {
+        if (!r.ok) throw new Error(`revenue ${r.status}`);
+        return r.json();
+      }),
+    ])
+      .then(([summary, rev]) => {
+        if (summary) setData(summary);
+        if (rev) setRevenue(rev);
+      })
+      .catch((err) => {
+        console.error("[dashboard] refetch failed:", err);
+        setLoadError(err instanceof Error ? err.message : "Failed to refresh dashboard");
+      });
   }, [activeCompany.code]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(null);
     Promise.all([
-      fetch(`/api/dashboard?brand=${activeCompany.code}`)
-        .then((r) => (r.ok ? r.json() : null)),
-      fetch(`/api/dashboard/revenue?months=6`)
-        .then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/dashboard?brand=${activeCompany.code}`).then(async (r) => {
+        if (!r.ok) throw new Error(`dashboard ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/dashboard/revenue?months=6`).then(async (r) => {
+        if (!r.ok) throw new Error(`revenue ${r.status}`);
+        return r.json();
+      }),
     ])
       .then(([summary, rev]) => {
         if (cancelled) return;
         if (summary) setData(summary);
         if (rev) setRevenue(rev);
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[dashboard] initial load failed:", err);
+        setLoadError(err instanceof Error ? err.message : "Failed to load dashboard");
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [activeCompany.code]);
@@ -176,6 +199,23 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
           <p className="text-[13px] text-[var(--foreground-dim)] mt-0.5">Here&apos;s what&apos;s happening across your companies</p>
         </div>
       </div>
+
+      {/* Load failure banner — surfaces API errors instead of silently
+          showing stale/null values. */}
+      {loadError && !loading && (
+        <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[13px] font-semibold text-[var(--danger)]">Dashboard failed to load</p>
+            <p className="text-[12px] text-[var(--foreground-dim)] mt-0.5">{loadError}</p>
+          </div>
+          <button
+            onClick={refetch}
+            className="px-3 py-1.5 rounded-lg bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--foreground)] text-[12px] font-medium hover:bg-[var(--border)] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Primary KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

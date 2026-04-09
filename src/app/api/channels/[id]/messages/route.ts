@@ -291,27 +291,47 @@ export async function POST(
       },
     });
 
-    // Handle @mentions — find @firstName patterns and notify those users
+    // Handle @mentions — extract all unique names first, resolve them in
+    // ONE findMany against the user table, then fan out notifications.
+    // This replaces the previous N+1 pattern where each match inside the
+    // regex loop triggered a separate findFirst. Hard cap of 20 distinct
+    // mentions per message prevents pathological "@a @b @c @d @e @f @g..."
+    // from building a huge OR clause.
     const mentionRegex = /@(\w+)/g;
-    let match;
-    while ((match = mentionRegex.exec(cleanContent)) !== null) {
-      const mentionedName = match[1].toLowerCase();
-      const mentionedUser = await prisma.user.findFirst({
+    const mentionNames = new Set<string>();
+    for (const m of cleanContent.matchAll(mentionRegex)) {
+      const name = m[1].toLowerCase();
+      if (name) mentionNames.add(name);
+      if (mentionNames.size >= 20) break;
+    }
+
+    if (mentionNames.size > 0) {
+      const mentionedUsers = await prisma.user.findMany({
         where: {
-          firstName: { equals: mentionedName, mode: "insensitive" },
           status: "ACTIVE",
+          OR: Array.from(mentionNames).map((name) => ({
+            firstName: { equals: name, mode: "insensitive" as const },
+          })),
         },
-        select: { id: true },
+        select: { id: true, firstName: true },
       });
-      if (mentionedUser && mentionedUser.id !== user.id) {
-        await createNotification({
-          type: "MENTION",
-          title: "You were mentioned",
-          message: `${user.firstName} mentioned you in #${channel.name}`,
-          userId: mentionedUser.id,
-          data: { channelId: id, messageId: message.id, link: `/chat?channel=${id}` },
-        });
-      }
+      // Notifications are independent — fire them in parallel, swallowing
+      // individual failures so one bad row doesn't block the others.
+      await Promise.all(
+        mentionedUsers
+          .filter((u) => u.id !== user.id)
+          .map((u) =>
+            createNotification({
+              type: "MENTION",
+              title: "You were mentioned",
+              message: `${user.firstName} mentioned you in #${channel.name}`,
+              userId: u.id,
+              data: { channelId: id, messageId: message.id, link: `/chat?channel=${id}` },
+            }).catch((err) =>
+              console.error("[messages POST] mention notify failed:", err)
+            )
+          )
+      );
     }
 
     return NextResponse.json({

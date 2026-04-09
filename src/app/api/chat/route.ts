@@ -109,6 +109,10 @@ const groq = createGroq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
+// Model name is env-configurable so we can swap the default without a
+// code change if Groq deprecates a model or we want to A/B a newer one.
+const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
@@ -127,20 +131,44 @@ export async function POST(req: Request) {
     const systemPrompt = await buildSystemPrompt(user);
     const modelMessages = await convertToModelMessages(messages);
 
-    const result = streamText({
-      model: groq("llama-3.3-70b-versatile"),
-      system: systemPrompt,
-      messages: modelMessages,
-      stopWhen: stepCountIs(3),
-    });
-
-    return result.toUIMessageStreamResponse();
+    // streamText itself can throw synchronously on misconfigured API keys
+    // or immediately reject on a Groq outage. Catching here lets us return
+    // a user-friendly 503 instead of the generic "Chat failed" that the
+    // outer handler would emit.
+    try {
+      const result = streamText({
+        model: groq(GROQ_MODEL),
+        system: systemPrompt,
+        messages: modelMessages,
+        stopWhen: stepCountIs(3),
+      });
+      return result.toUIMessageStreamResponse();
+    } catch (groqErr) {
+      const detail = groqErr instanceof Error ? groqErr.message : String(groqErr);
+      console.error("[chat] streamText failed:", detail);
+      return new Response(
+        JSON.stringify({
+          error: "AI service temporarily unavailable",
+          code: "AI_UPSTREAM_FAILED",
+          detail: process.env.NODE_ENV === "production" ? undefined : detail,
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } }
+      );
+    }
   } catch (err) {
     const status = err instanceof Error && err.message === "Unauthorized" ? 401 : 500;
-    console.error("Chat API error:", err);
-    return new Response(JSON.stringify({ error: status === 401 ? "Unauthorized" : "Chat failed" }), {
-      status,
-      headers: { "Content-Type": "application/json" },
-    });
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[chat] handler error:", detail);
+    return new Response(
+      JSON.stringify({
+        error: status === 401 ? "Unauthorized" : "Chat failed",
+        code: status === 401 ? "UNAUTHORIZED" : "CHAT_FAILED",
+        detail:
+          status === 401 || process.env.NODE_ENV === "production"
+            ? undefined
+            : detail,
+      }),
+      { status, headers: { "Content-Type": "application/json" } }
+    );
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
@@ -45,12 +46,12 @@ export default function DashboardError({
         >
           <RefreshCw className="w-4 h-4" /> Try again
         </button>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--foreground)] text-[13px] font-medium hover:bg-[var(--surface)] transition-colors"
         >
           Go home
-        </a>
+        </Link>
       </div>
     </div>
   );

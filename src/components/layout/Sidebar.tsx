@@ -155,7 +155,10 @@ export default function Sidebar({
 
         {/* Collapse Toggle */}
         <button
+          type="button"
           onClick={() => onCollapsedChange(!collapsed)}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={clsx(
             "absolute -right-3 top-[68px] w-6 h-6 rounded-full",
             "bg-[var(--surface)] border border-[var(--border)]",
@@ -178,7 +181,13 @@ export function MobileHeader({
     <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[var(--surface)] border-b border-[var(--border)]">
       <div className="flex items-center justify-between px-4 h-14">
         <div className="flex items-center gap-3">
-          <button onClick={onMenuOpen} className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors">
+          <button
+            type="button"
+            onClick={onMenuOpen}
+            aria-label="Open navigation menu"
+            title="Open navigation menu"
+            className="p-1.5 rounded-lg hover:bg-[var(--surface-hover)] transition-colors"
+          >
             <Menu className="w-5 h-5 text-[var(--foreground-muted)]" />
           </button>
           <div className="w-7 h-7 rounded-md bg-[var(--surface-elevated)] border border-[var(--border)] flex items-center justify-center overflow-hidden">

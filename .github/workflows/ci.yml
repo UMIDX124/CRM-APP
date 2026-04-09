@@ -31,8 +31,11 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Lint
+        # Gates merges on ESLint errors. Warnings are allowed (React 19
+        # compiler rules like `set-state-in-effect` and `purity` are
+        # demoted to warn in eslint.config.mjs because they flag safe
+        # patterns and would need per-call-site refactors).
         run: npm run lint
-        continue-on-error: true
 
       - name: Build
         run: npm run build

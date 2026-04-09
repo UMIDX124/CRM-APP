@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, isManager } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import crypto from "crypto";
 
@@ -55,6 +55,12 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await requireAuth();
+    // Webhook subscribers can exfiltrate tenant data to arbitrary URLs,
+    // so creation must be gated to managers. Previously anyone with
+    // a valid session could register a receiver.
+    if (!isManager(user.role)) {
+      return NextResponse.json({ error: "Manager access required" }, { status: 403 });
+    }
     const body = await req.json();
 
     if (!body.name || !body.url) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/db";
-import { requireAuth, isManager, hashPassword } from "@/lib/auth";
+import { requireAuth, isManager, hashPassword, tenantUserWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
@@ -19,8 +19,13 @@ export async function GET(req: Request) {
     // UI surfaces that don't actually need it.
     const minimal = url.searchParams.get("minimal") === "1";
 
-    const where: Record<string, unknown> = {};
-    if (brand) where.brand = { code: brand };
+    // Tenant scope first — replaces the previous "brandId = user.brandId"
+    // shortcut that leaked SUPER_ADMIN access across companies.
+    const where: Record<string, unknown> = { ...tenantUserWhere(user) };
+    if (brand) {
+      const existing = (where.brand as Record<string, unknown> | undefined) ?? {};
+      where.brand = { ...existing, code: brand };
+    }
     if (department) where.department = department;
     if (status) where.status = status;
     if (search) {
@@ -31,33 +36,76 @@ export async function GET(req: Request) {
         { title: { contains: search, mode: "insensitive" } },
       ];
     }
-    // Non-admins only see their own brand
-    if (!isManager(user.role) && user.brandId) {
-      where.brandId = user.brandId;
+
+    // Split the two selects into separate calls so TypeScript can narrow
+    // the return type and we can include `_count: { assignedTasks }` on
+    // the full shape without tripping the minimal shape.
+    if (minimal) {
+      const employees = await prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          title: true,
+          avatar: true,
+          brand: { select: { code: true, color: true } },
+        },
+        orderBy: [{ firstName: "asc" }],
+        take: 500,
+      });
+      return NextResponse.json(employees);
     }
 
     const employees = await prisma.user.findMany({
       where,
-      select: minimal
-        ? {
-            id: true,
-            firstName: true,
-            lastName: true,
-            title: true,
-            avatar: true,
-            brand: { select: { code: true, color: true } },
-          }
-        : {
-            id: true, email: true, firstName: true, lastName: true, phone: true,
-            avatar: true, title: true, role: true, department: true, status: true,
-            brandId: true, hireDate: true, salary: true, currency: true, skills: true,
-            lastLogin: true, createdAt: true,
-            brand: { select: { code: true, name: true, color: true } },
+      select: {
+        id: true, email: true, firstName: true, lastName: true, phone: true,
+        avatar: true, title: true, role: true, department: true, status: true,
+        brandId: true, hireDate: true, salary: true, currency: true, skills: true,
+        lastLogin: true, createdAt: true,
+        brand: { select: { code: true, name: true, color: true } },
+        // Real task metrics replace the hardcoded `performanceScore: 85`
+        // / `workload: 50` / `tasksCompleted: 0` values the UI used to
+        // fabricate. We expose raw counts; the UI computes the score.
+        _count: {
+          select: {
+            assignedTasks: true,
           },
-      orderBy: minimal ? [{ firstName: "asc" }] : { createdAt: "desc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 500,
     });
 
-    return NextResponse.json(employees);
+    // Enrich each row with a completed-task count via a single grouped
+    // query instead of N+1 per-employee calls.
+    const employeeIds = employees.map((e) => e.id);
+    const completedByAssignee = employeeIds.length
+      ? await prisma.task.groupBy({
+          by: ["assigneeId"],
+          where: { assigneeId: { in: employeeIds }, status: "COMPLETED" },
+          _count: { _all: true },
+        })
+      : [];
+    const completedMap = new Map<string, number>(
+      completedByAssignee.map((row) => [row.assigneeId ?? "", row._count._all])
+    );
+
+    const enriched = employees.map((emp) => {
+      const totalTasks = emp._count?.assignedTasks ?? 0;
+      const tasksCompleted = completedMap.get(emp.id) ?? 0;
+      const performanceScore =
+        totalTasks > 0 ? Math.round((tasksCompleted / totalTasks) * 100) : 0;
+      return {
+        ...emp,
+        totalTasks,
+        tasksCompleted,
+        performanceScore,
+      };
+    });
+
+    return NextResponse.json(enriched);
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Server error";
     return NextResponse.json({ error: msg }, { status: msg === "Unauthorized" ? 401 : 500 });

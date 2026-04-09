@@ -32,8 +32,20 @@ export async function GET(req: Request) {
 
     const clients = await prisma.client.findMany({
       where,
-      include: { brand: { select: { code: true, name: true, color: true } } },
+      include: {
+        brand: { select: { code: true, name: true, color: true } },
+        // Expose a live active-task count so the UI can stop hardcoding
+        // it to 0. "Active" = not in COMPLETED or BLOCKED state.
+        _count: {
+          select: {
+            tasks: {
+              where: { status: { notIn: ["COMPLETED", "BLOCKED"] } },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
+      take: 500,
     });
 
     return NextResponse.json(clients);
