@@ -42,6 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(body.brandId && { brandId: body.brandId }),
         ...(body.lastContactDate !== undefined && { lastContactDate: body.lastContactDate ? new Date(body.lastContactDate) : null }),
         ...(body.nextFollowUp !== undefined && { nextFollowUp: body.nextFollowUp ? new Date(body.nextFollowUp) : null }),
+        ...(body.portalAccess !== undefined && { portalAccess: Boolean(body.portalAccess) }),
       },
       include: { brand: { select: { code: true, name: true, color: true } } },
     });

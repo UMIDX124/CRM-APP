@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, Building2, Edit, Trash2, Eye, X, Save,
-  Loader2, TrendingUp, Heart, ArrowUpDown, Mail,
+  Loader2, TrendingUp, Heart, ArrowUpDown, Mail, Globe, Send,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const ClientEmails = dynamic(() => import("@/components/ClientEmails"), { ssr: false });
@@ -428,6 +428,46 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
                 </div>
               </div>
             )}
+            {/* Portal Access */}
+            {(() => {
+              const hasPortal = Boolean("portalAccess" in viewClient && (viewClient as unknown as { portalAccess?: boolean }).portalAccess);
+              return (
+                <div className="border-t border-[var(--border)] px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-muted)]">
+                    <Globe className="w-4 h-4" /> Client Portal
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        const newVal = !hasPortal;
+                        await apiMutate(`/api/clients/${viewClient.id}`, "PATCH", { portalAccess: newVal });
+                        setClientList((prev) => prev.map((c) => c.id === viewClient.id ? { ...c } : c));
+                        setViewClient(null);
+                        success(newVal ? "Portal access enabled" : "Portal access disabled");
+                      }}
+                      className={`px-3 py-1 rounded-md text-[12px] font-medium transition-colors ${hasPortal ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-[var(--surface)] text-[var(--foreground-dim)] border border-[var(--border)]"}`}
+                    >
+                      {hasPortal ? "Enabled" : "Disabled"}
+                    </button>
+                    {hasPortal && (
+                      <button
+                        onClick={async () => {
+                          const res = await apiMutate<{ loginUrl?: string }>("/api/portal/invite", "POST", { clientId: viewClient.id });
+                          if (res.ok) {
+                            success("Portal invite sent to " + viewClient.email);
+                          } else {
+                            showError(res.error || "Failed to send invite");
+                          }
+                        }}
+                        className="flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)]/20 transition-colors"
+                      >
+                        <Send className="w-3 h-3" /> Send Invite
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
               <button onClick={() => { setViewClient(null); openEdit(viewClient); }} className="btn-secondary"><Edit className="w-3.5 h-3.5" /> Edit</button>
               <button onClick={() => setViewClient(null)} className="btn-primary">Close</button>

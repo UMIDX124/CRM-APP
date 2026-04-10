@@ -36,6 +36,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/track/",
   // Gmail OAuth callback (user redirected from Google)
   "/api/gmail/callback",
+  // Client portal (authenticated via portal-session cookie, not CRM session)
+  "/api/portal/",
 ];
 
 function isPublicApi(pathname: string): boolean {

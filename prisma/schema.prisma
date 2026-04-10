@@ -295,9 +295,12 @@ model Client {
   notes       Note[]
   tasks       Task[]             @relation("ClientTasks")
   attachments Attachment[]       @relation("ClientAttachments")
-  feedback    CustomerFeedback[]
-  deals       Deal[]
-  tickets     Ticket[]
+  feedback       CustomerFeedback[]
+  deals          Deal[]
+  tickets        Ticket[]
+  portalAccess   Boolean            @default(false)
+  portalSessions PortalSession[]
+  portalMessages PortalMessage[]
 
   @@index([brandId])
   @@index([status])
@@ -945,4 +948,44 @@ model EmailLog {
   @@index([to])
   @@index([clientId])
   @@map("email_logs")
+}
+
+// ─── Client Portal ──────────────────────────────────
+
+model PortalSession {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([token])
+  @@map("portal_sessions")
+}
+
+model PortalMagicLink {
+  id        String   @id @default(cuid())
+  clientId  String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("portal_magic_links")
+}
+
+model PortalMessage {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  sender    String   // "client" | "agent"
+  message   String
+  agentId   String?
+  createdAt DateTime @default(now())
+
+  @@index([clientId, createdAt])
+  @@map("portal_messages")
 }
