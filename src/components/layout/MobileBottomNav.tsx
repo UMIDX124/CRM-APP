@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, MessageSquare, LifeBuoy, Target } from "lucide-react";
+import { LayoutDashboard, Building2, MessageSquare, LifeBuoy, TrendingUp } from "lucide-react";
 import { clsx } from "clsx";
 
 // Bottom-nav tabs surface the 5 highest-traffic destinations on mobile.
@@ -17,7 +17,7 @@ type NavTab =
 const tabs: NavTab[] = [
   { href: "/", icon: LayoutDashboard, label: "Home", kind: "link" },
   { href: "/clients", icon: Building2, label: "Clients", kind: "link" },
-  { href: "/deals", icon: Target, label: "Deals", kind: "link" },
+  { href: "/analytics", icon: TrendingUp, label: "Analytics", kind: "link" },
   { href: "/tickets", icon: LifeBuoy, label: "Tickets", kind: "link" },
   { action: "open-chat", icon: MessageSquare, label: "Chat", kind: "button" },
 ];

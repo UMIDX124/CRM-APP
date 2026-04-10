@@ -42,7 +42,7 @@ export async function GET(req: Request) {
         }),
         prisma.pageView.groupBy({
           by: ["referrer"],
-          where: { ...where, referrer: { notIn: [null as unknown as string, ""] } },
+          where: { ...where, NOT: [{ referrer: null }, { referrer: "" }] },
           _count: { id: true },
           orderBy: { _count: { id: "desc" } },
           take: 10,

@@ -44,7 +44,8 @@ Reply with ONLY one word: hot, warm, or cold.`,
     const score = text.trim().toLowerCase();
     if (["hot", "warm", "cold"].includes(score)) return score;
     return "warm";
-  } catch {
+  } catch (err) {
+    console.error("[scoreLead] Groq AI scoring failed:", err instanceof Error ? err.message : err);
     return "unscored";
   }
 }

@@ -94,7 +94,7 @@ export default function Sidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-3 px-2.5 overflow-y-auto scrollbar-thin">
-          {(["main", "sales", "hr", "finance", "system"] as const).map((section) => {
+          {(["main", "sales", "hr", "finance", "analytics", "system"] as const).map((section) => {
             const items = navItems.filter((i) => i.section === section);
             return (
               <div key={section} className={section !== "main" ? "mt-4" : ""}>
