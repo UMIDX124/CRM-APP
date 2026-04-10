@@ -32,6 +32,8 @@ const PUBLIC_API_PREFIXES = [
   // Kiosk is an unauthenticated shared device — the pin-verify route
   // has its own IP rate limit + constant-time comparison for safety.
   "/api/attendance/pin-verify",
+  // Public tracking endpoints (authenticated via apiKey, not session)
+  "/api/track/",
 ];
 
 function isPublicApi(pathname: string): boolean {

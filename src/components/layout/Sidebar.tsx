@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
   Settings, ChevronLeft, LogOut, Menu,
   ClipboardCheck, FileText, DollarSign, CalendarOff, Filter,
-  Target, LifeBuoy, Webhook,
+  Target, LifeBuoy, Webhook, Globe, TrendingUp, UserCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { WolfIcon } from "@/components/WolfLogo";
@@ -26,13 +26,16 @@ const navItems = [
   { href: "/leaves", label: "Leaves", icon: CalendarOff, section: "hr" as const },
   { href: "/invoices", label: "Invoices", icon: FileText, section: "finance" as const },
   { href: "/payroll", label: "Payroll", icon: DollarSign, section: "finance" as const },
+  { href: "/sites", label: "Tracked Sites", icon: Globe, section: "analytics" as const },
+  { href: "/analytics", label: "Analytics", icon: TrendingUp, section: "analytics" as const },
+  { href: "/web-leads", label: "Web Leads", icon: UserCheck, section: "analytics" as const },
   { href: "/reports", label: "Reports", icon: BarChart3, section: "system" as const },
   { href: "/webhooks", label: "Webhooks", icon: Webhook, section: "system" as const },
   { href: "/settings", label: "Settings", icon: Settings, section: "system" as const },
 ];
 
 const sectionLabels: Record<string, string> = {
-  main: "", sales: "Sales & Support", hr: "People", finance: "Finance", system: "System",
+  main: "", sales: "Sales & Support", hr: "People", finance: "Finance", analytics: "Website Analytics", system: "System",
 };
 
 interface SidebarProps {

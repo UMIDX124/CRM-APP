@@ -853,3 +853,58 @@ model WebhookDelivery {
   @@index([event])
   @@map("webhook_deliveries")
 }
+
+// ─── Multi-Site Analytics & Lead Tracking ────────────
+
+model TrackedSite {
+  id        String     @id @default(cuid())
+  name      String
+  domain    String     @unique
+  apiKey    String     @unique @default(cuid())
+  createdAt DateTime   @default(now())
+  pageViews PageView[]
+  webLeads  WebLead[]
+
+  @@map("tracked_sites")
+}
+
+model PageView {
+  id        String      @id @default(cuid())
+  siteId    String
+  site      TrackedSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sessionId String
+  page      String
+  referrer  String?
+  country   String?
+  city      String?
+  device    String?
+  browser   String?
+  ip        String?
+  duration  Int?
+  createdAt DateTime    @default(now())
+
+  @@index([siteId, createdAt])
+  @@index([sessionId])
+  @@index([page])
+  @@map("page_views")
+}
+
+model WebLead {
+  id        String      @id @default(cuid())
+  siteId    String
+  site      TrackedSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name      String?
+  email     String?
+  phone     String?
+  message   String?
+  page      String?
+  source    String?
+  aiScore   String      @default("unscored")
+  status    String      @default("new")
+  createdAt DateTime    @default(now())
+
+  @@index([siteId, createdAt])
+  @@index([email])
+  @@index([status])
+  @@map("web_leads")
+}
