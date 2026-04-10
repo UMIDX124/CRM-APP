@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "buildCommand": "npx prisma generate && npx prisma db push --accept-data-loss && npm run build",
   "outputDirectory": ".next"
 }
