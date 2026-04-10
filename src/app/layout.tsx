@@ -67,9 +67,29 @@ export default function RootLayout({
         <PWAInstallPrompt />
         <Analytics />
         <script dangerouslySetInnerHTML={{ __html: `
+          // Restore theme + accent color from localStorage before paint (prevents flash)
+          try {
+            var t = localStorage.getItem('alpha-crm-theme');
+            if (t === 'light' || t === 'dark') {
+              document.documentElement.classList.remove('dark','light');
+              document.documentElement.classList.add(t);
+            }
+            var a = localStorage.getItem('alpha-crm-accent');
+            if (a && /^#[0-9a-fA-F]{6}$/.test(a)) {
+              var r = document.documentElement.style;
+              r.setProperty('--primary', a);
+              r.setProperty('--primary-light', a + 'CC');
+              r.setProperty('--primary-dark', a + 'DD');
+              r.setProperty('--primary-glow', a + '26');
+              r.setProperty('--primary-subtle', a + '0F');
+              r.setProperty('--shadow-primary', '0 4px 16px ' + a + '1F');
+              r.setProperty('--shadow-ring', '0 0 0 3px ' + a + '26');
+              r.setProperty('--border-primary', a + '40');
+            }
+          } catch(e) {}
           if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js').catch(() => {});
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').catch(function() {});
             });
           }
         ` }} />

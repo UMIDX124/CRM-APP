@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   User, Building2, Bell, Shield, Save, Camera,
   Key, Check, ChevronRight, Loader2, AlertCircle,
-  FileText, Plus, Trash2,
+  FileText, Plus, Trash2, Palette, Moon, Sun,
 } from "lucide-react";
 import { clsx } from "clsx";
 const parentCompany = { name: "Alpha", code: "A", tagline: "Enterprise Command Center", website: "alpha-crm.com", founded: "2023", ceo: "Faizan & Umer" };
@@ -20,6 +20,18 @@ const tabs = [
   { id: "templates", label: "Templates", icon: FileText },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "security", label: "Security", icon: Shield },
+  { id: "appearance", label: "Appearance", icon: Palette },
+];
+
+const ACCENT_COLORS = [
+  { color: "#F59E0B", label: "Amber" },
+  { color: "#6366F1", label: "Indigo" },
+  { color: "#3B82F6", label: "Blue" },
+  { color: "#10B981", label: "Emerald" },
+  { color: "#EF4444", label: "Red" },
+  { color: "#EC4899", label: "Pink" },
+  { color: "#8B5CF6", label: "Violet" },
+  { color: "#FF6B00", label: "Orange" },
 ];
 
 interface TicketTpl {
@@ -573,6 +585,94 @@ export default function SettingsModule() {
                     ))}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "appearance" && (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--foreground)] mb-1">Appearance</h2>
+                <p className="text-sm text-[var(--foreground-dim)]">Customize the look and feel</p>
+              </div>
+
+              {/* Dark / Light toggle */}
+              <div>
+                <h4 className="text-sm font-medium text-[var(--foreground)] mb-3">Theme</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {(["dark", "light"] as const).map((mode) => {
+                    const isDark = mode === "dark";
+                    const active = typeof document !== "undefined" && document.documentElement.classList.contains(mode);
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          document.documentElement.classList.remove("dark", "light");
+                          document.documentElement.classList.add(mode);
+                          try { localStorage.setItem("alpha-crm-theme", mode); } catch {}
+                        }}
+                        className={clsx(
+                          "p-5 rounded-2xl text-center transition-all cursor-pointer",
+                          active
+                            ? "bg-[var(--surface)] border-2 border-[var(--primary)]"
+                            : "bg-[var(--surface)] border-2 border-[var(--border)] hover:border-[var(--border-hover)]"
+                        )}
+                      >
+                        <div className={clsx(
+                          "w-full h-16 rounded-xl border mb-3 flex items-center justify-center",
+                          isDark ? "bg-[#0A0A0F] border-[rgba(255,255,255,0.06)]" : "bg-[#FAFAFA] border-[rgba(0,0,0,0.08)]"
+                        )}>
+                          {isDark ? <Moon className="w-5 h-5 text-[var(--foreground-muted)]" /> : <Sun className="w-5 h-5 text-[#71717A]" />}
+                        </div>
+                        <p className="text-sm text-[var(--foreground)] font-medium">{isDark ? "Dark" : "Light"} Mode</p>
+                        {active && <p className="text-xs text-[var(--primary)] mt-0.5">Active</p>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Accent Color picker */}
+              <div className="p-5 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
+                <h4 className="text-sm font-medium text-[var(--foreground)] mb-3">Accent Color</h4>
+                <div className="flex flex-wrap gap-3">
+                  {ACCENT_COLORS.map((c) => {
+                    const currentPrimary = typeof document !== "undefined"
+                      ? getComputedStyle(document.documentElement).getPropertyValue("--primary").trim()
+                      : "";
+                    const isActive = currentPrimary === c.color;
+                    return (
+                      <button
+                        key={c.color}
+                        type="button"
+                        onClick={() => {
+                          const root = document.documentElement;
+                          root.style.setProperty("--primary", c.color);
+                          root.style.setProperty("--primary-light", c.color + "CC");
+                          root.style.setProperty("--primary-dark", c.color + "DD");
+                          root.style.setProperty("--primary-glow", c.color + "26");
+                          root.style.setProperty("--primary-subtle", c.color + "0F");
+                          root.style.setProperty("--shadow-primary", `0 4px 16px ${c.color}1F`);
+                          root.style.setProperty("--shadow-ring", `0 0 0 3px ${c.color}26`);
+                          root.style.setProperty("--border-primary", `${c.color}40`);
+                          try { localStorage.setItem("alpha-crm-accent", c.color); } catch {}
+                        }}
+                        className="flex flex-col items-center gap-1.5 group"
+                      >
+                        <div
+                          className={clsx(
+                            "w-10 h-10 rounded-xl border-2 transition-all",
+                            isActive ? "border-[var(--foreground)] scale-110 shadow-lg" : "border-transparent hover:scale-105"
+                          )}
+                          style={{ backgroundColor: c.color, boxShadow: isActive ? `0 0 12px ${c.color}60` : undefined }}
+                        />
+                        <span className="text-[10px] text-[var(--foreground-dim)]">{c.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-[var(--foreground-dim)] mt-3">Changes apply instantly and persist across sessions.</p>
               </div>
             </div>
           )}
