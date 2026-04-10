@@ -261,6 +261,7 @@ model User {
   requestedTickets   Ticket[]           @relation("TicketRequester")
   assignedTickets    Ticket[]           @relation("TicketAssignee")
   ticketComments     TicketComment[]
+  gmailToken         GmailToken?
 
   @@index([brandId])
   @@index([managerId])
@@ -907,4 +908,38 @@ model WebLead {
   @@index([email])
   @@index([status])
   @@map("web_leads")
+}
+
+// ─── Gmail Integration ──────────────────────────────
+
+model GmailToken {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  email        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("gmail_tokens")
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  userId    String
+  to        String
+  subject   String
+  body      String
+  threadId  String?
+  messageId String?
+  clientId  String?
+  webLeadId String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([to])
+  @@index([clientId])
+  @@map("email_logs")
 }

@@ -707,6 +707,14 @@ export default function WebLeadsPage() {
                 <div className="bg-[var(--primary-subtle)] border border-[var(--primary)]/20 rounded-lg p-4 text-sm text-[var(--foreground)] leading-relaxed">
                   {suggestedFollowUp(selectedLead.aiScore)}
                 </div>
+                {selectedLead.email && (
+                  <a
+                    href={`mailto:${selectedLead.email}?subject=Re: Your inquiry on ${selectedLead.site?.domain || "our website"}&body=${encodeURIComponent(suggestedFollowUp(selectedLead.aiScore))}`}
+                    className="mt-3 flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-[var(--primary)] text-[#0A0A0F] font-semibold text-sm hover:bg-[var(--primary-light)] transition-colors"
+                  >
+                    Reply via Email
+                  </a>
+                )}
               </div>
             </div>
           </div>

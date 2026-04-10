@@ -3,8 +3,10 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, Building2, Edit, Trash2, Eye, X, Save,
-  Loader2, TrendingUp, Heart, ArrowUpDown,
+  Loader2, TrendingUp, Heart, ArrowUpDown, Mail,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+const ClientEmails = dynamic(() => import("@/components/ClientEmails"), { ssr: false });
 import { clsx } from "clsx";
 const brands = [
   { id: "1", name: "Virtual Customer Solution", code: "VCS", color: "#FF6B00" },
@@ -409,6 +411,23 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
                 </div>
               )}
             </div>
+            {/* Email Thread Tab */}
+            {viewClient.email && (
+              <div className="border-t border-[var(--border)]">
+                <button
+                  onClick={() => {
+                    const el = document.getElementById("client-emails-section");
+                    if (el) el.style.display = el.style.display === "none" ? "block" : "none";
+                  }}
+                  className="w-full flex items-center gap-2 px-5 py-3 text-[13px] font-medium text-[var(--foreground-muted)] hover:text-[var(--primary)] hover:bg-[var(--surface-hover)] transition-colors"
+                >
+                  <Mail className="w-4 h-4" /> Email History
+                </button>
+                <div id="client-emails-section" style={{ display: "none" }} className="px-5 pb-4">
+                  <ClientEmails clientEmail={viewClient.email} />
+                </div>
+              </div>
+            )}
             <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
               <button onClick={() => { setViewClient(null); openEdit(viewClient); }} className="btn-secondary"><Edit className="w-3.5 h-3.5" /> Edit</button>
               <button onClick={() => setViewClient(null)} className="btn-primary">Close</button>

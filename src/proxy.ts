@@ -34,6 +34,8 @@ const PUBLIC_API_PREFIXES = [
   "/api/attendance/pin-verify",
   // Public tracking endpoints (authenticated via apiKey, not session)
   "/api/track/",
+  // Gmail OAuth callback (user redirected from Google)
+  "/api/gmail/callback",
 ];
 
 function isPublicApi(pathname: string): boolean {
