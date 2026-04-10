@@ -25,7 +25,7 @@ async function scoreLead(data: { name?: string; email?: string; message?: string
 
     const { text } = await generateText({
       model,
-      maxTokens: 10,
+      maxOutputTokens: 10,
       prompt: `Score this website lead as exactly one word: "hot", "warm", or "cold".
 
 Name: ${data.name || "unknown"}
