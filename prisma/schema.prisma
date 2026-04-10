@@ -380,11 +380,14 @@ model Invoice {
   subtotal  Float
   tax       Float         @default(0)
   total     Float
-  status    InvoiceStatus @default(DRAFT)
-  issueDate DateTime
-  dueDate   DateTime
-  paidDate  DateTime?
-  notes     String?
+  status         InvoiceStatus @default(DRAFT)
+  issueDate      DateTime
+  dueDate        DateTime
+  paidDate       DateTime?
+  paymentMethod  String?  // "bank_transfer" | "cash" | "cheque" | "other"
+  paymentRef     String?  // Reference/transaction number
+  paymentNotes   String?
+  notes          String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 

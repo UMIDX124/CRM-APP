@@ -84,6 +84,9 @@ export default function InvoiceModule() {
   const [filterStatus, setFilterStatus] = useState<InvoiceStatus | "ALL">("ALL");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [payInvoiceId, setPayInvoiceId] = useState<string | null>(null);
+  const [payForm, setPayForm] = useState({ method: "bank_transfer", ref: "", date: new Date().toISOString().split("T")[0], notes: "" });
+  const [paySubmitting, setPaySubmitting] = useState(false);
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
 
@@ -120,13 +123,31 @@ export default function InvoiceModule() {
     setForm(defaultForm);
   };
 
-  const markPaid = async (id: string) => {
-    const result = await apiMutate(`/api/invoices/${id}`, "PATCH", { status: "PAID", paidDate: new Date().toISOString().split("T")[0] });
-    if (!result.ok) { showError(result.error || "Failed to mark as paid"); return; }
-    setInvoices((prev) => prev.map((i) => (i.id === id ? { ...i, status: "PAID" as InvoiceStatus, paidDate: new Date().toISOString().split("T")[0] } : i)));
-    success("Marked as paid");
-    setSelectedInvoice(null);
+  const openPayModal = (id: string) => {
+    setPayInvoiceId(id);
+    setPayForm({ method: "bank_transfer", ref: "", date: new Date().toISOString().split("T")[0], notes: "" });
   };
+
+  const confirmPayment = async () => {
+    if (!payInvoiceId) return;
+    setPaySubmitting(true);
+    const result = await apiMutate(`/api/invoices/${payInvoiceId}`, "PATCH", {
+      status: "PAID",
+      paidDate: payForm.date,
+      paymentMethod: payForm.method,
+      paymentRef: payForm.ref || null,
+      paymentNotes: payForm.notes || null,
+    });
+    if (!result.ok) { showError(result.error || "Failed to mark as paid"); setPaySubmitting(false); return; }
+    setInvoices((prev) => prev.map((i) => (i.id === payInvoiceId ? { ...i, status: "PAID" as InvoiceStatus } : i)));
+    success("Invoice marked as paid");
+    setPayInvoiceId(null);
+    setSelectedInvoice(null);
+    setPaySubmitting(false);
+  };
+
+  // Legacy alias — buttons that used markPaid(id) now open the modal
+  const markPaid = openPayModal;
 
   const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
@@ -292,6 +313,73 @@ export default function InvoiceModule() {
             <div className="sticky bottom-0 bg-[var(--surface)] border-t border-[var(--border)] px-5 py-3 flex justify-end gap-2">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary">Cancel</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary disabled:opacity-50">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Create</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark as Paid Modal */}
+      {payInvoiceId && (
+        <div className="modal-overlay" onClick={() => setPayInvoiceId(null)}>
+          <div className="modal-content w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="p-5 border-b border-[var(--border)] flex items-center justify-between">
+              <h2 className="text-[15px] font-semibold text-[var(--foreground)]">Record Payment</h2>
+              <button onClick={() => setPayInvoiceId(null)} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Payment Method *</label>
+                <select
+                  value={payForm.method}
+                  onChange={(e) => setPayForm({ ...payForm, method: e.target.value })}
+                  className="input-field w-full"
+                >
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cash">Cash</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Payment Date *</label>
+                <input
+                  type="date"
+                  value={payForm.date}
+                  onChange={(e) => setPayForm({ ...payForm, date: e.target.value })}
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Reference / Transaction #</label>
+                <input
+                  type="text"
+                  value={payForm.ref}
+                  onChange={(e) => setPayForm({ ...payForm, ref: e.target.value })}
+                  placeholder="e.g. TXN-123456"
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Notes</label>
+                <textarea
+                  value={payForm.notes}
+                  onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
+                  placeholder="Optional payment notes..."
+                  rows={2}
+                  className="input-field w-full resize-none"
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
+              <button onClick={() => setPayInvoiceId(null)} className="btn-secondary">Cancel</button>
+              <button
+                onClick={confirmPayment}
+                disabled={paySubmitting || !payForm.date}
+                className="btn-primary !bg-emerald-500 hover:!bg-emerald-600 disabled:opacity-50"
+              >
+                {paySubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                Confirm Payment
+              </button>
             </div>
           </div>
         </div>

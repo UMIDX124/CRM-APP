@@ -76,6 +76,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(resolvedTotal !== undefined && { total: resolvedTotal }),
         ...(body.dueDate && { dueDate: new Date(body.dueDate) }),
         ...(body.notes !== undefined && { notes: body.notes }),
+        ...(body.paymentMethod !== undefined && { paymentMethod: body.paymentMethod }),
+        ...(body.paymentRef !== undefined && { paymentRef: body.paymentRef }),
+        ...(body.paymentNotes !== undefined && { paymentNotes: body.paymentNotes }),
       },
       include: {
         client: { select: { id: true, companyName: true, contactName: true } },
