@@ -14,52 +14,83 @@ export async function GET(req: Request) {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const where = {
-      createdAt: { gte: since },
-      ...(siteId ? { siteId } : {}),
-    };
+    const where: Record<string, unknown> = { createdAt: { gte: since } };
+    if (siteId) where.siteId = siteId;
 
-    const [totalVisitors, allViews, topPages, deviceSplit, referrerBreakdown, dailyViews, leadCount] =
-      await Promise.all([
-        prisma.pageView.count({ where }),
-        prisma.pageView.findMany({
-          where,
-          select: { sessionId: true },
-          distinct: ["sessionId"],
-        }),
-        prisma.pageView.groupBy({
+    // Run all queries in parallel — each is individually safe
+    const [
+      totalVisitors,
+      allViews,
+      topPages,
+      deviceSplit,
+      referrerBreakdown,
+      leadCount,
+    ] = await Promise.all([
+      prisma.pageView.count({ where }).catch(() => 0),
+
+      prisma.pageView
+        .findMany({ where, select: { sessionId: true }, distinct: ["sessionId"] })
+        .catch(() => []),
+
+      prisma.pageView
+        .groupBy({
           by: ["page"],
           where,
           _count: { id: true },
           _avg: { duration: true },
           orderBy: { _count: { id: "desc" } },
           take: 20,
-        }),
-        prisma.pageView.groupBy({
+        })
+        .catch(() => []),
+
+      prisma.pageView
+        .groupBy({
           by: ["device"],
           where,
           _count: { id: true },
-        }),
-        prisma.pageView.groupBy({
+          orderBy: { _count: { id: "desc" } },
+        })
+        .catch(() => []),
+
+      prisma.pageView
+        .groupBy({
           by: ["referrer"],
-          where: { ...where, NOT: [{ referrer: null }, { referrer: "" }] },
+          where: {
+            ...where,
+            referrer: { not: "" },
+            NOT: { referrer: null },
+          },
           _count: { id: true },
           orderBy: { _count: { id: "desc" } },
           take: 10,
-        }),
-        prisma.$queryRawUnsafe<{ date: string; count: bigint }[]>(
-          `SELECT DATE(created_at) as date, COUNT(*) as count
-           FROM page_views
-           WHERE created_at >= $1 ${siteId ? "AND site_id = $2" : ""}
-           GROUP BY DATE(created_at)
-           ORDER BY date ASC`,
-          ...(siteId ? [since, siteId] : [since])
-        ),
-        prisma.webLead.count({ where: { createdAt: { gte: since }, ...(siteId ? { siteId } : {}) } }),
-      ]);
+        })
+        .catch(() => []),
+
+      prisma.webLead
+        .count({ where: { createdAt: { gte: since }, ...(siteId ? { siteId } : {}) } })
+        .catch(() => 0),
+    ]);
+
+    // Daily views via raw SQL — handles the DATE() aggregation Prisma can't do
+    let dailyViews: { date: string; count: number }[] = [];
+    try {
+      const params: unknown[] = [since];
+      let sql = `SELECT DATE(created_at) as date, COUNT(*)::int as count FROM page_views WHERE created_at >= $1`;
+      if (siteId) {
+        sql += ` AND site_id = $2`;
+        params.push(siteId);
+      }
+      sql += ` GROUP BY DATE(created_at) ORDER BY date ASC`;
+
+      const raw = await prisma.$queryRawUnsafe<{ date: string; count: number | bigint }[]>(sql, ...params);
+      dailyViews = raw.map((r) => ({ date: String(r.date), count: Number(r.count) }));
+    } catch (e) {
+      console.error("[analytics] dailyViews raw query failed:", e instanceof Error ? e.message : e);
+    }
 
     const uniqueSessions = allViews.length;
-    const conversionRate = totalVisitors > 0 ? ((leadCount / uniqueSessions) * 100).toFixed(1) : "0";
+    const conversionRate =
+      uniqueSessions > 0 ? ((leadCount / uniqueSessions) * 100).toFixed(1) : "0";
 
     return NextResponse.json({
       totalVisitors,
@@ -79,15 +110,15 @@ export async function GET(req: Request) {
         referrer: r.referrer || "direct",
         count: r._count.id,
       })),
-      dailyViews: dailyViews.map((d) => ({
-        date: d.date,
-        count: Number(d.count),
-      })),
+      dailyViews,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Internal error";
-    if (message === "Unauthorized") return NextResponse.json({ error: message }, { status: 401 });
-    console.error("[analytics] error:", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error("[analytics] FATAL:", message, stack);
+    if (message === "Unauthorized") {
+      return NextResponse.json({ error: message }, { status: 401 });
+    }
+    return NextResponse.json({ error: "Internal error", detail: message }, { status: 500 });
   }
 }
