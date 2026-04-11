@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, CheckSquare, BarChart3, Building2,
-  Settings, ChevronLeft, LogOut, Menu,
+  Settings, ChevronLeft, LogOut, Menu, Mail,
   ClipboardCheck, FileText, DollarSign, CalendarOff, Filter,
   Target, LifeBuoy, Webhook, Globe, TrendingUp, UserCheck,
 } from "lucide-react";
@@ -20,6 +20,7 @@ const navItems = [
   { href: "/funnel", label: "Lead Funnel", icon: Filter, section: "main" as const },
   { href: "/deals", label: "Deals", icon: Target, section: "sales" as const },
   { href: "/tickets", label: "Tickets", icon: LifeBuoy, section: "sales" as const },
+  { href: "/cold-email", label: "Cold Email", icon: Mail, section: "sales" as const },
   { href: "/tasks", label: "Tasks", icon: CheckSquare, section: "main" as const },
   { href: "/employees", label: "Team", icon: Users, section: "hr" as const },
   { href: "/attendance", label: "Attendance", icon: ClipboardCheck, section: "hr" as const },

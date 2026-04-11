@@ -262,6 +262,7 @@ model User {
   assignedTickets    Ticket[]           @relation("TicketAssignee")
   ticketComments     TicketComment[]
   gmailToken         GmailToken?
+  emailCampaigns     EmailCampaign[]    @relation("CampaignCreator")
 
   @@index([brandId])
   @@index([managerId])
@@ -988,4 +989,131 @@ model PortalMessage {
 
   @@index([clientId, createdAt])
   @@map("portal_messages")
+}
+
+// ─── Cold Email Outreach System ─────────────────────────
+
+model Prospect {
+  id             String    @id @default(cuid())
+  email          String
+  firstName      String?
+  lastName       String?
+  company        String?
+  niche          String?
+  city           String?
+  country        String?
+  phone          String?
+  website        String?
+  googleRating   Float?
+  reviewCount    Int?
+  rawData        Json?
+  emailStatus    String    @default("unverified") // unverified|valid|invalid|risky|disposable
+  verifiedAt     DateTime?
+  source         String    @default("google_maps")
+  unsubscribed   Boolean   @default(false)
+  unsubscribedAt DateTime?
+  companyId      String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  campaignLeads CampaignLead[]
+
+  @@unique([email, companyId])
+  @@index([companyId])
+  @@index([emailStatus])
+  @@index([niche])
+  @@map("prospects")
+}
+
+model EmailCampaign {
+  id             String   @id @default(cuid())
+  name           String
+  niche          String
+  location       String?
+  status         String   @default("draft") // draft|active|paused|completed
+  totalProspects Int      @default(0)
+  emailsSent     Int      @default(0)
+  emailsOpened   Int      @default(0)
+  replies        Int      @default(0)
+  bounces        Int      @default(0)
+  unsubscribes   Int      @default(0)
+  systemPrompt   String?
+  emailTemplate  String?
+  subjectLine    String?
+  senderName     String
+  senderEmail    String
+  senderPassword String   // AES-256-GCM encrypted
+  dailyLimit     Int      @default(30)
+  sendingDays    String   @default("mon,tue,wed,thu,fri")
+  sendingHours   String   @default("09:00-17:00")
+  companyId      String
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creator   User             @relation("CampaignCreator", fields: [createdById], references: [id])
+  leads     CampaignLead[]
+  sequences EmailSequence[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([createdById])
+  @@map("email_campaigns")
+}
+
+model EmailSequence {
+  id           String   @id @default(cuid())
+  campaignId   String
+  stepNumber   Int
+  delayDays    Int      @default(0)
+  subject      String
+  bodyTemplate String
+  createdAt    DateTime @default(now())
+
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sentEmails SentEmail[]
+
+  @@unique([campaignId, stepNumber])
+  @@map("email_sequences")
+}
+
+model CampaignLead {
+  id               String    @id @default(cuid())
+  campaignId       String
+  prospectId       String
+  status           String    @default("queued") // queued|sent|opened|replied|bounced|unsubscribed
+  currentStep      Int       @default(0)
+  nextSendAt       DateTime?
+  generatedEmail   String?
+  generatedSubject String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospect   Prospect      @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  sentEmails SentEmail[]
+
+  @@unique([campaignId, prospectId])
+  @@index([status])
+  @@index([nextSendAt])
+  @@map("campaign_leads")
+}
+
+model SentEmail {
+  id             String   @id @default(cuid())
+  campaignLeadId String
+  sequenceId     String
+  subject        String
+  body           String
+  messageId      String?
+  status         String   @default("sent") // sent|bounced|replied
+  errorMessage   String?
+  sentAt         DateTime @default(now())
+
+  campaignLead CampaignLead  @relation(fields: [campaignLeadId], references: [id], onDelete: Cascade)
+  sequence     EmailSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@index([campaignLeadId])
+  @@index([sentAt])
+  @@map("sent_emails")
 }

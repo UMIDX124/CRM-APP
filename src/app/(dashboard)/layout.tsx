@@ -31,6 +31,7 @@ const pageTitles: Record<string, string> = {
   "/audit": "Audit Log", "/guide": "User Guide", "/shortcuts": "Keyboard Shortcuts",
   "/settings": "Settings", "/sites": "Tracked Sites", "/analytics": "Website Analytics",
   "/web-leads": "Web Leads",
+  "/cold-email": "Cold Email",
 };
 
 const pageDescriptions: Record<string, string> = {
@@ -47,6 +48,7 @@ const pageDescriptions: Record<string, string> = {
   "/sites": "Manage websites connected to Alpha Command Center",
   "/analytics": "Visitor traffic and engagement metrics",
   "/web-leads": "Leads captured from tracked websites",
+  "/cold-email": "Automated cold email outreach campaigns",
 };
 
 // Page-level role protection. These routes should bounce non-managers
