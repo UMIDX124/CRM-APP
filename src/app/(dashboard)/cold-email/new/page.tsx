@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowRight, Search, Shield, Sparkles, Rocket,
-  Loader2, Check, X, RefreshCw, Globe, AlertCircle, Eye,
+  Loader2, Check, X, RefreshCw, Globe, AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
@@ -58,6 +58,8 @@ export default function NewCampaignPage() {
   const [prospects, setProspects] = useState<ProspectResult[]>([]);
   const [prospectIds, setProspectIds] = useState<string[]>([]);
   const [scrapeStats, setScrapeStats] = useState<{ scraped: number; saved: number; duplicates: number } | null>(null);
+  const [manualEntry, setManualEntry] = useState("");
+  const [addingManual, setAddingManual] = useState(false);
 
   // Step 2 — Email Setup
   const [senderName, setSenderName] = useState("");
@@ -143,6 +145,75 @@ export default function NewCampaignPage() {
       toastError(err instanceof Error ? err.message : "Scraping failed");
     } finally {
       setScraping(false);
+    }
+  }
+
+  async function handleAddManualProspects() {
+    const lines = manualEntry
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      toastError("Paste at least one email address");
+      return;
+    }
+
+    const parsed = lines.map((line) => {
+      const [email, firstName, company] = line.split(",").map((s) => s?.trim());
+      return {
+        email: email || "",
+        firstName: firstName || undefined,
+        company: company || undefined,
+        niche,
+        city: location || undefined,
+      };
+    });
+
+    setAddingManual(true);
+    try {
+      const res = await fetch("/api/cold-email/prospects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prospects: parsed }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to add prospects");
+      }
+
+      const data = await res.json();
+      const newIds: string[] = data.prospectIds || [];
+      setProspectIds((prev) => Array.from(new Set([...prev, ...newIds])));
+      setScrapeStats({
+        scraped: newIds.length,
+        saved: data.saved || 0,
+        duplicates: data.duplicates || 0,
+      });
+
+      if (newIds.length > 0) {
+        const prospectRes = await fetch(
+          "/api/cold-email/prospects?" + new URLSearchParams({ ids: newIds.join(",") })
+        );
+        if (prospectRes.ok) {
+          const pData = await prospectRes.json();
+          setProspects((prev) => {
+            const merged = [...prev];
+            for (const p of pData.prospects || []) {
+              if (!merged.some((m) => m.id === p.id)) merged.push(p);
+            }
+            return merged;
+          });
+        }
+      }
+
+      setManualEntry("");
+      success(`Added ${data.saved} new prospects (${data.duplicates} already existed)`);
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Failed to add prospects");
+    } finally {
+      setAddingManual(false);
     }
   }
 
@@ -296,7 +367,7 @@ export default function NewCampaignPage() {
   ];
 
   const canGoNext = () => {
-    if (step === 1) return websites.some((w) => w.url.trim()) || prospectIds.length > 0;
+    if (step === 1) return true;
     if (step === 2) return senderName && senderEmail && senderPassword;
     if (step === 3) return true;
     return true;
@@ -418,11 +489,38 @@ export default function NewCampaignPage() {
             <button
               onClick={handleScrape}
               disabled={scraping || !websites.some((w) => w.url.trim())}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--primary)] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {scraping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
               {scraping ? "Scraping..." : "Scrape for Emails"}
             </button>
+
+            {/* Manual prospect entry — fallback when scraping times out or URLs aren't known */}
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[var(--foreground)]">Or add prospects manually</p>
+                  <p className="text-xs text-[var(--foreground-dim)] mt-0.5">
+                    One per line. Format: <code className="text-[var(--primary)]">email@domain.com, First Name, Company</code> (name &amp; company optional).
+                  </p>
+                </div>
+              </div>
+              <textarea
+                value={manualEntry}
+                onChange={(e) => setManualEntry(e.target.value)}
+                rows={5}
+                placeholder={"john@acme.com, John, Acme Inc\nsarah@example.com\ninfo@biz.co, , Biz Co"}
+                className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--foreground-dim)] text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/40 resize-y"
+              />
+              <button
+                onClick={handleAddManualProspects}
+                disabled={addingManual || !manualEntry.trim()}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--surface-elevated)] text-[var(--foreground)] border border-[var(--border)] font-medium text-sm hover:border-[var(--primary)] transition-colors disabled:opacity-50"
+              >
+                {addingManual ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {addingManual ? "Adding..." : "Add Prospects"}
+              </button>
+            </div>
 
             {/* Results */}
             {scrapeStats && (

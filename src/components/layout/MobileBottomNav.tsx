@@ -22,8 +22,15 @@ const tabs: NavTab[] = [
   { action: "open-chat", icon: MessageSquare, label: "Chat", kind: "button" },
 ];
 
+// Routes where the bottom nav is hidden to give multi-step flows the full viewport.
+const HIDDEN_ROUTES = ["/cold-email/new"];
+
 export default function MobileBottomNav() {
   const pathname = usePathname();
+
+  if (HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+    return null;
+  }
 
   const tabBaseClass = (active: boolean) =>
     clsx(
