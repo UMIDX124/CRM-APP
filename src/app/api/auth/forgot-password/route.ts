@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (user && user.status === "ACTIVE") {
       try {
         const token = createResetToken(user.id, user.passwordHash);
-        const appUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
+        const appUrl = process.env.APP_URL || "https://alpha-command-center.vercel.app";
         const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(token)}`;
         await sendPasswordResetEmail(user.email, user.firstName, resetUrl);
       } catch (err) {

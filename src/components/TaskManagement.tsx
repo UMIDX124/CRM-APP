@@ -32,7 +32,7 @@ const columns = [
   { status: "TODO", label: "To Do", color: "#71717A" },
   { status: "IN_PROGRESS", label: "In Progress", color: "#3B82F6" },
   { status: "REVIEW", label: "Review", color: "#F59E0B" },
-  { status: "DONE", label: "Done", color: "#10B981" },
+  { status: "COMPLETED", label: "Done", color: "#10B981" },
 ];
 
 const priorityOptions = [
@@ -134,7 +134,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
       if (filterDueDate !== "ALL") {
         if (!t.dueDate) return false;
         const due = new Date(t.dueDate);
-        const isDone = t.status === "DONE" || t.status === "COMPLETED";
+        const isDone = t.status === "COMPLETED";
         if (filterDueDate === "TODAY") {
           if (due < today || due >= tomorrow) return false;
         } else if (filterDueDate === "WEEK") {
@@ -149,9 +149,9 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
 
   const stats = useMemo(() => ({
     total: taskList.length,
-    done: taskList.filter((t) => t.status === "DONE" || t.status === "COMPLETED").length,
+    done: taskList.filter((t) => t.status === "COMPLETED").length,
     inProgress: taskList.filter((t) => t.status === "IN_PROGRESS").length,
-    overdue: taskList.filter((t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "DONE" && t.status !== "COMPLETED").length,
+    overdue: taskList.filter((t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== "COMPLETED").length,
   }), [taskList]);
 
   const openAdd = () => { setEditingId(null); setForm(defaultForm); setShowModal(true); };
@@ -191,7 +191,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
     success("Task deleted");
   };
 
-  const isOverdue = (d: string, s: string) => d && new Date(d) < new Date() && s !== "DONE" && s !== "COMPLETED";
+  const isOverdue = (d: string, s: string) => d && new Date(d) < new Date() && s !== "COMPLETED";
   const brandColor = (code: string) => brands.find((b) => b.code === code)?.color || "#FF6B00";
 
   return (
@@ -261,7 +261,7 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
       ) : viewMode === "kanban" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {columns.map((col) => {
-            const colTasks = filtered.filter((t) => t.status === col.status || (col.status === "DONE" && t.status === "COMPLETED"));
+            const colTasks = filtered.filter((t) => t.status === col.status || (col.status === "COMPLETED" && t.status === "COMPLETED"));
             return (
               <div key={col.status} className="kanban-column p-3">
                 <div className="flex items-center gap-2 mb-3 px-1">
@@ -296,13 +296,13 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
                           {col.status === "IN_PROGRESS" && (
                             <>
                               <button onClick={() => moveTask(task.id, "REVIEW")} className="flex-1 text-[10px] py-1 rounded-md bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors">Review</button>
-                              <button onClick={() => moveTask(task.id, "DONE")} className="flex-1 text-[10px] py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">Done</button>
+                              <button onClick={() => moveTask(task.id, "COMPLETED")} className="flex-1 text-[10px] py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">Done</button>
                             </>
                           )}
                           {col.status === "REVIEW" && (
                             <>
                               <button onClick={() => moveTask(task.id, "IN_PROGRESS")} className="flex-1 text-[10px] py-1 rounded-md bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:bg-[var(--surface-elevated)] transition-colors">Back</button>
-                              <button onClick={() => moveTask(task.id, "DONE")} className="flex-1 text-[10px] py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">Approve</button>
+                              <button onClick={() => moveTask(task.id, "COMPLETED")} className="flex-1 text-[10px] py-1 rounded-md bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors">Approve</button>
                             </>
                           )}
                         </div>

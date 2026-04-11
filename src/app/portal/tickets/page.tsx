@@ -24,7 +24,7 @@ interface TicketItem {
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Clock }> = {
   OPEN: { bg: "bg-blue-500/10", text: "text-blue-400", icon: Clock },
   IN_PROGRESS: { bg: "bg-amber-500/10", text: "text-amber-400", icon: Loader2 },
-  WAITING_ON_CLIENT: { bg: "bg-purple-500/10", text: "text-purple-400", icon: MessageSquare },
+  WAITING_CUSTOMER: { bg: "bg-purple-500/10", text: "text-purple-400", icon: MessageSquare },
   RESOLVED: { bg: "bg-emerald-500/10", text: "text-emerald-400", icon: CheckCircle2 },
   CLOSED: { bg: "bg-[var(--surface-hover)]", text: "text-[var(--foreground-dim)]", icon: XCircle },
 };

@@ -149,7 +149,7 @@ export async function PATCH(
           })
         : null;
       if (clientRow?.email) {
-        const appUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
+        const appUrl = process.env.APP_URL || "https://alpha-command-center.vercel.app";
         // Fire-and-forget — the .catch() is REQUIRED, otherwise a
         // Resend rejection becomes an unhandled promise rejection
         // which can crash the function instance.

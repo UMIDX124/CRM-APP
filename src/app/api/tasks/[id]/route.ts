@@ -26,6 +26,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
 
+    // Validate enum values before DB write
+    const VALID_STATUSES = ["TODO", "IN_PROGRESS", "REVIEW", "COMPLETED", "BLOCKED"];
+    const VALID_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
+    if (body.status && !VALID_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: `Invalid status: ${body.status}. Valid values: ${VALID_STATUSES.join(", ")}` }, { status: 400 });
+    }
+    if (body.priority && !VALID_PRIORITIES.includes(body.priority)) {
+      return NextResponse.json({ error: `Invalid priority: ${body.priority}` }, { status: 400 });
+    }
+
     const task = await prisma.task.update({
       where: { id },
       data: {

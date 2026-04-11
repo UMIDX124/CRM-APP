@@ -102,14 +102,23 @@ export async function GET(req: Request) {
         views: p._count.id,
         avgDuration: Math.round(p._avg.duration || 0),
       })),
-      deviceSplit: deviceSplit.map((d) => ({
-        device: d.device || "unknown",
-        count: d._count.id,
-      })),
-      referrerBreakdown: referrerBreakdown.map((r) => ({
-        referrer: r.referrer || "direct",
-        count: r._count.id,
-      })),
+      // Deduplicate after normalization to prevent React duplicate key errors
+      deviceSplit: (() => {
+        const map = new Map<string, number>();
+        for (const d of deviceSplit) {
+          const key = d.device || "unknown";
+          map.set(key, (map.get(key) || 0) + d._count.id);
+        }
+        return Array.from(map, ([device, count]) => ({ device, count }));
+      })(),
+      referrerBreakdown: (() => {
+        const map = new Map<string, number>();
+        for (const r of referrerBreakdown) {
+          const key = r.referrer || "direct";
+          map.set(key, (map.get(key) || 0) + r._count.id);
+        }
+        return Array.from(map, ([referrer, count]) => ({ referrer, count }));
+      })(),
       dailyViews,
     });
   } catch (error: unknown) {

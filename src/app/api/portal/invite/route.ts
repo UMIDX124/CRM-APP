@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     // Generate magic link
     const token = await createMagicLink(clientId);
-    const baseUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
+    const baseUrl = process.env.APP_URL || "https://alpha-command-center.vercel.app";
     const loginUrl = `${baseUrl}/portal/verify?token=${token}`;
 
     // Send invite email

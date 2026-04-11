@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const token = await createMagicLink(client.id);
-    const baseUrl = process.env.APP_URL || "https://fu-corp-crm.vercel.app";
+    const baseUrl = process.env.APP_URL || "https://alpha-command-center.vercel.app";
     const loginUrl = `${baseUrl}/portal/verify?token=${token}`;
 
     // Send magic link via Resend (existing email system)

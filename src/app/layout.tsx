@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   title: "Alpha Command Center",
   description: "Enterprise CRM powered by Alpha AI",
   manifest: "/manifest.json",
-  metadataBase: new URL("https://fu-corp-crm.vercel.app"),
+  metadataBase: new URL("https://alpha-command-center.vercel.app"),
   icons: {
     icon: [
       { url: "/mascot-32.png", sizes: "32x32", type: "image/png" },
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     type: "website",
     title: "Alpha Command Center",
     description: "Enterprise CRM powered by Alpha AI",
-    url: "https://fu-corp-crm.vercel.app",
+    url: "https://alpha-command-center.vercel.app",
     siteName: "Alpha Command Center",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Alpha Command Center" }],
   },
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: "Alpha Command Center",
   },
   alternates: {
-    canonical: "https://fu-corp-crm.vercel.app",
+    canonical: "https://alpha-command-center.vercel.app",
   },
 };
 

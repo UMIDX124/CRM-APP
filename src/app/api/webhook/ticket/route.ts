@@ -272,7 +272,7 @@ export async function POST(req: Request) {
                 </table>
                 <div style="margin-top:16px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;color:#374151;white-space:pre-wrap;">${description}</div>
                 <div style="margin-top:16px;text-align:center;">
-                  <a href="https://fu-corp-crm.vercel.app/tickets" style="display:inline-block;padding:10px 24px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">Open ticket</a>
+                  <a href="https://alpha-command-center.vercel.app/tickets" style="display:inline-block;padding:10px 24px;background:#F59E0B;color:#fff;text-decoration:none;border-radius:8px;font-size:13px;font-weight:500;">Open ticket</a>
                 </div>
               </div>
             </div>

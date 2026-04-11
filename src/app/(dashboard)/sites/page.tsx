@@ -66,7 +66,7 @@ export default function SitesPage() {
   }
 
   function getSnippet(apiKey: string) {
-    return `<script src="https://fu-corp-crm.vercel.app/tracker.js" data-key="${apiKey}" defer></script>`;
+    return `<script src="https://alpha-command-center.vercel.app/tracker.js" data-key="${apiKey}" defer></script>`;
   }
 
   if (loading) {
