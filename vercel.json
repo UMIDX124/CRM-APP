@@ -6,6 +6,6 @@
     { "path": "/api/cron/daily-digest", "schedule": "0 4 * * *" },
     { "path": "/api/cron/overdue-invoices", "schedule": "0 5 * * *" },
     { "path": "/api/cron/stale-leads", "schedule": "0 6 * * *" },
-    { "path": "/api/cron/cold-email", "schedule": "*/30 * * * *" }
+    { "path": "/api/cron/cold-email", "schedule": "0 9 * * *" }
   ]
 }
