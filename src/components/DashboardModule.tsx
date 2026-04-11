@@ -23,6 +23,10 @@ interface DashboardData {
   employees: number;
   tasks: number;
   completedTasks: number;
+  todoTasks?: number;
+  inProgressTasks?: number;
+  reviewTasks?: number;
+  blockedTasks?: number;
   leads: number;
   wonLeads: number;
   revenue: number;
@@ -181,12 +185,16 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
     { label: "Tasks Done", value: `${completedTasks}/${totalTasks}`, sub: `${completionRate}% completion`, icon: CheckSquare, color: "#3B82F6" },
   ];
 
+  const todoTasks = Math.max(0, data?.todoTasks || 0);
+  const inProgressTasks = Math.max(0, data?.inProgressTasks || 0);
+  const reviewTasks = Math.max(0, data?.reviewTasks || 0);
+
   const taskStatuses = useMemo(() => [
-    { name: "In Progress", value: Math.round(totalTasks * 0.3), color: "#3B82F6" },
-    { name: "Review", value: Math.round(totalTasks * 0.15), color: "#F59E0B" },
-    { name: "To Do", value: totalTasks - completedTasks - Math.round(totalTasks * 0.3) - Math.round(totalTasks * 0.15), color: "#71717A" },
+    { name: "In Progress", value: inProgressTasks, color: "#3B82F6" },
+    { name: "Review", value: reviewTasks, color: "#F59E0B" },
+    { name: "To Do", value: todoTasks, color: "#71717A" },
     { name: "Completed", value: completedTasks, color: "#10B981" },
-  ], [totalTasks, completedTasks]);
+  ], [todoTasks, inProgressTasks, reviewTasks, completedTasks]);
 
   return (
     <div className="page-container">
