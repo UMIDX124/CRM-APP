@@ -15,7 +15,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     const actor = await requireAuth();
     const { id } = await params;
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
     // Tenant-scoped ownership check. Without this, any authenticated
     // user could PATCH any client record by ID.
@@ -27,31 +30,53 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
+    // Resolve brandCode → brandId when provided
+    let resolvedBrandId: string | undefined = body.brandId;
+    if (!resolvedBrandId && typeof body.brandCode === "string" && body.brandCode) {
+      const brand = await prisma.brand.findUnique({
+        where: { code: body.brandCode },
+        select: { id: true },
+      });
+      if (!brand) {
+        return NextResponse.json({ error: `Unknown brand code "${body.brandCode}"` }, { status: 400 });
+      }
+      resolvedBrandId = brand.id;
+    }
+
     const client = await prisma.client.update({
       where: { id },
       data: {
-        ...(body.companyName && { companyName: body.companyName }),
-        ...(body.contactName && { contactName: body.contactName }),
-        ...(body.email && { email: body.email }),
-        ...(body.phone !== undefined && { phone: body.phone }),
-        ...(body.country !== undefined && { country: body.country }),
+        ...(body.companyName && { companyName: String(body.companyName).trim() }),
+        ...(body.contactName && { contactName: String(body.contactName).trim() }),
+        ...(body.email && { email: String(body.email).trim() }),
+        ...(body.phone !== undefined && { phone: body.phone || null }),
+        ...(body.country !== undefined && { country: body.country || null }),
         ...(body.status && { status: body.status }),
-        ...(body.healthScore !== undefined && { healthScore: body.healthScore }),
-        ...(body.mrr !== undefined && { mrr: body.mrr }),
-        ...(body.source !== undefined && { source: body.source }),
-        ...(body.brandId && { brandId: body.brandId }),
+        ...(body.healthScore !== undefined && { healthScore: Number(body.healthScore) }),
+        ...(body.mrr !== undefined && { mrr: Number(body.mrr) }),
+        ...(body.source !== undefined && { source: body.source || null }),
+        ...(body.website !== undefined && { website: body.website || null }),
+        ...(Array.isArray(body.services) && { services: body.services.filter((s: unknown) => typeof s === "string") }),
+        ...(resolvedBrandId && { brandId: resolvedBrandId }),
         ...(body.lastContactDate !== undefined && { lastContactDate: body.lastContactDate ? new Date(body.lastContactDate) : null }),
         ...(body.nextFollowUp !== undefined && { nextFollowUp: body.nextFollowUp ? new Date(body.nextFollowUp) : null }),
         ...(body.portalAccess !== undefined && { portalAccess: Boolean(body.portalAccess) }),
       },
-      include: { brand: { select: { code: true, name: true, color: true } } },
+      include: {
+        brand: { select: { code: true, name: true, color: true } },
+        _count: { select: { tasks: { where: { status: { notIn: ["COMPLETED", "BLOCKED"] } } } } },
+      },
     });
     await logAudit({ action: "UPDATE", entity: "Client", entityId: id, userId: actor.id, changes: body }).catch(() => {});
     return NextResponse.json(client);
   } catch (e: unknown) {
     const u = unauthorized(e); if (u) return u;
+    console.error("[clients.PATCH] error:", e);
     const msg = e instanceof Error ? e.message : "Update failed";
-    return NextResponse.json({ error: msg }, { status: 400 });
+    const safe = msg.includes("Unique constraint")
+      ? "A client with this email already exists"
+      : "Failed to update client";
+    return NextResponse.json({ error: safe }, { status: 400 });
   }
 }
 

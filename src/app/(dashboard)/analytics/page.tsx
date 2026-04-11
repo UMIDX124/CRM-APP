@@ -596,7 +596,9 @@ export default function AnalyticsPage() {
           >
             Daily Visitors
           </h2>
-          {!data.dailyViews || data.dailyViews.length === 0 ? (
+          {!data.dailyViews ||
+          data.dailyViews.length === 0 ||
+          data.dailyViews.every((d) => !d.count) ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 300, color: "var(--foreground-dim)", gap: 8 }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />

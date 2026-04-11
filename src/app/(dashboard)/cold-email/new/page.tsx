@@ -367,8 +367,12 @@ export default function NewCampaignPage() {
   ];
 
   const canGoNext = () => {
-    if (step === 1) return true;
-    if (step === 2) return senderName && senderEmail && senderPassword;
+    if (step === 1) {
+      // Only Campaign Name + Niche + Location are required — websites are optional
+      // (manual prospect entry is the alternate flow).
+      return Boolean(campaignName.trim() && niche && location.trim());
+    }
+    if (step === 2) return Boolean(senderName && senderEmail && senderPassword);
     if (step === 3) return true;
     return true;
   };
@@ -676,7 +680,7 @@ export default function NewCampaignPage() {
             <button
               onClick={handleGeneratePreview}
               disabled={generating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600 text-white font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--primary)] text-black font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {generating ? "Generating..." : "Generate Preview Emails"}
@@ -747,7 +751,7 @@ export default function NewCampaignPage() {
               <button
                 onClick={handleGenerateAll}
                 disabled={generatingAll || genAllDone}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-purple-600/10 text-purple-400 border border-purple-500/20 font-medium text-sm hover:bg-purple-600/20 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/30 font-medium text-sm hover:bg-[var(--primary)]/20 transition-colors disabled:opacity-50"
               >
                 {generatingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : genAllDone ? <Check className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                 {generatingAll ? "Generating..." : genAllDone ? "All Emails Generated" : "Generate All Emails"}

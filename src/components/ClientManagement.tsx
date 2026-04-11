@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Search, Plus, Building2, Edit, Trash2, Eye, X, Save,
   Loader2, TrendingUp, Heart, ArrowUpDown, Mail, Globe, Send,
@@ -28,6 +28,30 @@ const defaultForm = {
 
 const countries = ["United States", "United Kingdom", "Canada", "Australia", "Germany", "UAE", "Pakistan", "India", "Singapore"];
 
+function mapClientRow(c: Record<string, unknown>): Client {
+  const score = Number(c.healthScore) || 80;
+  return {
+    id: String(c.id),
+    companyName: String(c.companyName || ""),
+    contactName: String(c.contactName || ""),
+    email: String(c.email || ""),
+    phone: String(c.phone || ""),
+    country: String(c.country || ""),
+    countryFlag: String(c.countryFlag || ""),
+    brand: (c.brand as Record<string, string>)?.code || String(c.brand || ""),
+    accountManager: String(c.accountManager || ""),
+    mrr: Number(c.mrr) || 0,
+    healthScore: score,
+    healthStatus: score >= 80 ? "HEALTHY" : score >= 50 ? "AT_RISK" : "CRITICAL",
+    services: Array.isArray(c.services) ? (c.services as string[]) : [],
+    activeTasks:
+      Number((c._count as Record<string, unknown> | undefined)?.tasks) ||
+      Number(c.activeTasks) ||
+      0,
+    lastActivity: String(c.lastActivity || ""),
+  };
+}
+
 type SortKey = "companyName" | "mrr" | "healthScore" | "brand";
 type SortDir = "asc" | "desc";
 
@@ -37,45 +61,33 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
   const [clientList, setClientList] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const loadClients = useCallback(async (): Promise<Client[] | null> => {
+    try {
+      const r = await fetch(`/api/clients?brand=${activeCompany.code}`, { cache: "no-store" });
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!Array.isArray(data)) return null;
+      return data.map((c: Record<string, unknown>) => mapClientRow(c));
+    } catch {
+      return null;
+    }
+  }, [activeCompany.code]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/clients?brand=${activeCompany.code}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+    loadClients()
+      .then((rows) => {
         if (cancelled) return;
-        if (data && Array.isArray(data) && data.length > 0) {
-          const mapped: Client[] = data.map((c: Record<string, unknown>) => ({
-            id: String(c.id),
-            companyName: String(c.companyName || ""),
-            contactName: String(c.contactName || ""),
-            email: String(c.email || ""),
-            phone: String(c.phone || ""),
-            country: String(c.country || ""),
-            countryFlag: String(c.countryFlag || ""),
-            brand: (c.brand as Record<string, string>)?.code || String(c.brand || ""),
-            accountManager: String(c.accountManager || ""),
-            mrr: Number(c.mrr) || 0,
-            healthScore: Number(c.healthScore) || 80,
-            healthStatus: Number(c.healthScore) >= 80 ? "HEALTHY" : Number(c.healthScore) >= 50 ? "AT_RISK" : "CRITICAL",
-            services: Array.isArray(c.services) ? c.services as string[] : [],
-            // _count comes from the API's include{_count:{tasks:...}}.
-            // Falls back to 0 for legacy payload shapes.
-            activeTasks:
-              Number((c._count as Record<string, unknown> | undefined)?.tasks) ||
-              Number(c.activeTasks) ||
-              0,
-            lastActivity: String(c.lastActivity || ""),
-          }));
-          setClientList(mapped);
-        } else {
-          setClientList([]);
-        }
+        setClientList(rows ?? []);
       })
-      .catch(() => { setClientList([]); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [activeCompany.code]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadClients]);
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("ALL");
@@ -141,34 +153,50 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
     if (!form.companyName.trim()) { showError("Company name required"); return; }
     if (!form.contactName.trim()) { showError("Contact name required"); return; }
     if (!form.email.trim()) { showError("Email required"); return; }
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) { showError("Valid email is required"); return; }
     setSaving(true);
 
+    const payload = {
+      companyName: form.companyName.trim(),
+      contactName: form.contactName.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim() || null,
+      country: form.country || null,
+      brandCode: form.brand,
+      mrr: Number(form.mrr) || 0,
+      healthScore: Number(form.healthScore) || 80,
+      source: form.source || null,
+      services: form.services,
+      lastContactDate: form.lastContactDate || null,
+      nextFollowUp: form.nextFollowUp || null,
+    };
+
     if (editingId) {
-      const result = await apiMutate(`/api/clients/${editingId}`, "PATCH", { ...form, lastContactDate: form.lastContactDate || null, nextFollowUp: form.nextFollowUp || null });
-      if (!result.ok) { showError(result.error || "Failed to update client"); setSaving(false); return; }
-      setClientList((prev) => prev.map((c) =>
-        c.id === editingId ? { ...c, companyName: form.companyName, contactName: form.contactName, email: form.email, phone: form.phone, country: form.country, brand: form.brand, mrr: form.mrr, healthScore: form.healthScore, healthStatus: form.healthScore >= 80 ? "HEALTHY" as const : "AT_RISK" as const, services: form.services, source: form.source, lastContactDate: form.lastContactDate || undefined, nextFollowUp: form.nextFollowUp || undefined } : c
-      ));
+      const result = await apiMutate(`/api/clients/${editingId}`, "PATCH", payload);
+      if (!result.ok) {
+        showError(result.error || "Failed to update client");
+        setSaving(false);
+        return;
+      }
+      // Refetch authoritative data to stay consistent with server
+      const fresh = await loadClients();
+      if (fresh) setClientList(fresh);
       success("Client updated");
     } else {
-      const result = await apiMutate("/api/clients", "POST", {
-        companyName: form.companyName, contactName: form.contactName, email: form.email,
-        phone: form.phone, country: form.country, brandId: brands.find((b) => b.code === form.brand)?.id,
-        mrr: form.mrr, healthScore: form.healthScore, source: form.source,
-      });
-      if (!result.ok) { showError(result.error || "Failed to add client"); setSaving(false); return; }
-      const newClient: Client = {
-        id: String(Date.now()), companyName: form.companyName, contactName: form.contactName,
-        email: form.email, phone: form.phone, country: form.country, countryFlag: "",
-        brand: form.brand, accountManager: "", mrr: form.mrr, healthScore: form.healthScore,
-        healthStatus: form.healthScore >= 80 ? "HEALTHY" : "AT_RISK",
-        services: form.services, activeTasks: 0, lastActivity: "Just now",
-      };
-      setClientList((prev) => [...prev, newClient]);
-      success(`${form.companyName} added`);
+      const result = await apiMutate("/api/clients", "POST", payload);
+      if (!result.ok) {
+        showError(result.error || "Failed to add client");
+        setSaving(false);
+        return;
+      }
+      const fresh = await loadClients();
+      if (fresh) setClientList(fresh);
+      success(`${payload.companyName} added`);
     }
     setSaving(false);
     setShowModal(false);
+    setForm(defaultForm);
+    setEditingId(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -479,7 +507,7 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
       {/* Add/Edit Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content w-full max-w-lg max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content w-full max-w-lg max-h-[80vh] overflow-y-auto flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-[var(--surface)] border-b border-[var(--border)] px-5 py-4 flex items-center justify-between z-10">
               <h2 className="text-[15px] font-semibold text-[var(--foreground)]">{editingId ? "Edit Client" : "New Client"}</h2>
               <button onClick={() => setShowModal(false)} className="btn-ghost p-1.5"><X className="w-4 h-4" /></button>

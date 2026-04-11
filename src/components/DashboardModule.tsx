@@ -90,11 +90,11 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
   const refetch = useCallback(() => {
     setLoadError(null);
     Promise.all([
-      fetch(`/api/dashboard?brand=${activeCompany.code}`).then(async (r) => {
+      fetch(`/api/dashboard?brand=${activeCompany.code}`, { cache: "no-store" }).then(async (r) => {
         if (!r.ok) throw new Error(`dashboard ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/dashboard/revenue?months=6`).then(async (r) => {
+      fetch(`/api/dashboard/revenue?months=6`, { cache: "no-store" }).then(async (r) => {
         if (!r.ok) throw new Error(`revenue ${r.status}`);
         return r.json();
       }),
@@ -114,11 +114,11 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
     setLoading(true);
     setLoadError(null);
     Promise.all([
-      fetch(`/api/dashboard?brand=${activeCompany.code}`).then(async (r) => {
+      fetch(`/api/dashboard?brand=${activeCompany.code}`, { cache: "no-store" }).then(async (r) => {
         if (!r.ok) throw new Error(`dashboard ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/dashboard/revenue?months=6`).then(async (r) => {
+      fetch(`/api/dashboard/revenue?months=6`, { cache: "no-store" }).then(async (r) => {
         if (!r.ok) throw new Error(`revenue ${r.status}`);
         return r.json();
       }),
@@ -282,10 +282,14 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
           <div className="h-[240px]">
             {loading ? (
               <div className="h-full w-full skeleton rounded-xl" />
-            ) : !revenue || revenue.months.length === 0 ? (
+            ) : !revenue ||
+              revenue.months.length === 0 ||
+              revenue.months.every((m) =>
+                revenue.brands.every((code) => !Number(m[code]))
+              ) ? (
               <div className="h-full w-full flex flex-col items-center justify-center text-[var(--foreground-dim)]">
                 <DollarSign className="w-8 h-8 mb-2 opacity-50" />
-                <p className="text-[13px] font-medium">No paid invoices yet</p>
+                <p className="text-[13px] font-medium">No revenue data yet</p>
                 <p className="text-[11px] mt-0.5">Revenue appears here once invoices are marked PAID</p>
               </div>
             ) : (
