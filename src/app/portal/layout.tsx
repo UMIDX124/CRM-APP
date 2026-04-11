@@ -10,6 +10,8 @@ import {
   LogOut,
   Menu,
   X,
+  Ticket,
+  User,
 } from "lucide-react";
 
 interface PortalUser {
@@ -23,7 +25,9 @@ const NAV_ITEMS = [
   { href: "/portal/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/portal/invoices", label: "Invoices", icon: FileText },
   { href: "/portal/tasks", label: "Tasks", icon: CheckSquare },
+  { href: "/portal/tickets", label: "Tickets", icon: Ticket },
   { href: "/portal/messages", label: "Messages", icon: MessageSquare },
+  { href: "/portal/profile", label: "Profile", icon: User },
 ];
 
 const PUBLIC_PATHS = ["/portal/login", "/portal/verify"];
