@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, tenantWhere } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { calculateLeadScore } from "@/lib/scoring";
 
 // Strict lead-create schema. Replaces the previous raw `body` spread
 // that allowed callers to inject any writable field.
@@ -74,6 +75,17 @@ export async function POST(req: Request) {
     }
     const body = parsed.data;
 
+    // Auto-compute lead score from initial signals (source, value, phone,
+    // services, status). Updated by PATCH as the lead progresses.
+    const leadScore = calculateLeadScore({
+      source: body.source ?? null,
+      value: body.value,
+      phone: body.phone ?? null,
+      services: body.services,
+      status: body.status,
+      createdAt: new Date(),
+    });
+
     const lead = await prisma.lead.create({
       data: {
         companyName: body.companyName,
@@ -85,6 +97,7 @@ export async function POST(req: Request) {
         services: body.services,
         source: body.source ?? null,
         status: body.status,
+        leadScore,
         value: body.value,
         probability: body.probability,
         salesRepId: body.salesRepId ?? null,

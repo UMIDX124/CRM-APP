@@ -46,8 +46,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(body.assigneeId !== undefined && { assigneeId: body.assigneeId }),
         ...(body.clientId !== undefined && { clientId: body.clientId }),
         ...(body.brandId !== undefined && { brandId: body.brandId }),
+        ...(body.listId !== undefined && { listId: body.listId }),
+        ...(body.parentTaskId !== undefined && { parentTaskId: body.parentTaskId }),
+        ...(body.startDate !== undefined && { startDate: body.startDate ? new Date(body.startDate) : null }),
         ...(body.dueDate !== undefined && { dueDate: body.dueDate ? new Date(body.dueDate) : null }),
+        ...(body.estimateHours !== undefined && { estimateHours: body.estimateHours }),
         ...(body.timeSpent !== undefined && { timeSpent: body.timeSpent }),
+        ...(Array.isArray(body.tags) && { tags: body.tags }),
         ...(body.status === "COMPLETED" && { completedAt: new Date() }),
       },
       include: {

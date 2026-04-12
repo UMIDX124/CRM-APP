@@ -210,15 +210,16 @@ model Brand {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company  Company?  @relation(fields: [companyId], references: [id])
-  users    User[]
-  clients  Client[]
-  tasks    Task[]
-  leads    Lead[]
-  invoices Invoice[]
-  deals    Deal[]
-  tickets  Ticket[]
-  webhooks Webhook[]
+  company   Company?   @relation(fields: [companyId], references: [id])
+  users     User[]
+  clients   Client[]
+  tasks     Task[]
+  taskLists TaskList[]
+  leads     Lead[]
+  invoices  Invoice[]
+  deals     Deal[]
+  tickets   Ticket[]
+  webhooks  Webhook[]
 
   @@index([companyId])
   @@map("brands")
@@ -284,6 +285,9 @@ model User {
   leaves             Leave[]            @relation("LeaveEmployee")
   approvedLeaves     Leave[]            @relation("LeaveApprover")
   payrollRecords     PayrollRecord[]    @relation("PayrollEmployee")
+  taskTimeEntries    TaskTimeEntry[]
+  taskWatchers       TaskWatcher[]
+  taskActivities     TaskActivity[]
 
   @@index([brandId])
   @@index([managerId])
@@ -331,34 +335,51 @@ model Client {
 }
 
 model Task {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  status      TaskStatus  @default(TODO)
-  priority    Priority    @default(MEDIUM)
-  department  Department?
-  assigneeId  String?
-  creatorId   String
-  clientId    String?
-  brandId     String?
-  dueDate     DateTime?
-  completedAt DateTime?
-  timeSpent   Float       @default(0)
-  order       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  status        TaskStatus  @default(TODO)
+  priority      Priority    @default(MEDIUM)
+  department    Department?
+  assigneeId    String?
+  creatorId     String
+  clientId      String?
+  brandId       String?
+  listId        String?
+  parentTaskId  String?
+  startDate     DateTime?
+  dueDate       DateTime?
+  completedAt   DateTime?
+  estimateHours Float?
+  timeSpent     Float       @default(0)
+  tags          String[]    @default([])
+  order         Int         @default(0)
+  aiSummary     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
-  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
-  client      Client?      @relation("ClientTasks", fields: [clientId], references: [id])
-  brand       Brand?       @relation(fields: [brandId], references: [id])
-  comments    Comment[]
-  attachments Attachment[] @relation("TaskAttachments")
+  assignee     User?           @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator      User            @relation("TaskCreator", fields: [creatorId], references: [id])
+  client       Client?         @relation("ClientTasks", fields: [clientId], references: [id])
+  brand        Brand?          @relation(fields: [brandId], references: [id])
+  list         TaskList?       @relation(fields: [listId], references: [id], onDelete: SetNull)
+  parent       Task?           @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: Cascade)
+  subtasks     Task[]          @relation("TaskSubtasks")
+  comments     Comment[]
+  attachments  Attachment[]    @relation("TaskAttachments")
+  checklist    TaskChecklistItem[]
+  timeEntries  TaskTimeEntry[]
+  watchers     TaskWatcher[]
+  blockedBy    TaskDependency[] @relation("TaskBlockedBy")
+  blocks       TaskDependency[] @relation("TaskBlocks")
+  activity     TaskActivity[]
 
   @@index([assigneeId])
   @@index([creatorId])
   @@index([clientId])
   @@index([brandId])
+  @@index([listId])
+  @@index([parentTaskId])
   @@index([status])
   @@index([dueDate])
   @@map("tasks")
@@ -375,6 +396,7 @@ model Lead {
   services        String[]   @default([])
   source          String?
   status          LeadStatus @default(NEW)
+  leadScore       Int        @default(0) // 0-100 auto-computed lead heat
   value           Float      @default(0)
   probability     Int        @default(50)
   salesRepId      String?
@@ -1186,4 +1208,101 @@ model PayrollRecord {
   @@index([status])
   @@index([year, month])
   @@map("payroll_records")
+}
+
+// ─── ClickUp-style Task Extensions ──────────────────────
+
+model TaskList {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("#F59E0B")
+  icon        String?
+  brandId     String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  brand Brand? @relation(fields: [brandId], references: [id], onDelete: SetNull)
+  tasks Task[]
+
+  @@index([brandId])
+  @@map("task_lists")
+}
+
+model TaskChecklistItem {
+  id        String   @id @default(cuid())
+  taskId    String
+  content   String
+  done      Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_checklist_items")
+}
+
+model TaskTimeEntry {
+  id          String    @id @default(cuid())
+  taskId      String
+  userId      String
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  durationSec Int       @default(0)
+  note        String?
+  createdAt   DateTime  @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([startedAt])
+  @@map("task_time_entries")
+}
+
+model TaskWatcher {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([userId])
+  @@map("task_watchers")
+}
+
+model TaskDependency {
+  id            String   @id @default(cuid())
+  taskId        String   // the task that has the dependency
+  blocksTaskId  String   // the task that blocks it
+  createdAt     DateTime @default(now())
+
+  task   Task @relation("TaskBlockedBy", fields: [taskId], references: [id], onDelete: Cascade)
+  blocks Task @relation("TaskBlocks", fields: [blocksTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, blocksTaskId])
+  @@index([blocksTaskId])
+  @@map("task_dependencies")
+}
+
+model TaskActivity {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String?
+  type      String   // created|status_changed|assigned|comment|checklist|time|attachment|ai_breakdown|...
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  task Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([taskId, createdAt])
+  @@map("task_activities")
 }

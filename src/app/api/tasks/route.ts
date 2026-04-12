@@ -16,8 +16,13 @@ const taskCreateSchema = z.object({
   assigneeId: z.string().optional().nullable(),
   clientId: z.string().optional().nullable(),
   brandId: z.string().optional().nullable(),
+  listId: z.string().optional().nullable(),
+  parentTaskId: z.string().optional().nullable(),
+  startDate: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
+  estimateHours: z.number().nonnegative().finite().optional().nullable(),
   timeSpent: z.number().nonnegative().finite().optional().default(0),
+  tags: z.array(z.string().max(50)).max(20).optional().default([]),
   order: z.number().int().optional().default(0),
 });
 
@@ -94,12 +99,26 @@ export async function POST(req: Request) {
         assigneeId: body.assigneeId ?? null,
         clientId: body.clientId ?? null,
         brandId: body.brandId ?? null,
+        listId: body.listId ?? null,
+        parentTaskId: body.parentTaskId ?? null,
+        startDate: body.startDate ? new Date(body.startDate) : null,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
+        estimateHours: body.estimateHours ?? null,
         timeSpent: body.timeSpent,
+        tags: body.tags ?? [],
         order: body.order,
         creatorId: user.id,
       },
     });
+
+    await prisma.taskActivity.create({
+      data: {
+        taskId: task.id,
+        userId: user.id,
+        type: "created",
+        payload: { title: task.title, status: task.status },
+      },
+    }).catch(() => {});
 
     await logAudit({
       action: "CREATE", entity: "Task", entityId: task.id, userId: user.id,

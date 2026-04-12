@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, CheckSquare, Clock, AlertCircle, Calendar, Edit, Trash2,
-  X, Save, Loader2, User, LayoutGrid, List,
+  X, Save, Loader2, User, LayoutGrid, List, CalendarDays, Play, Square, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
 // Employees and clients fetched from API for dropdowns
@@ -109,12 +109,99 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
   const [search, setSearch] = useState("");
   const [filterPriority, setFilterPriority] = useState("ALL");
   const [filterDueDate, setFilterDueDate] = useState<"ALL" | "TODAY" | "WEEK" | "OVERDUE">("ALL");
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+  const [viewMode, setViewMode] = useState<"kanban" | "list" | "calendar">("kanban");
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(defaultForm);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Active time-tracking timer for the current user (only one at a time)
+  const [activeTimer, setActiveTimer] = useState<{ taskId: string; startedAt: string } | null>(null);
+  const [timerTick, setTimerTick] = useState(0);
+
+  // Persist view mode per user
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("tasks-view-mode");
+      if (stored === "kanban" || stored === "list" || stored === "calendar") {
+        setViewMode(stored);
+      }
+    } catch {
+      /* no-op */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("tasks-view-mode", viewMode);
+    } catch {
+      /* no-op */
+    }
+  }, [viewMode]);
+
+  // Tick every second while a timer is active so the displayed elapsed
+  // time updates smoothly without a full re-fetch.
+  useEffect(() => {
+    if (!activeTimer) return;
+    const interval = setInterval(() => setTimerTick((t) => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [activeTimer]);
+
+  const startTimer = async (taskId: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/time`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "start" }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to start timer");
+      }
+      const data = await res.json();
+      setActiveTimer({ taskId, startedAt: data.entry.startedAt });
+      success("Timer started");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to start timer");
+    }
+  };
+
+  const stopTimer = async (taskId: string) => {
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/time`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to stop timer");
+      }
+      const data = await res.json();
+      const minutes = Math.max(0, Math.round((data.entry?.durationSec ?? 0) / 60));
+      setActiveTimer(null);
+      setTaskList((prev) =>
+        prev.map((t) =>
+          t.id === taskId ? { ...t, timeSpent: t.timeSpent + minutes / 60 } : t
+        )
+      );
+      success(`Timer stopped — ${minutes} minute${minutes === 1 ? "" : "s"} logged`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to stop timer");
+    }
+  };
+
+  // Compute the currently-displayed elapsed time (reads timerTick for reactivity)
+  const elapsedForActive = useMemo(() => {
+    if (!activeTimer) return 0;
+    void timerTick; // force dep so re-render picks up new seconds
+    const started = new Date(activeTimer.startedAt).getTime();
+    return Math.max(0, Math.floor((Date.now() - started) / 1000));
+  }, [activeTimer, timerTick]);
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -235,8 +322,9 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
           <option value="OVERDUE">Overdue</option>
         </select>
         <div className="tab-list !p-0.5">
-          <button onClick={() => setViewMode("kanban")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "kanban" ? "active" : ""}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-          <button onClick={() => setViewMode("list")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "list" ? "active" : ""}`}><List className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setViewMode("kanban")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "kanban" ? "active" : ""}`} title="Board"><LayoutGrid className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setViewMode("list")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "list" ? "active" : ""}`} title="List"><List className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setViewMode("calendar")} className={`tab-item !px-2.5 !py-1.5 ${viewMode === "calendar" ? "active" : ""}`} title="Calendar"><CalendarDays className="w-3.5 h-3.5" /></button>
         </div>
         <button onClick={openAdd} className="btn-primary whitespace-nowrap"><Plus className="w-4 h-4" /> New Task</button>
       </div>
@@ -291,6 +379,33 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
                             <Calendar className="w-2.5 h-2.5" />{task.dueDate}{overdue && <span className="text-red-400 font-medium">OVERDUE</span>}
                           </p>
                         )}
+                        {(() => {
+                          const isTiming = activeTimer?.taskId === task.id;
+                          return (
+                            <div className="flex items-center gap-1 mt-1 text-[10px] text-[var(--foreground-dim)]">
+                              {isTiming ? (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); stopTimer(task.id); }}
+                                  className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                                  title="Stop timer"
+                                >
+                                  <Square className="w-2.5 h-2.5" />
+                                  <span className="tabular-nums font-medium">{formatHms(elapsedForActive)}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); startTimer(task.id); }}
+                                  className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--surface-hover)] text-[var(--foreground-dim)] hover:text-[var(--primary)] disabled:opacity-30"
+                                  disabled={Boolean(activeTimer)}
+                                  title={activeTimer ? "Another timer is running" : "Start timer"}
+                                >
+                                  <Play className="w-2.5 h-2.5" />
+                                  {task.timeSpent > 0 && <span className="tabular-nums">{task.timeSpent.toFixed(1)}h</span>}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                         <div className="flex gap-1 mt-2 pt-2 border-t border-[var(--border-subtle)]">
                           {col.status === "TODO" && <button onClick={() => moveTask(task.id, "IN_PROGRESS")} className="flex-1 text-[10px] py-1 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors">Start</button>}
                           {col.status === "IN_PROGRESS" && (
@@ -319,14 +434,15 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
             );
           })}
         </div>
-      ) : (
+      ) : viewMode === "list" ? (
         <div className="card overflow-hidden">
           <table className="data-table">
-            <thead><tr><th>Task</th><th>Status</th><th>Priority</th><th className="hidden md:table-cell">Assignee</th><th className="hidden md:table-cell">Due</th><th className="text-right">Actions</th></tr></thead>
+            <thead><tr><th>Task</th><th>Status</th><th>Priority</th><th className="hidden md:table-cell">Assignee</th><th className="hidden md:table-cell">Due</th><th className="hidden md:table-cell">Time</th><th className="text-right">Actions</th></tr></thead>
             <tbody>
               {filtered.map((task) => {
                 const col = columns.find((c) => c.status === task.status) || columns[0];
                 const overdue = isOverdue(task.dueDate, task.status);
+                const isTiming = activeTimer?.taskId === task.id;
                 return (
                   <tr key={task.id} className={overdue ? "!bg-red-500/[0.02]" : ""}>
                     <td><p className="text-[13px] font-medium text-[var(--foreground)]">{task.title}</p><p className="text-[11px] text-[var(--foreground-dim)]">{task.client}</p></td>
@@ -334,8 +450,34 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
                     <td><span className={clsx("badge", getPriorityColor(task.priority as "HIGH"))}>{task.priority}</span></td>
                     <td className="hidden md:table-cell">{task.assignee || "—"}</td>
                     <td className={clsx("hidden md:table-cell", overdue && "!text-red-400")}>{task.dueDate || "—"}</td>
+                    <td className="hidden md:table-cell tabular-nums text-[12px] text-[var(--foreground-muted)]">
+                      {isTiming ? (
+                        <span className="text-[var(--primary)] font-medium">{formatHms(elapsedForActive)}</span>
+                      ) : task.timeSpent > 0 ? (
+                        `${task.timeSpent.toFixed(1)}h`
+                      ) : (
+                        "—"
+                      )}
+                    </td>
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-0.5">
+                        <button
+                          onClick={() => (isTiming ? stopTimer(task.id) : startTimer(task.id))}
+                          className={clsx(
+                            "btn-ghost p-1.5",
+                            isTiming ? "!text-red-400" : "hover:!text-[var(--primary)]"
+                          )}
+                          disabled={!isTiming && Boolean(activeTimer)}
+                          title={
+                            isTiming
+                              ? "Stop timer"
+                              : activeTimer
+                                ? "Another timer is running"
+                                : "Start timer"
+                          }
+                        >
+                          {isTiming ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                        </button>
                         <button onClick={() => openEdit(task)} className="btn-ghost p-1.5"><Edit className="w-3.5 h-3.5" /></button>
                         <button onClick={() => setShowDeleteConfirm(task.id)} className="btn-ghost p-1.5 hover:!text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
@@ -343,9 +485,25 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
                   </tr>
                 );
               })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-[12px] text-[var(--foreground-dim)]">
+                    No tasks match your filters
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+      ) : (
+        /* Calendar view — monthly grid with tasks plotted on their due date */
+        <CalendarView
+          tasks={filtered}
+          month={calendarMonth}
+          setMonth={setCalendarMonth}
+          onEditTask={openEdit}
+          brandColor={brandColor}
+        />
       )}
 
       {/* Modal */}
@@ -384,6 +542,171 @@ export default function TaskManagement({ brandId: _brandId }: { brandId: string 
               <button onClick={() => setShowDeleteConfirm(null)} className="btn-secondary">Cancel</button>
               <button onClick={() => handleDelete(showDeleteConfirm)} className="btn-primary !bg-red-500 hover:!bg-red-600">Delete</button>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatHms(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+interface CalendarViewProps {
+  tasks: Task[];
+  month: Date;
+  setMonth: (d: Date) => void;
+  onEditTask: (task: Task) => void;
+  brandColor: (code: string) => string;
+}
+
+function CalendarView({ tasks, month, setMonth, onEditTask, brandColor }: CalendarViewProps) {
+  const monthLabel = month.toLocaleString(undefined, { month: "long", year: "numeric" });
+
+  // Build a Sunday-start grid for the visible month. Pad with surrounding
+  // days so every week row has 7 cells.
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const firstOfMonth = new Date(year, monthIndex, 1);
+  const startDow = firstOfMonth.getDay();
+  const gridStart = new Date(year, monthIndex, 1 - startDow);
+
+  const cells: Date[] = [];
+  for (let i = 0; i < 42; i++) {
+    cells.push(new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i));
+  }
+
+  // Group tasks by their due date (YYYY-MM-DD) for O(1) lookup per cell
+  const byDate = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    for (const t of tasks) {
+      if (!t.dueDate) continue;
+      const key = t.dueDate;
+      const arr = map.get(key) ?? [];
+      arr.push(t);
+      map.set(key, arr);
+    }
+    return map;
+  }, [tasks]);
+
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const goPrev = () => setMonth(new Date(year, monthIndex - 1, 1));
+  const goNext = () => setMonth(new Date(year, monthIndex + 1, 1));
+  const goToday = () =>
+    setMonth(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+
+  const unscheduled = tasks.filter((t) => !t.dueDate);
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2">
+          <button onClick={goPrev} className="btn-ghost p-1.5" title="Previous month">
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <h3 className="text-[13px] font-semibold text-[var(--foreground)] min-w-[140px] text-center">
+            {monthLabel}
+          </h3>
+          <button onClick={goNext} className="btn-ghost p-1.5" title="Next month">
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <button onClick={goToday} className="btn-secondary text-[11px]">
+          Today
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 border-b border-[var(--border)]">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div
+            key={d}
+            className="text-[10px] uppercase tracking-wider text-[var(--foreground-dim)] text-center py-2 border-r border-[var(--border-subtle)] last:border-r-0"
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7">
+        {cells.map((cell, i) => {
+          const inMonth = cell.getMonth() === monthIndex;
+          const key = `${cell.getFullYear()}-${String(cell.getMonth() + 1).padStart(2, "0")}-${String(cell.getDate()).padStart(2, "0")}`;
+          const dayTasks = byDate.get(key) || [];
+          const isToday = key === todayKey;
+          return (
+            <div
+              key={i}
+              className={clsx(
+                "min-h-[92px] border-r border-b border-[var(--border-subtle)] last:border-r-0 p-1.5",
+                !inMonth && "bg-[var(--background)]/40"
+              )}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className={clsx(
+                    "text-[11px] tabular-nums",
+                    isToday
+                      ? "inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--primary)] text-black font-semibold"
+                      : inMonth
+                        ? "text-[var(--foreground)]"
+                        : "text-[var(--foreground-dim)]"
+                  )}
+                >
+                  {cell.getDate()}
+                </span>
+                {dayTasks.length > 2 && (
+                  <span className="text-[9px] text-[var(--foreground-dim)]">{dayTasks.length}</span>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                {dayTasks.slice(0, 3).map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => onEditTask(t)}
+                    className="w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate hover:opacity-80"
+                    style={{
+                      backgroundColor: `${brandColor(t.brand)}15`,
+                      color: brandColor(t.brand),
+                    }}
+                    title={t.title}
+                  >
+                    {t.title}
+                  </button>
+                ))}
+                {dayTasks.length > 3 && (
+                  <p className="text-[9px] text-[var(--foreground-dim)] px-1">
+                    +{dayTasks.length - 3} more
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {unscheduled.length > 0 && (
+        <div className="border-t border-[var(--border)] px-4 py-3">
+          <p className="text-[10px] uppercase tracking-wider text-[var(--foreground-dim)] mb-2">
+            Unscheduled ({unscheduled.length})
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {unscheduled.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => onEditTask(t)}
+                className="text-[11px] px-2 py-1 rounded border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--foreground-muted)] hover:border-[var(--border-hover)]"
+                title={t.title}
+              >
+                {t.title}
+              </button>
+            ))}
           </div>
         </div>
       )}

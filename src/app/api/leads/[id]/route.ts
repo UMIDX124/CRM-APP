@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { logAudit } from "@/lib/audit";
 import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
 import { requireAuth, tenantWhere } from "@/lib/auth";
+import { calculateLeadScore } from "@/lib/scoring";
 
 function unauthorized(e: unknown) {
   if (e instanceof Error && e.message === "Unauthorized") {
@@ -20,11 +21,30 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     // Tenant ownership check — closes the cross-tenant PATCH bypass.
     const existing = await prisma.lead.findFirst({
       where: { id, ...tenantWhere(actor) },
-      select: { id: true },
+      select: {
+        id: true, source: true, value: true, phone: true, services: true,
+        status: true, lastContactDate: true, createdAt: true,
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: "Lead not found" }, { status: 404 });
     }
+
+    // Recompute lead score from the merged post-PATCH values
+    const nextLeadScore = calculateLeadScore({
+      source: body.source !== undefined ? body.source : existing.source,
+      value: body.value !== undefined ? body.value : existing.value,
+      phone: body.phone !== undefined ? body.phone : existing.phone,
+      services: body.services !== undefined ? body.services : existing.services,
+      status: body.status !== undefined ? body.status : existing.status,
+      lastContactDate:
+        body.lastContactDate !== undefined
+          ? body.lastContactDate
+            ? new Date(body.lastContactDate)
+            : null
+          : existing.lastContactDate,
+      createdAt: existing.createdAt,
+    });
 
     const lead = await prisma.lead.update({
       where: { id },
@@ -45,6 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(body.nextContactDate !== undefined && { nextContactDate: body.nextContactDate ? new Date(body.nextContactDate) : null }),
         ...(body.nextAction !== undefined && { nextAction: body.nextAction }),
         ...(body.notes !== undefined && { notes: body.notes }),
+        leadScore: nextLeadScore,
       },
       include: { brand: { select: { code: true, color: true } } },
     });

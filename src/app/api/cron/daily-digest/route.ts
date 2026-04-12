@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createNotification, autoPostToChannel, getSystemUserId } from "@/lib/notifications";
+import { recalcAllClientHealth } from "@/lib/scoring";
 
 // Vercel Cron: runs daily at 9:00 AM PKT (04:00 UTC)
 // Generates a morning brief for each SUPER_ADMIN + DEPT_HEAD
+// Also piggybacks the client-health recalc (Phase 3F) to avoid
+// burning a second cron slot on the Hobby plan.
 
 export async function GET(req: Request) {
   // Verify cron secret to prevent public access
@@ -15,6 +18,15 @@ export async function GET(req: Request) {
   try {
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Recompute every active client's health score from latest activity.
+    // Runs before the digest so the morning numbers reflect today's reality.
+    try {
+      const health = await recalcAllClientHealth();
+      console.log("[cron.daily-digest] health recalc:", health);
+    } catch (err) {
+      console.error("[cron.daily-digest] health recalc failed (non-fatal):", err);
+    }
 
     // Gather stats for the last 24 hours
     const [newLeads, newClients, completedTasks, overdueInvoices, paidInvoices] = await Promise.all([
