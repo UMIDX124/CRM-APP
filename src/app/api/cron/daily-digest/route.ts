@@ -22,8 +22,7 @@ export async function GET(req: Request) {
     // Recompute every active client's health score from latest activity.
     // Runs before the digest so the morning numbers reflect today's reality.
     try {
-      const health = await recalcAllClientHealth();
-      console.log("[cron.daily-digest] health recalc:", health);
+      await recalcAllClientHealth();
     } catch (err) {
       console.error("[cron.daily-digest] health recalc failed (non-fatal):", err);
     }

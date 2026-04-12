@@ -184,8 +184,6 @@ export async function GET(req: Request) {
       campaignResults.push({ id: campaign.id, sent, failed });
     }
 
-    console.log(`[cold-email cron] Processed ${campaigns.length} campaigns. Sent: ${totalSent}, Failed: ${totalFailed}`);
-
     return NextResponse.json({
       processed: campaigns.length,
       totalSent,
