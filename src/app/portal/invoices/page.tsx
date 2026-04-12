@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronRight,
+  Download,
 } from "lucide-react";
 
 interface LineItem {
@@ -381,15 +382,44 @@ export default function PortalInvoicesPage() {
                           >
                             <div
                               style={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                color: "var(--foreground-dim)",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.05em",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
                                 marginBottom: 8,
                               }}
                             >
-                              Line Items
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: "var(--foreground-dim)",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.05em",
+                                }}
+                              >
+                                Line Items
+                              </div>
+                              <a
+                                href={`/api/portal/invoices/${inv.id}/pdf`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 6,
+                                  padding: "6px 12px",
+                                  borderRadius: "var(--radius)",
+                                  background: "var(--primary)",
+                                  color: "#000",
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  textDecoration: "none",
+                                }}
+                              >
+                                <Download size={12} />
+                                Download PDF
+                              </a>
                             </div>
                             {!inv.lineItems || inv.lineItems.length === 0 ? (
                               <div

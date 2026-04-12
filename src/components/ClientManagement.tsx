@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Search, Plus, Building2, Edit, Trash2, Eye, X, Save,
-  Loader2, TrendingUp, Heart, ArrowUpDown, Mail, Globe, Send,
+  Loader2, TrendingUp, Heart, ArrowUpDown, Mail, Globe, Send, Sparkles, Copy,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const ClientEmails = dynamic(() => import("@/components/ClientEmails"), { ssr: false });
@@ -102,6 +102,38 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
   const [newService, setNewService] = useState("");
   const [page, setPage] = useState(0);
   const perPage = 10;
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefText, setBriefText] = useState<string | null>(null);
+
+  const handleGenerateBrief = async (clientId: string) => {
+    setBriefLoading(true);
+    setBriefText(null);
+    try {
+      const res = await fetch("/api/ai/client-brief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate brief");
+      setBriefText(data.brief);
+      success("Brief generated");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to generate brief");
+    } finally {
+      setBriefLoading(false);
+    }
+  };
+
+  const copyBrief = async () => {
+    if (!briefText) return;
+    try {
+      await navigator.clipboard.writeText(briefText);
+      success("Copied to clipboard");
+    } catch {
+      showError("Clipboard unavailable");
+    }
+  };
 
   const filtered = useMemo(() => {
     const list = clientList.filter((c) => {
@@ -496,9 +528,41 @@ export default function ClientManagement({ brandId: _brandId }: { brandId: strin
                 </div>
               );
             })()}
+            {/* AI Brief */}
+            <div className="border-t border-[var(--border)] px-5 py-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-muted)]">
+                  <Sparkles className="w-4 h-4 text-[var(--primary)]" /> AI Executive Brief
+                </div>
+                <div className="flex items-center gap-1">
+                  {briefText && (
+                    <button onClick={copyBrief} className="btn-ghost p-1.5" title="Copy">
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleGenerateBrief(viewClient.id)}
+                    disabled={briefLoading}
+                    className="px-3 py-1.5 rounded-md text-[12px] font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)]/20 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {briefLoading ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3 h-3" />
+                    )}
+                    {briefLoading ? "Generating…" : briefText ? "Regenerate" : "Generate Brief"}
+                  </button>
+                </div>
+              </div>
+              {briefText && (
+                <div className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] text-[12px] text-[var(--foreground-muted)] leading-relaxed whitespace-pre-wrap">
+                  {briefText}
+                </div>
+              )}
+            </div>
             <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
-              <button onClick={() => { setViewClient(null); openEdit(viewClient); }} className="btn-secondary"><Edit className="w-3.5 h-3.5" /> Edit</button>
-              <button onClick={() => setViewClient(null)} className="btn-primary">Close</button>
+              <button onClick={() => { setViewClient(null); setBriefText(null); openEdit(viewClient); }} className="btn-secondary"><Edit className="w-3.5 h-3.5" /> Edit</button>
+              <button onClick={() => { setViewClient(null); setBriefText(null); }} className="btn-primary">Close</button>
             </div>
           </div>
         </div>

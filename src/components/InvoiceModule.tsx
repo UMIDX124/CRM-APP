@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Plus, Search, FileText, Clock, CheckCircle2,
-  AlertCircle, XCircle, Eye, X, Save, Loader2,
+  AlertCircle, XCircle, Eye, X, Save, Loader2, Download,
 } from "lucide-react";
 import { apiMutate } from "@/lib/api";
 import { useToast } from "@/components/ui/toast";
@@ -218,7 +218,16 @@ export default function InvoiceModule() {
                     </td>
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-0.5">
-                        <button onClick={() => setSelectedInvoice(inv)} className="btn-ghost p-1.5"><Eye className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setSelectedInvoice(inv)} className="btn-ghost p-1.5" title="View"><Eye className="w-3.5 h-3.5" /></button>
+                        <a
+                          href={`/api/invoices/${inv.id}/pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-ghost p-1.5 hover:!text-[var(--primary)]"
+                          title="Download PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </a>
                         {(inv.status === "PENDING" || inv.status === "OVERDUE") && (
                           <button onClick={() => markPaid(inv.id)} className="btn-ghost p-1.5 hover:!text-emerald-400" title="Mark Paid"><CheckCircle2 className="w-3.5 h-3.5" /></button>
                         )}
@@ -267,6 +276,14 @@ export default function InvoiceModule() {
               </div>
             </div>
             <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
+              <a
+                href={`/api/invoices/${selectedInvoice.id}/pdf`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary"
+              >
+                <Download className="w-3.5 h-3.5" /> Download PDF
+              </a>
               {(selectedInvoice.status === "PENDING" || selectedInvoice.status === "OVERDUE") && (
                 <button onClick={() => markPaid(selectedInvoice.id)} className="btn-primary !bg-emerald-500 hover:!bg-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> Mark Paid</button>
               )}

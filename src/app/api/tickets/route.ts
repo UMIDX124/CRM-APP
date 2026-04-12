@@ -8,6 +8,7 @@ import { dispatchWebhook } from "@/lib/webhooks";
 import { computeSlaDueAt, type TicketPriorityLike } from "@/lib/sla";
 import { sendTicketAssignedToAgent } from "@/lib/email";
 import { createNotification } from "@/lib/notifications";
+import { aiGenerate, extractJson } from "@/lib/ai";
 
 // Strict ticket-create schema. Rejects anything outside the whitelist
 // and enforces enum priority/channel — the previous "check subject +
@@ -23,7 +24,36 @@ const ticketCreateSchema = z.object({
   requesterId: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
   slaDueAt: z.string().optional().nullable(),
+  autoClassify: z.boolean().optional(),
 });
+
+interface AiClassification {
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  category: "BUG" | "FEATURE_REQUEST" | "BILLING" | "SUPPORT" | "OTHER";
+  confidence: number;
+  reasoning: string;
+}
+
+async function classifyTicket(subject: string, description: string): Promise<AiClassification | null> {
+  try {
+    const system = `You are a support triage specialist. Classify the ticket into JSON only (no markdown, no code fences):
+
+{"priority":"LOW|MEDIUM|HIGH|URGENT","category":"BUG|FEATURE_REQUEST|BILLING|SUPPORT|OTHER","confidence":<0-1>,"reasoning":"one sentence"}
+
+URGENT = production down, data loss, security, payment blocked.
+HIGH = blocking workflow, multiple users affected.
+MEDIUM = single user impact, billing questions.
+LOW = cosmetic, feature requests, minor.
+
+Return JSON only.`;
+    const prompt = `Subject: ${subject}\n\n${description ? `Description:\n${description}` : ""}`;
+    const result = await aiGenerate({ system, prompt, temperature: 0.2, maxTokens: 300 });
+    return extractJson<AiClassification>(result.text);
+  } catch (err) {
+    console.error("[tickets.classify] AI error (non-fatal):", err);
+    return null;
+  }
+}
 
 /**
  * GET /api/tickets
@@ -127,7 +157,25 @@ export async function POST(req: Request) {
     }
     const body = parsed.data;
 
-    const priority = body.priority as TicketPriorityLike;
+    // AI triage: when the caller sets autoClassify and hasn't overridden
+    // priority, let Groq decide. Falls through gracefully on failure.
+    let aiTags: string[] = [];
+    let priority = body.priority as TicketPriorityLike;
+    if (body.autoClassify) {
+      const aiResult = await classifyTicket(body.subject, body.description);
+      if (aiResult) {
+        // Respect an explicit non-MEDIUM priority from the caller, but auto-fill
+        // when it defaulted to MEDIUM so the AI can upgrade urgency.
+        if (body.priority === "MEDIUM") {
+          priority = aiResult.priority as TicketPriorityLike;
+        }
+        aiTags = [
+          `ai:${aiResult.category.toLowerCase()}`,
+          `ai-confidence:${Math.round(aiResult.confidence * 100)}`,
+        ];
+      }
+    }
+
     // Auto-compute SLA due date from priority unless caller passed an override
     const slaDueAt = body.slaDueAt
       ? new Date(body.slaDueAt)
@@ -140,7 +188,7 @@ export async function POST(req: Request) {
         priority,
         channel: body.channel,
         status: "OPEN",
-        tags: body.tags,
+        tags: [...body.tags, ...aiTags],
         brandId: body.brandId ?? null,
         clientId: body.clientId ?? null,
         requesterId: body.requesterId ?? user.id,

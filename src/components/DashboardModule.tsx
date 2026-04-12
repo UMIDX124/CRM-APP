@@ -10,7 +10,7 @@ import {
 import {
   Users, Building2, DollarSign, CheckSquare,
   ArrowUpRight, Briefcase, ArrowRight,
-  Target,
+  Target, Sparkles, Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/types";
@@ -407,6 +407,9 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
         </div>
       </div>
 
+      {/* AI Revenue Forecast */}
+      <RevenueForecastWidget />
+
       {/* Summary Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Quick Stats */}
@@ -494,6 +497,119 @@ export default function DashboardModule({ brandId: _brandId, brandColor: _brandC
           </Link>
         ))}
       </div>
+    </div>
+  );
+}
+
+interface ForecastData {
+  low: number;
+  expected: number;
+  high: number;
+  rationale: string;
+  inputs: {
+    openDealsCount: number;
+    openPipelineValue: number;
+    winRate: number;
+    currentMRR: number;
+    activeClients: number;
+  };
+}
+
+function RevenueForecastWidget() {
+  const [loading, setLoading] = useState(false);
+  const [forecast, setForecast] = useState<ForecastData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const run = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/ai/revenue-forecast", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to forecast");
+      setForecast(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to forecast");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="card-glow p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-[15px] font-semibold text-[var(--foreground)] tracking-tight flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[var(--primary)]" /> AI Revenue Forecast
+          </h3>
+          <p className="text-[11px] text-[var(--foreground-dim)] mt-0.5">
+            90-day projection from current pipeline + historical win rate
+          </p>
+        </div>
+        <button
+          onClick={run}
+          disabled={loading}
+          className="px-3 py-1.5 rounded-md text-[12px] font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)]/20 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+        >
+          {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+          {loading ? "Calculating…" : forecast ? "Refresh" : "Generate Forecast"}
+        </button>
+      </div>
+
+      {error && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-[12px] text-red-400">
+          {error}
+        </div>
+      )}
+
+      {!forecast && !loading && !error && (
+        <div className="text-[12px] text-[var(--foreground-dim)] text-center py-6">
+          Click “Generate Forecast” to project revenue from your current pipeline.
+        </div>
+      )}
+
+      {forecast && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <ForecastCard label="Low" value={forecast.low} color="#71717A" />
+          <ForecastCard label="Expected" value={forecast.expected} color="#F59E0B" highlighted />
+          <ForecastCard label="High" value={forecast.high} color="#10B981" />
+          <div className="sm:col-span-3 p-3 rounded-lg bg-[var(--background)] border border-[var(--border)]">
+            <p className="text-[11px] uppercase tracking-wider text-[var(--foreground-dim)] mb-1">Rationale</p>
+            <p className="text-[12px] text-[var(--foreground-muted)] leading-relaxed">{forecast.rationale}</p>
+            <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-[var(--foreground-dim)]">
+              <span>{forecast.inputs.openDealsCount} open deals</span>
+              <span>${forecast.inputs.openPipelineValue.toFixed(0)} pipeline</span>
+              <span>{(forecast.inputs.winRate * 100).toFixed(0)}% win rate</span>
+              <span>${forecast.inputs.currentMRR.toFixed(0)} MRR</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForecastCard({
+  label,
+  value,
+  color,
+  highlighted,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  highlighted?: boolean;
+}) {
+  return (
+    <div
+      className={`p-4 rounded-lg border ${
+        highlighted ? "border-[var(--primary)]/30 bg-[var(--primary)]/5" : "border-[var(--border)] bg-[var(--background)]"
+      }`}
+    >
+      <p className="text-[10px] uppercase tracking-wider text-[var(--foreground-dim)] mb-1">{label}</p>
+      <p className="text-[20px] font-semibold tabular-nums" style={{ color }}>
+        ${value.toLocaleString()}
+      </p>
     </div>
   );
 }

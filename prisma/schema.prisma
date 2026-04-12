@@ -141,6 +141,24 @@ enum WebhookEvent {
   INVOICE_PAID
 }
 
+enum LeaveType {
+  ANNUAL
+  SICK
+  CASUAL
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayrollStatus {
+  PENDING
+  PAID
+}
+
 enum WebhookDeliveryStatus {
   PENDING
   SUCCESS
@@ -263,6 +281,9 @@ model User {
   ticketComments     TicketComment[]
   gmailToken         GmailToken?
   emailCampaigns     EmailCampaign[]    @relation("CampaignCreator")
+  leaves             Leave[]            @relation("LeaveEmployee")
+  approvedLeaves     Leave[]            @relation("LeaveApprover")
+  payrollRecords     PayrollRecord[]    @relation("PayrollEmployee")
 
   @@index([brandId])
   @@index([managerId])
@@ -1116,4 +1137,53 @@ model SentEmail {
   @@index([campaignLeadId])
   @@index([sentAt])
   @@map("sent_emails")
+}
+
+// ─── Leaves / Payroll (Phase 2A + 2B) ───────────────────────────────
+
+model Leave {
+  id         String      @id @default(cuid())
+  employeeId String
+  type       LeaveType
+  startDate  DateTime
+  endDate    DateTime
+  days       Float
+  reason     String?
+  status     LeaveStatus @default(PENDING)
+  approvedBy String?
+  approvedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  employee User  @relation("LeaveEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  approver User? @relation("LeaveApprover", fields: [approvedBy], references: [id])
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate])
+  @@map("leaves")
+}
+
+model PayrollRecord {
+  id          String        @id @default(cuid())
+  employeeId  String
+  month       Int // 1-12
+  year        Int
+  baseSalary  Float
+  bonus       Float         @default(0)
+  deductions  Float         @default(0)
+  netPay      Float
+  currency    String        @default("USD")
+  status      PayrollStatus @default(PENDING)
+  paidAt      DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  employee User @relation("PayrollEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month, year])
+  @@index([status])
+  @@index([year, month])
+  @@map("payroll_records")
 }

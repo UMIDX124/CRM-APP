@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Search, Plus, Briefcase, DollarSign, X, Save,
-  Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List,
+  Trash2, Edit, Loader2, TrendingUp, Target, LayoutGrid, List, Sparkles, Download, Copy,
 } from "lucide-react";
 import { clsx } from "clsx";
 // Employees fetched from API for sales rep dropdown
@@ -421,6 +421,11 @@ export default function PipelineModule({ brandId: _brandId }: { brandId: string 
                 <div className="sm:col-span-2"><label className="block text-[11px] text-[var(--foreground-dim)] mb-1">Next Action</label><input type="text" value={form.nextAction} onChange={(e) => setForm({ ...form, nextAction: e.target.value })} placeholder="Send proposal, Schedule demo..." className="input-field" /></div>
               </div>
             </div>
+            {editingId && (
+              <div className="border-t border-[var(--border)] px-5 py-3">
+                <ProposalGenerator leadId={editingId} />
+              </div>
+            )}
             <div className="sticky bottom-0 bg-[var(--surface)] border-t border-[var(--border)] px-5 py-3 flex justify-end gap-2">
               <button onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary disabled:opacity-50">{saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} {editingId ? "Save" : "Add Lead"}</button>
@@ -440,6 +445,92 @@ export default function PipelineModule({ brandId: _brandId }: { brandId: string 
               <button onClick={() => handleDelete(showDeleteConfirm)} className="btn-primary !bg-red-500 hover:!bg-red-600">Remove</button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProposalGenerator({ leadId }: { leadId: string }) {
+  const { success, error: showError } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [markdown, setMarkdown] = useState<string | null>(null);
+  const [subject, setSubject] = useState<string>("");
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setMarkdown(null);
+    try {
+      const res = await fetch("/api/ai/proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate proposal");
+      setMarkdown(data.markdown);
+      setSubject(data.subject || "Proposal");
+      success("Proposal generated");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Failed to generate proposal");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = async () => {
+    if (!markdown) return;
+    try {
+      await navigator.clipboard.writeText(markdown);
+      success("Copied to clipboard");
+    } catch {
+      showError("Clipboard unavailable");
+    }
+  };
+
+  const download = () => {
+    if (!markdown) return;
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(subject || "proposal").replace(/[^a-z0-9-]+/gi, "-").toLowerCase()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-muted)]">
+          <Sparkles className="w-4 h-4 text-[var(--primary)]" /> AI Proposal
+        </div>
+        <div className="flex items-center gap-1">
+          {markdown && (
+            <>
+              <button onClick={copy} className="btn-ghost p-1.5" title="Copy">
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={download} className="btn-ghost p-1.5" title="Download .md">
+                <Download className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className="px-3 py-1.5 rounded-md text-[12px] font-medium bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)]/20 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+            {loading ? "Generating…" : markdown ? "Regenerate" : "Generate Proposal"}
+          </button>
+        </div>
+      </div>
+      {markdown && (
+        <div className="p-3 rounded-lg bg-[var(--background)] border border-[var(--border)] max-h-[280px] overflow-y-auto text-[12px] text-[var(--foreground-muted)] whitespace-pre-wrap font-mono leading-relaxed">
+          {markdown}
         </div>
       )}
     </div>
